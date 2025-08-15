@@ -12,9 +12,11 @@ from sklearn.model_selection import GridSearchCV
 # -------------------
 # PARAMETERS
 # -------------------
-TRAIN = True  # Set to False to skip training and load the model directly
-BAYESIAN_OPTIMIZATION = True  # Set to True to use Optuna for hyperparameter tuning
-GRID_SEARCH_OPTIMIZATION = False  # Set to True to use GridSearchCV for hyperparameter tuning
+TRAIN = False  # Set to False to skip training and load the model directly
+BAYESIAN_OPTIMIZATION = False  # Set to True to use Optuna for hyperparameter tuning
+GRID_SEARCH_OPTIMIZATION = True  # Set to True to use GridSearchCV for hyperparameter tuning
+FORCE_RETRAIN = False  # Set to True to always retrain even if model exists
+KEEP_MODEL_HISTORY = 5  # Number of recent models to keep
 
 # Add timestamp to model filenames for versioning
 from datetime import datetime
@@ -112,35 +114,79 @@ y_train = train_data['spend']
 X_test  = test_data.drop(columns=['spend'])
 y_test  = test_data['spend']
 
-# Remove existing model files if TRAIN is True
-if TRAIN:
-    # Clean up old model files (keep only the 5 most recent)
-    def cleanup_old_models():
-        import glob
-        # Find all model files
-        grid_search_models = glob.glob("catboost_gridsearch_model_*.cbm")
-        bayesian_models = glob.glob("catboost_bayesian_model_*.cbm")
-        
-        # Sort by modification time (newest first) and keep only the 5 most recent
-        for model_list in [grid_search_models, bayesian_models]:
-            if len(model_list) > 5:
-                model_list.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-                for old_model in model_list[5:]:
-                    os.remove(old_model)
-                    print(f"Cleaned up old model: {old_model}")
+# Function to find the most recent model file
+def find_latest_model(model_pattern):
+    import glob
+    models = glob.glob(model_pattern)
+    if models:
+        # Sort by modification time (newest first)
+        models.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+        return models[0]
+    return None
+
+# Function to clean up old models
+def cleanup_old_models():
+    import glob
+    # Find all model files
+    grid_search_models = glob.glob("catboost_gridsearch_model_*.cbm")
+    bayesian_models = glob.glob("catboost_bayesian_model_*.cbm")
     
+    # Sort by modification time (newest first) and keep only the KEEP_MODEL_HISTORY most recent
+    for model_list in [grid_search_models, bayesian_models]:
+        if len(model_list) > KEEP_MODEL_HISTORY:
+            model_list.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+            for old_model in model_list[KEEP_MODEL_HISTORY:]:
+                os.remove(old_model)
+                print(f"Cleaned up old model: {old_model}")
+
+# Function to list available models
+def list_available_models():
+    import glob
+    grid_search_models = glob.glob("catboost_gridsearch_model_*.cbm")
+    bayesian_models = glob.glob("catboost_bayesian_model_*.cbm")
+    
+    print(f"\nAvailable models:")
+    print(f"Grid Search models: {len(grid_search_models)}")
+    for model in sorted(grid_search_models, reverse=True):
+        print(f"  - {model}")
+    print(f"Bayesian models: {len(bayesian_models)}")
+    for model in sorted(bayesian_models, reverse=True):
+        print(f"  - {model}")
+
+# Check if we should train or load existing model
+should_train = TRAIN
+model_loaded = False
+
+if not TRAIN:
+    # Try to load existing model based on optimization type
+    if BAYESIAN_OPTIMIZATION:
+        latest_model = find_latest_model("catboost_bayesian_model_*.cbm")
+        if latest_model:
+            model = CatBoostRegressor()
+            model.load_model(latest_model)
+            print(f"Loaded existing Bayesian model: {latest_model}")
+            model_loaded = True
+        else:
+            print("No existing Bayesian model found. Starting training...")
+            should_train = True
+    
+    elif GRID_SEARCH_OPTIMIZATION:
+        latest_model = find_latest_model("catboost_gridsearch_model_*.cbm")
+        if latest_model:
+            model = CatBoostRegressor()
+            model.load_model(latest_model)
+            print(f"Loaded existing Grid Search model: {latest_model}")
+            model_loaded = True
+        else:
+            print("No existing Grid Search model found. Starting training...")
+            should_train = True
+
+if should_train:
+    # Clean up old models and prepare for training
     cleanup_old_models()
     print(f"Training new model with timestamp: {timestamp}")
-
-if not TRAIN and (os.path.exists(MODEL_PATH_GRID_SEARCH) or os.path.exists(MODEL_PATH_BAYESIAN_OPTIMIZATION)):
-    # Load the pre-trained CatBoost model
-    model = CatBoostRegressor()
-    if GRID_SEARCH_OPTIMIZATION:
-        model.load_model(MODEL_PATH_BAYESIAN_OPTIMIZATION)
-    elif MODEL_PATH_BAYESIAN_OPTIMIZATION:
-        model.load_model(MODEL_PATH_BAYESIAN_OPTIMIZATION)
-    print("Model loaded")
-else:
+    list_available_models()
+    
     # -------------------
     # 2. Train the CatBoost model
     # -------------------
@@ -340,4 +386,8 @@ plt.tight_layout()
 plt.show()
 
     
+# Model saved to catboost_gridsearch_model_20250815_184243.cbm
+# RMSE: 38.6532
+# MAE: 8.0275
+# R²: 0.9372
     

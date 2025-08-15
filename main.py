@@ -1,18 +1,60 @@
 import os
 import pandas as pd
 import numpy as np
+import optuna
 from sklearn.model_selection import train_test_split
 from catboost import CatBoostRegressor, Pool
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.model_selection import TimeSeriesSplit, cross_val_score
+from sklearn.model_selection import GridSearchCV    
 
-#import CSV file
-df = pd.read_csv('actual_detail_2025-08-14.csv')
+# -------------------
+# PARAMETERS
+# -------------------
+TRAIN = False  # Set to False to skip training and load the model directly
+MODEL_PATH_GRID_SEARCH = "catboost_gridsearch_model.cbm"  # Path to save/load the CatBoost model
+MODEL_PATH_BAYESIAN_OPTIMIZATION = "catboost_bayesian_model.cbm"  # Path to save/load the CatBoost model
+BAYESIAN_OPTIMIZATION = False  # Set to True to use Optuna for hyperparameter tuning
+GRID_SEARCH_OPTIMIZATION = True  # Set to True to use GridSearchCV for hyperparameter tuning
+# -------------------
+# -------------------
+
+def objective(trial):
+    params = {
+        'depth': trial.suggest_int('depth', 4, 10),
+        'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.1, log=True),
+        'l2_leaf_reg': trial.suggest_int('l2_leaf_reg', 1, 10),
+        'bagging_temperature': trial.suggest_float('bagging_temperature', 0.0, 1.0),
+        'iterations': 1000,
+        'loss_function': 'RMSE',
+        'random_seed': 42,
+        'verbose': 0
+    }
+    
+    model = CatBoostRegressor(**params, cat_features=categorical_cols)
+    
+    # Time series split
+    tscv = TimeSeriesSplit(n_splits=3)
+    rmse_scores = []
+    
+    for train_idx, val_idx in tscv.split(X):
+        X_train, X_val = X.iloc[train_idx], X.iloc[val_idx]
+        y_train, y_val = y.iloc[train_idx], y.iloc[val_idx]
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_val)
+        rmse = np.sqrt(mean_squared_error(y_val, y_pred))
+        rmse_scores.append(rmse)
+        
+    return np.mean(rmse_scores)
 
 # -------------------
 # 1. Prepare the data
 # -------------------
-#Convert 'month' column to datetime and extract year and month number
+# Data loading
+df = pd.read_csv('actual_detail_2025-08-14.csv')
+
+# Convert 'month' column to datetime and extract year and month number
 df['month'] = pd.to_datetime(df['month'], format='%Y-%m')
 df['year'] = df['month'].dt.year
 df['month_num'] = df['month'].dt.month
@@ -20,7 +62,7 @@ df['month_num'] = df['month'].dt.month
 # Sort columns base on 'month' (datetime)
 df = df.sort_values('month').reset_index(drop=True)
 
-# Drop 'estimate' column (as it is same as 'spend') if it exists
+# Drop 'estimate' column (it's same as 'spend') if it exists
 if 'estimate' in df.columns:
     df.drop(columns=['estimate'], inplace=True)
     
@@ -46,16 +88,15 @@ df['rolling_mean_6'] = df.groupby(categorical_cols)['spend'].shift(1).rolling(6)
 #display data types of all columns
 print(df.dtypes)
 
-# Step 1: Create lag features
-df['lag_1'] = df['spend'].shift(1)
-df['lag_2'] = df['spend'].shift(2)
-df['lag_3'] = df['spend'].shift(3)
-
 # Divide the dataset into training and testing sets
 # 80% for training and 20% for testing
-# Ensure that the split is random but reproducible by setting a random state
-# Shuffle the data before splitting
-train_data, test_data = train_test_split(df, test_size=0.2, random_state=42, shuffle=True)
+# DO NOT Shuffle the data as it is time series data
+train_size = int(len(df) * 0.8)  # 80% train
+train_data = df.iloc[:train_size]
+test_data = df.iloc[train_size:]
+
+X = df.drop(columns=['spend'])
+y = df['spend']
 
 # Shape of the training and testing datasets
 print('Shape of training data :',train_data.shape)
@@ -67,18 +108,69 @@ y_train = train_data['spend']
 X_test  = test_data.drop(columns=['spend'])
 y_test  = test_data['spend']
 
-# Model CatBoostRegressor
-model = CatBoostRegressor(
-    cat_features=categorical_cols,
-    iterations=1000,
-    learning_rate=0.05,
-    depth=8,
-    loss_function='RMSE',
-    random_seed=42,
-    verbose=200
-)
+if not TRAIN and os.path.exists(MODEL_PATH_BAYESIAN_OPTIMIZATION):
+    # Load the pre-trained CatBoost model
+    model = CatBoostRegressor()
+    if GRID_SEARCH_OPTIMIZATION:
+        model.load_model(MODEL_PATH_BAYESIAN_OPTIMIZATION)
+    elif MODEL_PATH_BAYESIAN_OPTIMIZATION:
+        model.load_model(MODEL_PATH_BAYESIAN_OPTIMIZATION)
+    print("Model loaded")
+else:
+    # -------------------
+    # 2. Train the CatBoost model
+    # -------------------
+    if BAYESIAN_OPTIMIZATION:
+        # Use Optuna for hyperparameter tuning
+        study = optuna.create_study(direction='minimize')
+        study.optimize(objective, n_trials=50)  # 30 trials, can increase for better search
 
-model.fit(X_train, y_train)
+        print("Best Parameters: ", study.best_params)
+        print("Best RMSE: ", study.best_value)
+        
+        best_params = study.best_params
+        best_params.update({
+            'iterations': 1000,
+            'loss_function': 'RMSE',
+            'random_seed': 42,
+            'verbose': 200
+        })
+
+        model = CatBoostRegressor(**best_params, cat_features=categorical_cols)
+        model.fit(X, y)
+        model.save_model(MODEL_PATH_BAYESIAN_OPTIMIZATION)
+        print("Model saved to", MODEL_PATH_BAYESIAN_OPTIMIZATION)
+        
+    else:
+            # Use GridSearchCV for hyperparameter tuning
+
+        model = CatBoostRegressor(
+                loss_function='RMSE',
+                cat_features=categorical_cols,
+                random_seed=42,
+                verbose=3
+            )
+        
+        grid = {
+            'depth': [3, 6, 8, 10, 12],
+            'learning_rate': [0.01, 0.05, 0.1],
+            'iterations': [200, 500, 800, 1000],
+            'bootstrap_type': ['Bayesian', 'Bernoulli'],
+            'l2_leaf_reg': [1, 3, 5]
+        }
+        
+        # Use GridSearchCV to find the best hyperparameters
+        grid_search_result = model.grid_search(
+            grid,
+            X_train,
+            y_train,
+            cv=3,                  # 3-fold cross-validation
+            plot=False             # set True to plot learning curves
+        )
+
+        model.fit(X_train, y_train)
+        model.save_model(MODEL_PATH_GRID_SEARCH)
+        print("Model saved to", MODEL_PATH_GRID_SEARCH)
 
 # Predictions
 y_pred = model.predict(X_test)
@@ -91,17 +183,6 @@ r2 = r2_score(y_test, y_pred)
 print(f"RMSE: {rmse:.4f}")
 print(f"MAE: {mae:.4f}")
 print(f"R²: {r2:.4f}")
-
-# Plot Predicted vs Actual
-# plt.figure(figsize=(8, 6))
-# plt.scatter(y_test, y_pred, alpha=0.6)
-# plt.plot([y_test.min(), y_test.max()],
-#          [y_test.min(), y_test.max()],
-#          'r--', lw=2)
-# plt.xlabel('Actual Spend')
-# plt.ylabel('Predicted Spend')
-# plt.title('CatBoost Regression: Predicted vs Actual Spend')
-# plt.show()
 
 # ----------------------------
 # Monthly Actual vs Predicted Bar Plot
@@ -139,6 +220,91 @@ plt.grid(axis='y', linestyle='--', alpha=0.7)
 plt.legend(["Actual", "Predicted"])
 plt.show()
 
+# ----------------------------
+# Monthly Actual vs Predicted Line Graph
+# ----------------------------
+plt.figure(figsize=(12, 6))
+plt.plot(monthly_compare['year_month'], monthly_compare['spend'], marker='o', label='Actual Spend')
+plt.plot(monthly_compare['year_month'], monthly_compare['predicted_spend'], marker='o', label='Predicted Spend')
+
+plt.title("Actual vs Predicted Monthly Spend", fontsize=16)
+plt.xlabel("Month")
+plt.ylabel("Spend (USD)")
+plt.xticks(rotation=45)
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+#Basic Catboost - 1000 iterations
 # RMSE: 47.2365
 # MAE: 15.5730
 # R²: 0.8414
+
+#iterations/100
+#RMSE: 89.3153
+#MAE: 43.2676
+#R²: 0.4328
+
+#CatBoost with GridSearchCV
+# RMSE: 42.8212
+# MAE: 14.8235
+# R²: 0.8696
+
+
+# -------------------
+# Future Predictions
+# -------------------
+from datetime import datetime, timedelta
+
+def preprocess_future_df(future_df):
+    # Convert 'month' to datetime
+    future_df['month'] = pd.to_datetime(future_df['month'], format='%Y-%m')
+    # Extract year and month number
+    future_df['year'] = future_df['month'].dt.year
+    future_df['month_num'] = future_df['month'].dt.month
+    # Drop the original 'month' column
+    future_df.drop(columns=['month'], inplace=True)
+    
+    # Ensure all categorical columns exist and fill with a string if missing
+    for col in categorical_cols:
+        if col not in future_df.columns:
+            future_df[col] = 'default'
+        future_df[col] = future_df[col].fillna('default').astype('category')
+    
+    # Fill lag / rolling features with last known value from training
+    future_df['lag_1'] = df['spend'].iloc[-1]
+    future_df['lag_2'] = df['spend'].iloc[-2]
+    future_df['lag_3'] = df['spend'].iloc[-3]
+    future_df['rolling_mean_3'] = df['spend'].iloc[-3:].mean()
+    future_df['rolling_mean_6'] = df['spend'].iloc[-6:].mean()
+        
+    return future_df
+
+# Define the start and end dates for future predictions
+start_date = datetime(2025, 8, 1)
+
+#Generate a list of 24 months from start date
+month_range = pd.date_range(start=start_date, periods=24, freq='MS').strftime("%Y-%m").tolist()
+
+#Create a DataFrame with month column
+future_df = pd.DataFrame({'month': month_range})
+future_df = preprocess_future_df(future_df)
+
+#predict future spend
+future_pred = model.predict(future_df)
+
+#visualize future predictions with a line graph
+plt.figure(figsize=(12, 6))
+plt.plot(future_df['month'], future_pred, marker='o', label='Predicted Future Spend')
+plt.title("Future Monthly Spend Predictions", fontsize=16)
+plt.xlabel("Month")
+plt.ylabel("Predicted Spend (USD)")
+plt.xticks(rotation=45)
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+    
+    

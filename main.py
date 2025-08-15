@@ -12,11 +12,15 @@ from sklearn.model_selection import GridSearchCV
 # -------------------
 # PARAMETERS
 # -------------------
-TRAIN = False  # Set to False to skip training and load the model directly
-MODEL_PATH_GRID_SEARCH = "catboost_gridsearch_model.cbm"  # Path to save/load the CatBoost model
-MODEL_PATH_BAYESIAN_OPTIMIZATION = "catboost_bayesian_model.cbm"  # Path to save/load the CatBoost model
-BAYESIAN_OPTIMIZATION = False  # Set to True to use Optuna for hyperparameter tuning
-GRID_SEARCH_OPTIMIZATION = True  # Set to True to use GridSearchCV for hyperparameter tuning
+TRAIN = True  # Set to False to skip training and load the model directly
+BAYESIAN_OPTIMIZATION = True  # Set to True to use Optuna for hyperparameter tuning
+GRID_SEARCH_OPTIMIZATION = False  # Set to True to use GridSearchCV for hyperparameter tuning
+
+# Add timestamp to model filenames for versioning
+from datetime import datetime
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+MODEL_PATH_GRID_SEARCH = f"catboost_gridsearch_model_{timestamp}.cbm"  # Path to save/load the CatBoost model
+MODEL_PATH_BAYESIAN_OPTIMIZATION = f"catboost_bayesian_model_{timestamp}.cbm"  # Path to save/load the CatBoost model
 # -------------------
 # -------------------
 
@@ -79,11 +83,11 @@ df.drop(columns=['month'], inplace=True)
 
 # Create lag features (use all categorical combos implicitly by grouping later if needed)
 for lag in [1, 2, 3, 6, 12]:
-    df[f'lag_{lag}'] = df.groupby(categorical_cols)['spend'].shift(lag)
+    df[f'lag_{lag}'] = df.groupby(categorical_cols, observed=False)['spend'].shift(lag)
 
 # Optionally create rolling statistics for extra signal
-df['rolling_mean_3'] = df.groupby(categorical_cols)['spend'].shift(1).rolling(3).mean()
-df['rolling_mean_6'] = df.groupby(categorical_cols)['spend'].shift(1).rolling(6).mean()
+df['rolling_mean_3'] = df.groupby(categorical_cols, observed=False)['spend'].shift(1).rolling(3).mean()
+df['rolling_mean_6'] = df.groupby(categorical_cols, observed=False)['spend'].shift(1).rolling(6).mean()
 
 #display data types of all columns
 print(df.dtypes)
@@ -108,7 +112,27 @@ y_train = train_data['spend']
 X_test  = test_data.drop(columns=['spend'])
 y_test  = test_data['spend']
 
-if not TRAIN and os.path.exists(MODEL_PATH_BAYESIAN_OPTIMIZATION):
+# Remove existing model files if TRAIN is True
+if TRAIN:
+    # Clean up old model files (keep only the 5 most recent)
+    def cleanup_old_models():
+        import glob
+        # Find all model files
+        grid_search_models = glob.glob("catboost_gridsearch_model_*.cbm")
+        bayesian_models = glob.glob("catboost_bayesian_model_*.cbm")
+        
+        # Sort by modification time (newest first) and keep only the 5 most recent
+        for model_list in [grid_search_models, bayesian_models]:
+            if len(model_list) > 5:
+                model_list.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+                for old_model in model_list[5:]:
+                    os.remove(old_model)
+                    print(f"Cleaned up old model: {old_model}")
+    
+    cleanup_old_models()
+    print(f"Training new model with timestamp: {timestamp}")
+
+if not TRAIN and (os.path.exists(MODEL_PATH_GRID_SEARCH) or os.path.exists(MODEL_PATH_BAYESIAN_OPTIMIZATION)):
     # Load the pre-trained CatBoost model
     model = CatBoostRegressor()
     if GRID_SEARCH_OPTIMIZATION:
@@ -272,12 +296,18 @@ def preprocess_future_df(future_df):
             future_df[col] = 'default'
         future_df[col] = future_df[col].fillna('default').astype('category')
     
-    # Fill lag / rolling features with last known value from training
-    future_df['lag_1'] = df['spend'].iloc[-1]
-    future_df['lag_2'] = df['spend'].iloc[-2]
-    future_df['lag_3'] = df['spend'].iloc[-3]
-    future_df['rolling_mean_3'] = df['spend'].iloc[-3:].mean()
-    future_df['rolling_mean_6'] = df['spend'].iloc[-6:].mean()
+    # Create all lag features that were used in training
+    for lag in [1, 2, 3, 6, 12]:
+        future_df[f'lag_{lag}'] = df['spend'].iloc[-lag] if len(df) >= lag else df['spend'].iloc[-1]
+    
+    # Create rolling statistics features
+    future_df['rolling_mean_3'] = df['spend'].iloc[-3:].mean() if len(df) >= 3 else df['spend'].iloc[-1]
+    future_df['rolling_mean_6'] = df['spend'].iloc[-6:].mean() if len(df) >= 6 else df['spend'].iloc[-1]
+    
+    # Ensure the future_df has the same column order as the training data
+    # Get the expected columns from the training data (excluding 'spend')
+    expected_columns = [col for col in df.columns if col != 'spend']
+    future_df = future_df[expected_columns]
         
     return future_df
 
@@ -294,13 +324,16 @@ future_df = preprocess_future_df(future_df)
 #predict future spend
 future_pred = model.predict(future_df)
 
+# Create month labels for plotting
+month_labels = pd.date_range(start=start_date, periods=24, freq='MS').strftime("%Y-%m")
+
 #visualize future predictions with a line graph
 plt.figure(figsize=(12, 6))
-plt.plot(future_df['month'], future_pred, marker='o', label='Predicted Future Spend')
+plt.plot(range(len(future_pred)), future_pred, marker='o', label='Predicted Future Spend')
 plt.title("Future Monthly Spend Predictions", fontsize=16)
 plt.xlabel("Month")
 plt.ylabel("Predicted Spend (USD)")
-plt.xticks(rotation=45)
+plt.xticks(range(len(month_labels)), month_labels, rotation=45)
 plt.grid(True, linestyle='--', alpha=0.6)
 plt.legend()
 plt.tight_layout()

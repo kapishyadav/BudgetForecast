@@ -33,6 +33,11 @@ df.drop(columns=['month'], inplace=True)
 #display data types of all columns
 print(df.dtypes)
 
+# Step 1: Create lag features
+df['lag_1'] = df['spend'].shift(1)
+df['lag_2'] = df['spend'].shift(2)
+df['lag_3'] = df['spend'].shift(3)
+
 # Divide the dataset into training and testing sets
 # 80% for training and 20% for testing
 # Ensure that the split is random but reproducible by setting a random state

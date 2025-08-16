@@ -22,13 +22,22 @@ FORCE_RETRAIN = False  # Set to True to always retrain even if model exists
 KEEP_MODEL_HISTORY = 5  # Number of recent models to keep
 USE_LINEAR_REGRESSION = True  # Set to True to also train and compare Linear Regression
 
+# Create model directories if they don't exist
+import os
+models_dir = 'models'
+catboost_dir = os.path.join(models_dir, 'catboost')
+linear_regression_dir = os.path.join(models_dir, 'linear_regression')
+
+os.makedirs(catboost_dir, exist_ok=True)
+os.makedirs(linear_regression_dir, exist_ok=True)
+
 # Add timestamp to model filenames for versioning
 from datetime import datetime
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-MODEL_PATH_GRID_SEARCH = f"catboost_gridsearch_model_{timestamp}.cbm"  # Path to save/load the CatBoost model
-MODEL_PATH_BAYESIAN_OPTIMIZATION = f"catboost_bayesian_model_{timestamp}.cbm"  # Path to save/load the CatBoost model
-LINEAR_REGRESSION_MODEL_PATH = f"linear_regression_model_{timestamp}.pkl"  # Path to save/load the Linear Regression model
-LINEAR_REGRESSION_SCALER_PATH = f"linear_regression_scaler_{timestamp}.pkl"  # Path to save/load the scaler
+MODEL_PATH_GRID_SEARCH = os.path.join(catboost_dir, f"catboost_gridsearch_model_{timestamp}.cbm")  # Path to save/load the CatBoost model
+MODEL_PATH_BAYESIAN_OPTIMIZATION = os.path.join(catboost_dir, f"catboost_bayesian_model_{timestamp}.cbm")  # Path to save/load the CatBoost model
+LINEAR_REGRESSION_MODEL_PATH = os.path.join(linear_regression_dir, f"linear_regression_model_{timestamp}.pkl")  # Path to save/load the Linear Regression model
+LINEAR_REGRESSION_SCALER_PATH = os.path.join(linear_regression_dir, f"linear_regression_scaler_{timestamp}.pkl")  # Path to save/load the scaler
 # -------------------
 # -------------------
 
@@ -121,9 +130,16 @@ X_test  = test_data.drop(columns=['spend'])
 y_test  = test_data['spend']
 
 # Function to find the most recent model file
-def find_latest_model(model_pattern):
+def find_latest_model(model_pattern, search_dir=None):
     import glob
-    models = glob.glob(model_pattern)
+    if search_dir:
+        # Search in specific directory
+        search_path = os.path.join(search_dir, model_pattern)
+    else:
+        # Search in current directory (for backward compatibility)
+        search_path = model_pattern
+    
+    models = glob.glob(search_path)
     if models:
         # Sort by modification time (newest first)
         models.sort(key=lambda x: os.path.getmtime(x), reverse=True)
@@ -133,12 +149,14 @@ def find_latest_model(model_pattern):
 # Function to clean up old models
 def cleanup_old_models():
     import glob
-    # Find all model files
-    grid_search_models = glob.glob("catboost_gridsearch_model_*.cbm")
-    bayesian_models = glob.glob("catboost_bayesian_model_*.cbm")
+    # Find all model files in their respective directories
+    grid_search_models = glob.glob(os.path.join(catboost_dir, "catboost_gridsearch_model_*.cbm"))
+    bayesian_models = glob.glob(os.path.join(catboost_dir, "catboost_bayesian_model_*.cbm"))
+    linear_regression_models = glob.glob(os.path.join(linear_regression_dir, "linear_regression_model_*.pkl"))
+    linear_regression_scalers = glob.glob(os.path.join(linear_regression_dir, "linear_regression_scaler_*.pkl"))
     
     # Sort by modification time (newest first) and keep only the KEEP_MODEL_HISTORY most recent
-    for model_list in [grid_search_models, bayesian_models]:
+    for model_list in [grid_search_models, bayesian_models, linear_regression_models, linear_regression_scalers]:
         if len(model_list) > KEEP_MODEL_HISTORY:
             model_list.sort(key=lambda x: os.path.getmtime(x), reverse=True)
             for old_model in model_list[KEEP_MODEL_HISTORY:]:
@@ -148,9 +166,10 @@ def cleanup_old_models():
 # Function to list available models
 def list_available_models():
     import glob
-    grid_search_models = glob.glob("catboost_gridsearch_model_*.cbm")
-    bayesian_models = glob.glob("catboost_bayesian_model_*.cbm")
-    linear_regression_models = glob.glob("linear_regression_model_*.pkl")
+    grid_search_models = glob.glob(os.path.join(catboost_dir, "catboost_gridsearch_model_*.cbm"))
+    bayesian_models = glob.glob(os.path.join(catboost_dir, "catboost_bayesian_model_*.cbm"))
+    linear_regression_models = glob.glob(os.path.join(linear_regression_dir, "linear_regression_model_*.pkl"))
+    linear_regression_scalers = glob.glob(os.path.join(linear_regression_dir, "linear_regression_scaler_*.pkl"))
     
     print(f"\nAvailable models:")
     print(f"Grid Search models: {len(grid_search_models)}")
@@ -162,6 +181,9 @@ def list_available_models():
     print(f"Linear Regression models: {len(linear_regression_models)}")
     for model in sorted(linear_regression_models, reverse=True):
         print(f"  - {model}")
+    print(f"Linear Regression scalers: {len(linear_regression_scalers)}")
+    for scaler in sorted(linear_regression_scalers, reverse=True):
+        print(f"  - {scaler}")
 
 # Function to prepare data for Linear Regression (one-hot encode categorical variables)
 def prepare_data_for_linear_regression(df, categorical_cols):
@@ -196,7 +218,7 @@ linear_regression_loaded = False
 if not TRAIN:
     # Try to load existing model based on optimization type
     if BAYESIAN_OPTIMIZATION:
-        latest_model = find_latest_model("catboost_bayesian_model_*.cbm")
+        latest_model = find_latest_model("catboost_bayesian_model_*.cbm", catboost_dir)
         if latest_model:
             model = CatBoostRegressor()
             model.load_model(latest_model)
@@ -207,7 +229,7 @@ if not TRAIN:
             should_train = True
     
     elif GRID_SEARCH_OPTIMIZATION:
-        latest_model = find_latest_model("catboost_gridsearch_model_*.cbm")
+        latest_model = find_latest_model("catboost_gridsearch_model_*.cbm", catboost_dir)
         if latest_model:
             model = CatBoostRegressor()
             model.load_model(latest_model)
@@ -219,8 +241,8 @@ if not TRAIN:
     
     # Try to load Linear Regression model if enabled
     if USE_LINEAR_REGRESSION:
-        latest_lr_model = find_latest_model("linear_regression_model_*.pkl")
-        latest_lr_scaler = find_latest_model("linear_regression_scaler_*.pkl")
+        latest_lr_model = find_latest_model("linear_regression_model_*.pkl", linear_regression_dir)
+        latest_lr_scaler = find_latest_model("linear_regression_scaler_*.pkl", linear_regression_dir)
         if latest_lr_model and latest_lr_scaler:
             linear_regression_model = joblib.load(latest_lr_model)
             linear_regression_scaler = joblib.load(latest_lr_scaler)
@@ -354,7 +376,7 @@ if linear_regression_loaded:
     X_test_lr = prepare_data_for_linear_regression(X_test, categorical_cols)
     # Load the scaler if not already loaded
     if 'linear_regression_scaler' not in locals():
-        latest_scaler = find_latest_model("linear_regression_scaler_*.pkl")
+        latest_scaler = find_latest_model("linear_regression_scaler_*.pkl", linear_regression_dir)
         if latest_scaler:
             linear_regression_scaler = joblib.load(latest_scaler)
     X_test_scaled = linear_regression_scaler.transform(X_test_lr)

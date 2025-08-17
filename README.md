@@ -386,38 +386,6 @@ The system provides detailed progress information during execution:
 - Simplified model configurations
 - Hardware acceleration
 
-## 🤝 Contributing
-
-### Development Guidelines
-- Follow Python coding standards
-- Add comprehensive documentation
-- Include unit tests for new features
-- Maintain backward compatibility
-
-### Feature Requests
-- Submit detailed issue descriptions
-- Provide use case examples
-- Include performance requirements
-- Specify compatibility needs
-
-### Bug Reports
-- Include error messages and stack traces
-- Provide reproduction steps
-- Specify environment details
-- Attach relevant data samples
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 📞 Support
-
-For questions, issues, or contributions:
-- Create GitHub issues for bug reports
-- Submit pull requests for improvements
-- Contact maintainers for support
-- Review documentation for solutions
-
 ---
 
 **Note**: This documentation is comprehensive and designed to help users understand and effectively use the Budget Forecasting Model. For specific implementation details, refer to the source code and inline documentation. 

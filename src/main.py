@@ -20,7 +20,7 @@ BAYESIAN_OPTIMIZATION = True  # Set to True to use Optuna for hyperparameter tun
 GRID_SEARCH_OPTIMIZATION = False  # Set to True to use GridSearchCV for hyperparameter tuning
 FORCE_RETRAIN = False  # Set to True to always retrain even if model exists
 KEEP_MODEL_HISTORY = 5  # Number of recent models to keep
-USE_LINEAR_REGRESSION = True  # Set to True to also train and compare Linear Regression
+USE_LINEAR_REGRESSION = False  # Set to True to also train and compare Linear Regression
 
 # Create model directories if they don't exist
 import os
@@ -39,6 +39,8 @@ MODEL_PATH_BAYESIAN_OPTIMIZATION = os.path.join(catboost_dir, f"catboost_bayesia
 LINEAR_REGRESSION_MODEL_PATH = os.path.join(linear_regression_dir, f"linear_regression_model_{timestamp}.pkl")  # Path to save/load the Linear Regression model
 LINEAR_REGRESSION_SCALER_PATH = os.path.join(linear_regression_dir, f"linear_regression_scaler_{timestamp}.pkl")  # Path to save/load the scaler
 # -------------------
+# -------------------
+# HYPERPARAMETER TUNING
 # -------------------
 
 def objective(trial):
@@ -106,8 +108,8 @@ for lag in [1, 2, 3, 6, 12]:
 df['rolling_mean_3'] = df.groupby(categorical_cols, observed=False)['spend'].shift(1).rolling(3).mean()
 df['rolling_mean_6'] = df.groupby(categorical_cols, observed=False)['spend'].shift(1).rolling(6).mean()
 
-#display data types of all columns
-print(df.dtypes)
+# #display data types of all columns
+# print(df.dtypes)
 
 # Divide the dataset into training and testing sets
 # 80% for training and 20% for testing
@@ -252,6 +254,7 @@ if not TRAIN:
             print("No existing Linear Regression model found. Will train new one...")
             should_train = True
 
+#For training CatBoost model
 if should_train:
     # Clean up old models and prepare for training
     cleanup_old_models()
@@ -300,7 +303,7 @@ if should_train:
             'l2_leaf_reg': [1, 3, 5]
         }
         
-        # Use GridSearchCV to find the best hyperparameters
+        # Use GridSearchCV to find the best hyperparameters (takes a long time as per parameters)
         grid_search_result = model.grid_search(
             grid,
             X_train,
@@ -494,22 +497,6 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 
-#Basic Catboost - 1000 iterations
-# RMSE: 47.2365
-# MAE: 15.5730
-# R²: 0.8414
-
-#iterations/100
-#RMSE: 89.3153
-#MAE: 43.2676
-#R²: 0.4328
-
-#CatBoost with GridSearchCV
-# RMSE: 42.8212
-# MAE: 14.8235
-# R²: 0.8696
-
-
 # -------------------
 # Future Predictions
 # -------------------
@@ -628,7 +615,7 @@ ax2.tick_params(axis='both', which='major', labelsize=10)
 plt.tight_layout()
 plt.show()
 
-# Print detailed future predictions comparison
+# Print detailed future predictions comparison on terminal
 print("\n" + "="*80)
 print("24-MONTH FUTURE PREDICTIONS COMPARISON")
 print("="*80)
@@ -659,10 +646,4 @@ else:
     
     print(f"\nAverage Prediction: ${np.mean(future_pred):.2f}")
     print(f"Prediction Range: ${np.min(future_pred):.2f} - ${np.max(future_pred):.2f}")
-
-    
-# Model saved to catboost_gridsearch_model_20250815_184243.cbm
-# RMSE: 38.6532
-# MAE: 8.0275
-# R²: 0.9372
     

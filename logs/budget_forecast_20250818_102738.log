@@ -1,0 +1,41 @@
+2025-08-18 10:27:38 - BudgetForecast - INFO - Logging initialized. Log file: logs/budget_forecast_20250818_102738.log
+2025-08-18 10:27:38 - BudgetForecast - INFO - ============================================================
+2025-08-18 10:27:38 - BudgetForecast - INFO - BUDGET FORECASTING MODEL EXECUTION STARTED
+2025-08-18 10:27:38 - BudgetForecast - INFO - ============================================================
+2025-08-18 10:27:38 - BudgetForecast - INFO - Configuration:
+2025-08-18 10:27:38 - BudgetForecast - INFO -   Train: True
+2025-08-18 10:27:38 - BudgetForecast - INFO -   Optimizer: gridSearch
+2025-08-18 10:27:38 - BudgetForecast - INFO -   Model: linearRegression
+2025-08-18 10:27:38 - BudgetForecast - INFO -   Bayesian Optimization: False
+2025-08-18 10:27:38 - BudgetForecast - INFO -   Grid Search Optimization: True
+2025-08-18 10:27:38 - BudgetForecast - INFO -   Use Linear Regression: True
+2025-08-18 10:27:38 - BudgetForecast - INFO - ============================================================
+2025-08-18 10:27:38 - BudgetForecast - INFO - STAGE 1: DATA PREPROCESSING
+2025-08-18 10:27:38 - BudgetForecast - INFO - ============================================================
+2025-08-18 10:27:38 - BudgetForecast - INFO - Loading dataset...
+2025-08-18 10:27:38 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-08-18 10:27:38 - BudgetForecast - INFO - Processing date columns...
+2025-08-18 10:27:38 - BudgetForecast - INFO - Date columns processed successfully
+2025-08-18 10:27:38 - BudgetForecast - INFO - Data sorted by month
+2025-08-18 10:27:38 - BudgetForecast - INFO - Dropped 'estimate' column (duplicate of 'spend')
+2025-08-18 10:27:38 - BudgetForecast - INFO - Converting categorical columns...
+2025-08-18 10:27:38 - BudgetForecast - INFO - Converted 9 columns to categorical
+2025-08-18 10:27:38 - BudgetForecast - INFO - Dropped original 'month' column
+2025-08-18 10:27:38 - BudgetForecast - INFO - Creating lag features...
+2025-08-18 10:27:38 - BudgetForecast - INFO - Lag features created successfully
+2025-08-18 10:27:38 - BudgetForecast - INFO - Creating rolling statistics...
+2025-08-18 10:27:38 - BudgetForecast - INFO - Rolling statistics created successfully
+2025-08-18 10:27:38 - BudgetForecast - INFO - Splitting data into training and testing sets...
+2025-08-18 10:27:38 - BudgetForecast - INFO - Shape of training data: (1753, 19)
+2025-08-18 10:27:38 - BudgetForecast - INFO - Shape of testing data: (439, 19)
+2025-08-18 10:27:38 - BudgetForecast - INFO - ============================================================
+2025-08-18 10:27:38 - BudgetForecast - INFO - STAGE 2: MODEL LOADING OR TRAINING
+2025-08-18 10:27:38 - BudgetForecast - INFO - ============================================================
+2025-08-18 10:27:38 - BudgetForecast - INFO - ============================================================
+2025-08-18 10:27:38 - BudgetForecast - INFO - STAGE 3: MODEL TRAINING
+2025-08-18 10:27:38 - BudgetForecast - INFO - ============================================================
+2025-08-18 10:27:38 - BudgetForecast - INFO - Training new model with timestamp: 20250818_102738
+2025-08-18 10:27:38 - BudgetForecast - INFO - --- Grid Search Optimization ---
+2025-08-18 10:27:38 - BudgetForecast - ERROR - ERROR: Failed during Grid Search optimization: Only one of parameters ['verbose', 'logging_level', 'verbose_eval', 'silent'] should be set
+2025-08-18 10:27:38 - BudgetForecast - ERROR - CRITICAL ERROR: Only one of parameters ['verbose', 'logging_level', 'verbose_eval', 'silent'] should be set
+2025-08-18 10:27:38 - BudgetForecast - ERROR - Analysis failed. Check the logs for details.

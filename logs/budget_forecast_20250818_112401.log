@@ -1,0 +1,108 @@
+2025-08-18 11:24:01 - BudgetForecast - INFO - Logging initialized. Log file: logs/budget_forecast_20250818_112401.log
+2025-08-18 11:24:01 - BudgetForecast - INFO - ============================================================
+2025-08-18 11:24:01 - BudgetForecast - INFO - BUDGET FORECASTING MODEL EXECUTION STARTED
+2025-08-18 11:24:01 - BudgetForecast - INFO - ============================================================
+2025-08-18 11:24:01 - BudgetForecast - INFO - Configuration:
+2025-08-18 11:24:01 - BudgetForecast - INFO -   Train: False
+2025-08-18 11:24:01 - BudgetForecast - INFO -   Optimizer: bayesian
+2025-08-18 11:24:01 - BudgetForecast - INFO -   Model: linearRegression
+2025-08-18 11:24:01 - BudgetForecast - INFO -   Bayesian Optimization: True
+2025-08-18 11:24:01 - BudgetForecast - INFO -   Grid Search Optimization: False
+2025-08-18 11:24:01 - BudgetForecast - INFO -   Use Linear Regression: True
+2025-08-18 11:24:01 - BudgetForecast - INFO - ============================================================
+2025-08-18 11:24:01 - BudgetForecast - INFO - STAGE 1: DATA PREPROCESSING
+2025-08-18 11:24:01 - BudgetForecast - INFO - ============================================================
+2025-08-18 11:24:01 - BudgetForecast - INFO - Loading dataset...
+2025-08-18 11:24:01 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-08-18 11:24:01 - BudgetForecast - INFO - Processing date columns...
+2025-08-18 11:24:01 - BudgetForecast - INFO - Date columns processed successfully
+2025-08-18 11:24:01 - BudgetForecast - INFO - Data sorted by month
+2025-08-18 11:24:01 - BudgetForecast - INFO - Dropped 'estimate' column (duplicate of 'spend')
+2025-08-18 11:24:01 - BudgetForecast - INFO - Converting categorical columns...
+2025-08-18 11:24:01 - BudgetForecast - INFO - Converted 9 columns to categorical
+2025-08-18 11:24:01 - BudgetForecast - INFO - Dropped original 'month' column
+2025-08-18 11:24:01 - BudgetForecast - INFO - Creating lag features...
+2025-08-18 11:24:01 - BudgetForecast - INFO - Lag features created successfully
+2025-08-18 11:24:01 - BudgetForecast - INFO - Creating rolling statistics...
+2025-08-18 11:24:01 - BudgetForecast - INFO - Rolling statistics created successfully
+2025-08-18 11:24:01 - BudgetForecast - INFO - Splitting data into training and testing sets...
+2025-08-18 11:24:01 - BudgetForecast - INFO - Shape of training data: (1753, 19)
+2025-08-18 11:24:01 - BudgetForecast - INFO - Shape of testing data: (439, 19)
+2025-08-18 11:24:01 - BudgetForecast - INFO - ============================================================
+2025-08-18 11:24:01 - BudgetForecast - INFO - STAGE 2: MODEL LOADING OR TRAINING
+2025-08-18 11:24:01 - BudgetForecast - INFO - ============================================================
+2025-08-18 11:24:01 - BudgetForecast - INFO - Attempting to load existing models...
+2025-08-18 11:24:01 - BudgetForecast - INFO - Loaded existing Bayesian model: models/catboost/catboost_bayesian_model_20250818_092529.cbm
+2025-08-18 11:24:01 - BudgetForecast - INFO - Loaded existing Linear Regression model: models/linear_regression/linear_regression_model_20250818_105145.pkl
+2025-08-18 11:24:01 - BudgetForecast - INFO - ============================================================
+2025-08-18 11:24:01 - BudgetForecast - INFO - STAGE 4: MODEL EVALUATION
+2025-08-18 11:24:01 - BudgetForecast - INFO - ============================================================
+2025-08-18 11:24:01 - BudgetForecast - INFO - CatBoost Model Results:
+2025-08-18 11:24:01 - BudgetForecast - INFO - RMSE: 16.7363
+2025-08-18 11:24:01 - BudgetForecast - INFO - MAE: 5.8520
+2025-08-18 11:24:01 - BudgetForecast - INFO - R²: 0.9882
+2025-08-18 11:24:01 - BudgetForecast - INFO - Linear Regression Model Results:
+2025-08-18 11:24:01 - BudgetForecast - INFO - RMSE: 38.0652
+2025-08-18 11:24:01 - BudgetForecast - INFO - MAE: 22.2583
+2025-08-18 11:24:01 - BudgetForecast - INFO - R²: 0.9391
+2025-08-18 11:24:01 - BudgetForecast - INFO - Model Comparison:
+2025-08-18 11:24:01 - BudgetForecast - INFO - Metric          CatBoost        Linear Regression    Winner    
+2025-08-18 11:24:01 - BudgetForecast - INFO - ------------------------------------------------------------
+2025-08-18 11:24:01 - BudgetForecast - INFO - RMSE            16.7363         38.0652              CatBoost
+2025-08-18 11:24:01 - BudgetForecast - INFO - MAE             5.8520          22.2583              CatBoost
+2025-08-18 11:24:01 - BudgetForecast - INFO - R²              0.9882          0.9391               CatBoost
+2025-08-18 11:24:01 - BudgetForecast - INFO - ============================================================
+2025-08-18 11:24:01 - BudgetForecast - INFO - STAGE 5: GENERATING VISUALIZATIONS
+2025-08-18 11:24:01 - BudgetForecast - INFO - ============================================================
+2025-08-18 11:24:01 - BudgetForecast - INFO - Generating monthly comparison bar chart...
+2025-08-18 11:24:01 - BudgetForecast - INFO - Monthly comparison bar chart saved to plots/monthly_comparison_bar.html
+2025-08-18 11:24:01 - BudgetForecast - INFO - Generating monthly comparison line graph...
+2025-08-18 11:24:02 - BudgetForecast - INFO - Monthly comparison line graph saved to plots/monthly_comparison_line.html
+2025-08-18 11:24:02 - BudgetForecast - INFO - Visualizations generated successfully
+2025-08-18 11:24:02 - BudgetForecast - INFO - ============================================================
+2025-08-18 11:24:02 - BudgetForecast - INFO - STAGE 6: GENERATING FUTURE PREDICTIONS
+2025-08-18 11:24:02 - BudgetForecast - INFO - ============================================================
+2025-08-18 11:24:02 - BudgetForecast - INFO - Generating future predictions visualization...
+2025-08-18 11:24:02 - BudgetForecast - INFO - Future predictions visualization saved to plots/future_predictions.html
+2025-08-18 11:24:02 - BudgetForecast - INFO - ================================================================================
+2025-08-18 11:24:02 - BudgetForecast - INFO - 24-MONTH FUTURE PREDICTIONS COMPARISON
+2025-08-18 11:24:02 - BudgetForecast - INFO - ================================================================================
+2025-08-18 11:24:02 - BudgetForecast - INFO - Month        CatBoost        Linear Regression    Difference      % Difference   
+2025-08-18 11:24:02 - BudgetForecast - INFO - --------------------------------------------------------------------------------
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2025-08      $147.29         $87.82               $59.47          67.7          %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2025-09      $147.84         $84.58               $63.25          74.8          %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2025-10      $147.80         $81.35               $66.45          81.7          %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2025-11      $147.69         $78.12               $69.57          89.1          %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2025-12      $147.41         $74.88               $72.52          96.8          %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2026-01      $138.57         $75.76               $62.81          82.9          %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2026-02      $138.98         $72.53               $66.46          91.6          %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2026-03      $144.22         $69.29               $74.93          108.1         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2026-04      $144.98         $66.06               $78.92          119.5         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2026-05      $146.20         $62.83               $83.38          132.7         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2026-06      $146.42         $59.59               $86.83          145.7         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2026-07      $147.20         $56.36               $90.85          161.2         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2026-08      $147.29         $53.13               $94.16          177.2         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2026-09      $147.84         $49.89               $97.94          196.3         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2026-10      $147.80         $46.66               $101.14         216.8         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2026-11      $147.69         $43.43               $104.26         240.1         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2026-12      $147.41         $40.19               $107.21         266.7         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2027-01      $138.57         $41.07               $97.50          237.4         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2027-02      $138.98         $37.84               $101.15         267.3         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2027-03      $144.22         $34.60               $109.62         316.8         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2027-04      $144.98         $31.37               $113.61         362.2         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2027-05      $146.20         $28.14               $118.07         419.6         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2027-06      $146.42         $24.90               $121.52         488.0         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - 2027-07      $147.20         $21.67               $125.54         579.3         %
+2025-08-18 11:24:02 - BudgetForecast - INFO - ================================================================================
+2025-08-18 11:24:02 - BudgetForecast - INFO - SUMMARY STATISTICS
+2025-08-18 11:24:02 - BudgetForecast - INFO - ================================================================================
+2025-08-18 11:24:02 - BudgetForecast - INFO - CatBoost Average Prediction: $145.38
+2025-08-18 11:24:02 - BudgetForecast - INFO - Linear Regression Average Prediction: $55.09
+2025-08-18 11:24:02 - BudgetForecast - INFO - Average Difference: $90.30
+2025-08-18 11:24:02 - BudgetForecast - INFO - Average % Difference: 209.1%
+2025-08-18 11:24:02 - BudgetForecast - INFO - CatBoost Prediction Range: $138.57 - $147.84
+2025-08-18 11:24:02 - BudgetForecast - INFO - Linear Regression Prediction Range: $21.67 - $87.82
+2025-08-18 11:24:02 - BudgetForecast - INFO - Future predictions generated successfully
+2025-08-18 11:24:02 - BudgetForecast - INFO - ============================================================
+2025-08-18 11:24:02 - BudgetForecast - INFO - ANALYSIS COMPLETE - SUCCESS
+2025-08-18 11:24:02 - BudgetForecast - INFO - ============================================================

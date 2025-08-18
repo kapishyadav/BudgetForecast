@@ -1,0 +1,16 @@
+# Core data science libraries
+pandas>=1.5.0
+numpy>=1.21.0
+
+# Machine learning libraries
+scikit-learn>=1.1.0
+catboost>=1.1.0
+optuna>=3.0.0
+joblib>=1.2.0
+
+# Interactive visualization
+plotly>=5.15.0
+
+# Optional: For Jupyter notebook support
+# jupyter>=1.0.0
+# ipywidgets>=8.0.0 

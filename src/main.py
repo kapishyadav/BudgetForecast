@@ -42,8 +42,11 @@ import joblib
 # CatBoost specific imports
 from catboost import CatBoostRegressor, Pool
 
-# Visualization
-import matplotlib.pyplot as plt
+# Visualization - Plotly for interactive plots
+import plotly.graph_objects as go
+import plotly.express as px
+from plotly.subplots import make_subplots
+import plotly.offline as pyo
 
 # =============================================================================
 # LOGGING SETUP
@@ -120,8 +123,11 @@ models_dir = 'models'
 catboost_dir = os.path.join(models_dir, 'catboost')
 linear_regression_dir = os.path.join(models_dir, 'linear_regression')
 
+# Create plots directory for interactive visualizations
+plots_dir = 'plots'
 os.makedirs(catboost_dir, exist_ok=True)
 os.makedirs(linear_regression_dir, exist_ok=True)
+os.makedirs(plots_dir, exist_ok=True)
 
 # Add timestamp to model filenames for versioning
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -323,7 +329,7 @@ def main(train=True, model='catboost', optimizer='bayesian'):
         # Load the dataset
         logger.info("Loading dataset...")
         try:
-            df = pd.read_csv('../actual_detail_2025-08-14.csv')
+            df = pd.read_csv('actual_detail_2025-08-14.csv')
             logger.info(f"Dataset loaded successfully. Shape: {df.shape}")
         except FileNotFoundError:
             logger.error("ERROR: Dataset file not found. Please ensure 'actual_detail_2025-08-14.csv' exists in the parent directory.")
@@ -739,54 +745,109 @@ def main(train=True, model='catboost', optimizer='bayesian'):
             logger.info("Generating monthly comparison bar chart...")
             if y_pred_lr_final is not None:
                 # Plot with both models
-                ax = monthly_compare.plot(
-                    x='year_month',
-                    y=['spend', 'predicted_spend_catboost', 'predicted_spend_lr'],
-                    kind='bar',
-                    figsize=(15, 7),
-                    width=0.8
+                fig = make_subplots(specs=[[{"secondary_y": True}]])
+                fig.add_trace(
+                    go.Bar(x=monthly_compare['year_month'], y=monthly_compare['spend'], 
+                           name="Actual", hovertemplate='<b>Month:</b> %{x}<br><b>Actual Spend:</b> $%{y:,.2f}<extra></extra>'),
+                    secondary_y=False
                 )
-                plt.title("Actual vs Predicted Monthly Spend (CatBoost vs Linear Regression)", fontsize=16)
-                plt.legend(["Actual", "CatBoost", "Linear Regression"])
+                fig.add_trace(
+                    go.Bar(x=monthly_compare['year_month'], y=monthly_compare['predicted_spend_catboost'], 
+                           name="CatBoost", hovertemplate='<b>Month:</b> %{x}<br><b>CatBoost Prediction:</b> $%{y:,.2f}<extra></extra>'),
+                    secondary_y=False
+                )
+                fig.add_trace(
+                    go.Bar(x=monthly_compare['year_month'], y=monthly_compare['predicted_spend_lr'], 
+                           name="Linear Regression", hovertemplate='<b>Month:</b> %{x}<br><b>Linear Regression Prediction:</b> $%{y:,.2f}<extra></extra>'),
+                    secondary_y=True
+                )
+                fig.update_layout(
+                    title="Actual vs Predicted Monthly Spend (CatBoost vs Linear Regression)",
+                    xaxis_title="Month",
+                    yaxis_title="Spend (USD)",
+                    barmode='group',
+                    width=1000,
+                    height=600,
+                    hovermode='x unified',
+                    template='plotly_white'
+                )
+                fig.update_yaxes(title_text="Spend (USD)", secondary_y=False)
+                fig.update_yaxes(title_text="Spend (USD)", secondary_y=True)
+                pyo.plot(fig, filename=os.path.join(plots_dir, "monthly_comparison_bar.html"))
+                logger.info(f"Monthly comparison bar chart saved to {os.path.join(plots_dir, 'monthly_comparison_bar.html')}")
             else:
                 # Plot with only CatBoost
-                ax = monthly_compare.plot(
-                    x='year_month',
-                    y=['spend', 'predicted_spend_catboost'],
-                    kind='bar',
-                    figsize=(12, 6),
-                    width=0.8
+                fig = make_subplots(specs=[[{"secondary_y": True}]])
+                fig.add_trace(
+                    go.Bar(x=monthly_compare['year_month'], y=monthly_compare['spend'], name="Actual"),
+                    secondary_y=False
                 )
-                plt.title("Actual vs Predicted Monthly Spend (CatBoost)", fontsize=16)
-                plt.legend(["Actual", "CatBoost"])
-
-            plt.xlabel("Month")
-            plt.ylabel("Spend (USD)")
-            plt.xticks(rotation=45)
-            plt.grid(axis='y', linestyle='--', alpha=0.7)
-            plt.tight_layout()
-            plt.show()
+                fig.add_trace(
+                    go.Bar(x=monthly_compare['year_month'], y=monthly_compare['predicted_spend_catboost'], name="CatBoost"),
+                    secondary_y=True
+                )
+                fig.update_layout(
+                    title="Actual vs Predicted Monthly Spend (CatBoost)",
+                    xaxis_title="Month",
+                    yaxis_title="Spend (USD)",
+                    barmode='group',
+                    width=1000,
+                    height=600,
+                    hovermode='x unified',
+                    template='plotly_white'
+                )
+                fig.update_yaxes(title_text="Spend (USD)", secondary_y=False)
+                fig.update_yaxes(title_text="Spend (USD)", secondary_y=True)
+                pyo.plot(fig, filename=os.path.join(plots_dir, "monthly_comparison_bar.html"))
+                logger.info(f"Monthly comparison bar chart saved to {os.path.join(plots_dir, 'monthly_comparison_bar.html')}")
 
             # Plot 2: Monthly Actual vs Predicted Line Graph
             logger.info("Generating monthly comparison line graph...")
-            plt.figure(figsize=(15, 7))
-            plt.plot(monthly_compare['year_month'], monthly_compare['spend'], marker='o', linewidth=2, label='Actual Spend', color='black')
-
+            fig = make_subplots(specs=[[{"secondary_y": True}]])
+            fig.add_trace(
+                go.Scatter(x=monthly_compare['year_month'], y=monthly_compare['spend'], mode='lines+markers', name="Actual"),
+                secondary_y=False
+            )
             if y_pred_lr_final is not None:
-                plt.plot(monthly_compare['year_month'], monthly_compare['predicted_spend_catboost'], marker='s', linewidth=2, label='CatBoost Prediction', color='blue')
-                plt.plot(monthly_compare['year_month'], monthly_compare['predicted_spend_lr'], marker='^', linewidth=2, label='Linear Regression Prediction', color='red')
-                plt.title("Actual vs Predicted Monthly Spend (CatBoost vs Linear Regression)", fontsize=16)
+                fig.add_trace(
+                    go.Scatter(x=monthly_compare['year_month'], y=monthly_compare['predicted_spend_catboost'], mode='lines+markers', name="CatBoost"),
+                    secondary_y=False
+                )
+                fig.add_trace(
+                    go.Scatter(x=monthly_compare['year_month'], y=monthly_compare['predicted_spend_lr'], mode='lines+markers', name="Linear Regression"),
+                    secondary_y=True
+                )
+                fig.update_layout(
+                    title="Actual vs Predicted Monthly Spend (CatBoost vs Linear Regression)",
+                    xaxis_title="Month",
+                    yaxis_title="Spend (USD)",
+                    width=1000,
+                    height=600,
+                    hovermode='x unified',
+                    template='plotly_white'
+                )
+                fig.update_yaxes(title_text="Spend (USD)", secondary_y=False)
+                fig.update_yaxes(title_text="Spend (USD)", secondary_y=True)
+                pyo.plot(fig, filename=os.path.join(plots_dir, "monthly_comparison_line.html"))
+                logger.info(f"Monthly comparison line graph saved to {os.path.join(plots_dir, 'monthly_comparison_line.html')}")
             else:
-                plt.plot(monthly_compare['year_month'], monthly_compare['predicted_spend_catboost'], marker='s', linewidth=2, label='CatBoost Prediction', color='blue')
-                plt.title("Actual vs Predicted Monthly Spend (CatBoost)", fontsize=16)
-
-            plt.xlabel("Month")
-            plt.ylabel("Spend (USD)")
-            plt.xticks(rotation=45)
-            plt.grid(True, linestyle='--', alpha=0.6)
-            plt.legend()
-            plt.tight_layout()
-            plt.show()
+                fig.add_trace(
+                    go.Scatter(x=monthly_compare['year_month'], y=monthly_compare['predicted_spend_catboost'], mode='lines+markers', name="CatBoost"),
+                    secondary_y=True
+                )
+                fig.update_layout(
+                    title="Actual vs Predicted Monthly Spend (CatBoost)",
+                    xaxis_title="Month",
+                    yaxis_title="Spend (USD)",
+                    width=1000,
+                    height=600,
+                    hovermode='x unified',
+                    template='plotly_white'
+                )
+                fig.update_yaxes(title_text="Spend (USD)", secondary_y=False)
+                fig.update_yaxes(title_text="Spend (USD)", secondary_y=True)
+                pyo.plot(fig, filename=os.path.join(plots_dir, "monthly_comparison_line.html"))
+                logger.info(f"Monthly comparison line graph saved to {os.path.join(plots_dir, 'monthly_comparison_line.html')}")
             
             logger.info("Visualizations generated successfully")
         except Exception as e:
@@ -838,50 +899,75 @@ def main(train=True, model='catboost', optimizer='bayesian'):
 
             # Create comprehensive future predictions visualization
             logger.info("Generating future predictions visualization...")
-            plt.figure(figsize=(18, 10))
-
-            # Create subplots
-            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(18, 12))
+            
+            # Create subplots for future predictions
+            fig = make_subplots(
+                rows=2, cols=1,
+                subplot_titles=("24-Month Future Spend Predictions: Line Chart", "24-Month Future Spend Predictions: Bar Chart"),
+                vertical_spacing=0.1
+            )
 
             # Plot 1: Line graph comparison
             if linear_regression_loaded:
-                ax1.plot(range(len(future_pred)), future_pred, marker='s', linewidth=3, label='CatBoost Prediction', color='blue', markersize=6)
-                ax1.plot(range(len(future_pred_lr)), future_pred_lr, marker='^', linewidth=3, label='Linear Regression Prediction', color='red', markersize=6)
-                ax1.set_title("24-Month Future Spend Predictions: CatBoost vs Linear Regression", fontsize=16, fontweight='bold')
+                fig.add_trace(
+                    go.Scatter(x=month_labels, y=future_pred, mode='lines+markers', 
+                              name='CatBoost Prediction', line=dict(color='blue', width=3), 
+                              marker=dict(size=8)),
+                    row=1, col=1
+                )
+                fig.add_trace(
+                    go.Scatter(x=month_labels, y=future_pred_lr, mode='lines+markers', 
+                              name='Linear Regression Prediction', line=dict(color='red', width=3), 
+                              marker=dict(size=8)),
+                    row=1, col=1
+                )
             else:
-                ax1.plot(range(len(future_pred)), future_pred, marker='o', linewidth=3, label='CatBoost Prediction', color='blue', markersize=6)
-                ax1.set_title("24-Month Future Spend Predictions: CatBoost", fontsize=16, fontweight='bold')
-
-            ax1.set_xlabel("Month", fontsize=12)
-            ax1.set_ylabel("Predicted Spend (USD)", fontsize=12)
-            ax1.set_xticks(range(len(month_labels)))
-            ax1.set_xticklabels(month_labels, rotation=45)
-            ax1.grid(True, linestyle='--', alpha=0.6)
-            ax1.legend(fontsize=12)
-            ax1.tick_params(axis='both', which='major', labelsize=10)
+                fig.add_trace(
+                    go.Scatter(x=month_labels, y=future_pred, mode='lines+markers', 
+                              name='CatBoost Prediction', line=dict(color='blue', width=3), 
+                              marker=dict(size=8)),
+                    row=1, col=1
+                )
 
             # Plot 2: Bar chart comparison
             if linear_regression_loaded:
-                x = np.arange(len(future_pred))
-                width = 0.35
-                
-                ax2.bar(x - width/2, future_pred, width, label='CatBoost', color='blue', alpha=0.7)
-                ax2.bar(x + width/2, future_pred_lr, width, label='Linear Regression', color='red', alpha=0.7)
-                ax2.set_title("24-Month Future Spend Predictions: Bar Chart Comparison", fontsize=16, fontweight='bold')
+                fig.add_trace(
+                    go.Bar(x=month_labels, y=future_pred, name='CatBoost', 
+                          marker_color='blue', opacity=0.7),
+                    row=2, col=1
+                )
+                fig.add_trace(
+                    go.Bar(x=month_labels, y=future_pred_lr, name='Linear Regression', 
+                          marker_color='red', opacity=0.7),
+                    row=2, col=1
+                )
             else:
-                ax2.bar(range(len(future_pred)), future_pred, color='blue', alpha=0.7, label='CatBoost')
-                ax2.set_title("24-Month Future Spend Predictions: Bar Chart", fontsize=16, fontweight='bold')
+                fig.add_trace(
+                    go.Bar(x=month_labels, y=future_pred, name='CatBoost', 
+                          marker_color='blue', opacity=0.7),
+                    row=2, col=1
+                )
 
-            ax2.set_xlabel("Month", fontsize=12)
-            ax2.set_ylabel("Predicted Spend (USD)", fontsize=12)
-            ax2.set_xticks(range(len(month_labels)))
-            ax2.set_xticklabels(month_labels, rotation=45)
-            ax2.grid(True, linestyle='--', alpha=0.6)
-            ax2.legend(fontsize=12)
-            ax2.tick_params(axis='both', which='major', labelsize=10)
-
-            plt.tight_layout()
-            plt.show()
+            # Update layout
+            fig.update_layout(
+                title="24-Month Future Spend Predictions",
+                width=1200,
+                height=800,
+                showlegend=True,
+                barmode='group' if linear_regression_loaded else 'relative',
+                hovermode='x unified',
+                template='plotly_white'
+            )
+            
+            # Update axes labels
+            fig.update_xaxes(title_text="Month", row=1, col=1)
+            fig.update_yaxes(title_text="Predicted Spend (USD)", row=1, col=1)
+            fig.update_xaxes(title_text="Month", row=2, col=1)
+            fig.update_yaxes(title_text="Predicted Spend (USD)", row=2, col=1)
+            
+            # Save the plot
+            pyo.plot(fig, filename=os.path.join(plots_dir, "future_predictions.html"))
+            logger.info(f"Future predictions visualization saved to {os.path.join(plots_dir, 'future_predictions.html')}")
 
             # =============================================================================
             # FUTURE PREDICTIONS SUMMARY

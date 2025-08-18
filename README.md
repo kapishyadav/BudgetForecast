@@ -2,6 +2,19 @@
 
 A comprehensive machine learning system for predicting budget spending using advanced time series forecasting techniques. This project implements multiple models with hyperparameter optimization to provide accurate budget predictions for financial planning and analysis.
 
+### Running the Main Script
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run with plotly visualizations
+#Example 1:
+python src/main.py --train true --optimizer bayesian --model catboost
+
+#Example 2:
+python src/main.py --train false --optimizer gridSearch --model linearRegression
+```
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)

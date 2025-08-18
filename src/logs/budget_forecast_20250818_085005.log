@@ -1,0 +1,18 @@
+2025-08-18 08:50:05 - BudgetForecast - INFO - Logging initialized. Log file: logs/budget_forecast_20250818_085005.log
+2025-08-18 08:50:05 - BudgetForecast - INFO - ============================================================
+2025-08-18 08:50:05 - BudgetForecast - INFO - BUDGET FORECASTING MODEL EXECUTION STARTED
+2025-08-18 08:50:05 - BudgetForecast - INFO - ============================================================
+2025-08-18 08:50:05 - BudgetForecast - INFO - Configuration:
+2025-08-18 08:50:05 - BudgetForecast - INFO -   Train: False
+2025-08-18 08:50:05 - BudgetForecast - INFO -   Optimizer: bayesian
+2025-08-18 08:50:05 - BudgetForecast - INFO -   Model: catboost
+2025-08-18 08:50:05 - BudgetForecast - INFO -   Bayesian Optimization: True
+2025-08-18 08:50:05 - BudgetForecast - INFO -   Grid Search Optimization: False
+2025-08-18 08:50:05 - BudgetForecast - INFO -   Use Linear Regression: False
+2025-08-18 08:50:05 - BudgetForecast - INFO - ============================================================
+2025-08-18 08:50:05 - BudgetForecast - INFO - STAGE 1: DATA PREPROCESSING
+2025-08-18 08:50:05 - BudgetForecast - INFO - ============================================================
+2025-08-18 08:50:05 - BudgetForecast - INFO - Loading dataset...
+2025-08-18 08:50:05 - BudgetForecast - ERROR - ERROR: Dataset file not found. Please ensure 'actual_detail_2025-08-14.csv' exists in the root directory.
+2025-08-18 08:50:05 - BudgetForecast - ERROR - CRITICAL ERROR: [Errno 2] No such file or directory: 'actual_detail_2025-08-14.csv'
+2025-08-18 08:50:05 - BudgetForecast - ERROR - Analysis failed. Check the logs for details.

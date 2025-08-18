@@ -1,6 +1,6 @@
 """
 Budget Forecasting Model - Main Script
-=====================================
+======================================
 
 This script implements a comprehensive budget forecasting system using CatBoost and Linear Regression models.
 It includes data preprocessing, model training, hyperparameter optimization, and future predictions.
@@ -234,8 +234,8 @@ def main(train=True, model='catboost', optimizer='bayesian'):
     
     Args:
         train (bool): Whether to train new models or load existing ones
-        optimizer (str): Optimization method ('bayesian' or 'gridSearch')
         model (str): Model type ('catboost' or 'linearRegression')
+        optimizer (str): Optimization method ('bayesian' or 'gridSearch')
     """
     global TRAIN, BAYESIAN_OPTIMIZATION, GRID_SEARCH_OPTIMIZATION, USE_LINEAR_REGRESSION
     

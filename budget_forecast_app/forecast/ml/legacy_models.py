@@ -434,8 +434,8 @@ def main(train=True, model='catboost', optimizer='bayesian'):
                     'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.1, log=True),
                     'l2_leaf_reg': trial.suggest_int('l2_leaf_reg', 1, 10),
                     'bagging_temperature': trial.suggest_float('bagging_temperature', 0.0, 1.0),
-                    'iterations': 1000,
-                    'loss_function': 'RMSE',
+                    'iterations': 200,
+                    'loss_function': 'Tweedie:variance_power=1.5',
                     'random_seed': 42,
                     'verbose': 0
                 }
@@ -543,7 +543,7 @@ def main(train=True, model='catboost', optimizer='bayesian'):
                 try:
                     # Use Optuna for hyperparameter tuning
                     study = optuna.create_study(direction='minimize')
-                    study.optimize(objective, n_trials=50)  # 50 trials for comprehensive search
+                    study.optimize(objective, n_trials=20)  # 50 trials for comprehensive search
 
                     logger.info(f"Best Parameters: {study.best_params}")
                     logger.info(f"Best RMSE: {study.best_value}")
@@ -551,13 +551,13 @@ def main(train=True, model='catboost', optimizer='bayesian'):
                     best_params = study.best_params
                     best_params.update({
                         'iterations': 1000,
-                        'loss_function': 'RMSE',
+                        'loss_function': 'Tweedie:variance_power=1.5',
                         'random_seed': 42,
                         'verbose': 200
                     })
 
                     model = CatBoostRegressor(**best_params, cat_features=categorical_cols)
-                    model.fit(X, y)
+                    model.fit(X_train, y_train)
                     model.save_model(MODEL_PATH_BAYESIAN_OPTIMIZATION)
                     logger.info(f"Model saved to {MODEL_PATH_BAYESIAN_OPTIMIZATION}")
                 except Exception as e:
@@ -1060,16 +1060,16 @@ if __name__ == "__main__":
         epilog="""
 Examples:
   # Train CatBoost with Bayesian optimization
-  python main.py --train true --optimizer bayesian --model catboost
+  python legacy_models.py --train true --optimizer bayesian --model catboost
   
   # Load existing models and run evaluation
-  python main.py --train false --optimizer bayesian --model catboost
+  python legacy_models.py --train false --optimizer bayesian --model catboost
   
   # Train Linear Regression model
-  python main.py --train true --optimizer bayesian --model linearRegression
+  python legacy_models.py --train true --optimizer bayesian --model linearRegression
   
   # Train CatBoost with Grid Search optimization
-  python main.py --train true --optimizer gridSearch --model catboost
+  python legacy_models.py --train true --optimizer gridSearch --model catboost
         """
     )
     

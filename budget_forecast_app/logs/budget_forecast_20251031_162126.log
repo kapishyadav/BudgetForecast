@@ -1,0 +1,7 @@
+2025-10-31 16:21:26 - BudgetForecast - INFO - Logging initialized. Log file: logs/budget_forecast_20251031_162126.log
+2025-10-31 16:21:26 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (160298, 11)
+2025-10-31 16:21:26 - BudgetForecast - INFO - Data prepared for Prophet. Rows: 22
+2025-10-31 16:21:33 - BudgetForecast - INFO - Prophet model trained successfully.
+2025-10-31 16:21:33 - BudgetForecast - INFO - Forecasting metrics: {'RMSE': 0.43, 'MAE': 0.3, 'R2': 1.0}
+2025-10-31 16:21:33 - BudgetForecast - INFO - Plotly figure created successfully.
+2025-10-31 16:21:33 - BudgetForecast - INFO - Prophet forecasting complete.

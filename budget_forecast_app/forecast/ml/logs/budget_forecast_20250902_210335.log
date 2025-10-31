@@ -1,0 +1,2 @@
+2025-09-02 21:03:35 - BudgetForecast - INFO - Logging initialized. Log file: logs/budget_forecast_20250902_210335.log
+2025-09-02 21:03:35 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (160298, 11)

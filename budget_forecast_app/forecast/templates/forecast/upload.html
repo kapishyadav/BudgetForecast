@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 Budget Forecast Upload</title>
+    <style>
+        :root {
+            --bg-color: #f8f8f8;
+            --primary: #111;
+            --accent: #ff4081;
+            --shadow: 5px 5px 0 #111;
+            --radius: 16px;
+            --transition: all 0.2s ease;
+        }
+
+        body {
+            font-family: 'Inter', 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .card {
+            background: #fff;
+            padding: 3rem 2.5rem;
+            border: 3px solid var(--primary);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            text-align: center;
+            width: 420px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: 8px 8px 0 var(--primary);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        p {
+            color: #333;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        input[type="file"] {
+            border: 3px dashed var(--primary);
+            padding: 1rem;
+            width: 100%;
+            border-radius: var(--radius);
+            cursor: pointer;
+            background: #fafafa;
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+
+        input[type="file"]:hover {
+            background: #fffae6;
+        }
+
+        button {
+            margin-top: 1.5rem;
+            background: var(--accent);
+            color: white;
+            border: 3px solid var(--primary);
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: var(--radius);
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        button:hover {
+            background: #111;
+            color: #fff;
+            box-shadow: 8px 8px 0 var(--accent);
+            transform: translate(-3px, -3px);
+        }
+
+        .error {
+            color: red;
+            margin-top: 1rem;
+            font-weight: 600;
+        }
+
+        .footer {
+            margin-top: 2rem;
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        .footer span {
+            color: var(--accent);
+        }
+
+        .loading {
+            margin-top: 1rem;
+            display: none;
+            font-weight: 500;
+            color: var(--primary);
+            animation: pulse 1.2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>📈 Time Series Forecast</h1>
+        <p>Upload your CSV file to generate a Prophet-based budget forecast.</p>
+
+        <form id="uploadForm" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" name="dataset" accept=".csv" required>
+            <button type="submit">🚀 Run Forecast</button>
+            <div class="loading" id="loading">Running model... please wait ⏳</div>
+        </form>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <div class="footer">
+            Built with <span>Prophet</span> · Django · Plotly ⚡
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const loading = document.getElementById('loading');
+
+        form.addEventListener('submit', () => {
+            loading.style.display = 'block';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Forecast Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        :root {
+            --bg: #f8f8f8;
+            --primary: #111;
+            --accent: #ff4081;
+            --radius: 16px;
+            --shadow: 6px 6px 0 var(--primary);
+            --transition: all 0.2s ease;
+        }
+
+        body {
+            font-family: 'Poppins', 'Inter', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #444;
+            font-size: 1rem;
+        }
+
+        .card {
+            background: #fff;
+            border: 3px solid var(--primary);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 8px 8px 0 var(--primary);
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric {
+            background: #fff;
+            border: 3px solid var(--primary);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 1.2rem;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .metric:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: 8px 8px 0 var(--accent);
+        }
+
+        .metric h3 {
+            font-size: 0.95rem;
+            color: #444;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric p {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .plot {
+            border: 3px solid var(--primary);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            background: #fff;
+            padding: 1rem;
+        }
+
+        .button {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .button a {
+            display: inline-block;
+            background: var(--accent);
+            color: #fff;
+            text-decoration: none;
+            padding: 0.8rem 2rem;
+            font-weight: 600;
+            border: 3px solid var(--primary);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .button a:hover {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 8px 8px 0 var(--accent);
+            transform: translate(-4px, -4px);
+        }
+
+        footer {
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #444;
+        }
+
+        footer span {
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💡 Forecast Dashboard</h1>
+            <p>Your Prophet-powered time series insights</p>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="metrics">
+            {% if metrics %}
+                {% for key, value in metrics.items %}
+                    <div class="metric">
+                        <h3>{{ key|title }}</h3>
+                        <p>{{ value }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align:center;">No metrics available</p>
+            {% endif %}
+        </div>
+
+        <!-- Plotly Forecast -->
+        <div class="card plot">
+            <div id="forecastPlot"></div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="button">
+            <a href="{% url 'upload_file' %}">⬅️ Upload Another Dataset</a>
+        </div>
+
+        <footer>
+            Built with <span>Django</span> · <span>Plotly</span> · <span>Prophet</span>
+        </footer>
+    </div>
+
+    <script>
+        const figure = {{ figure|safe }};
+        Plotly.newPlot('forecastPlot', figure.data, figure.layout);
+    </script>
+</body>
+</html>

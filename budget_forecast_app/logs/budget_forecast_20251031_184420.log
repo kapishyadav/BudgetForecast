@@ -1,0 +1,6 @@
+2025-10-31 18:44:25 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-10-31 18:44:25 - BudgetForecast - INFO - Starting forecast with model: PROPHET
+2025-10-31 18:44:25 - BudgetForecast - INFO - Running forecast with type: monthly
+2025-10-31 18:44:25 - BudgetForecast - INFO - Prophet forecasting starting.
+2025-10-31 18:44:25 - BudgetForecast - ERROR - Forecasting failed: name 'logger' is not defined
+2025-10-31 18:44:25 - BudgetForecast - ERROR - Forecasting failed: name 'logger' is not defined

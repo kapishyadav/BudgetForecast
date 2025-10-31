@@ -136,6 +136,17 @@
             <div class="loading" id="loading">Running model... please wait ⏳</div>
         </form>
 
+        <form method="POST" enctype="multipart/form-data" class="form">
+
+            <label for="forecast_type">📊 Select Forecast Type</label>
+            <select name="forecast_type" id="forecast_type" required>
+                <option value="monthly">Forecast by Monthly Aggregate</option>
+                <option value="account">Forecast by Account</option>
+                <option value="service">Forecast by Service</option>
+            </select>
+
+        </form>
+
         {% if error %}
             <div class="error">{{ error }}</div>
         {% endif %}

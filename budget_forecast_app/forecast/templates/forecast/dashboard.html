@@ -1,5 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
+
+<!--<div class="header">-->
+<!--    <p>Viewing:-->
+<!--        <strong>-->
+<!--            {% if forecast_type == "monthly" %} Monthly Aggregate {% elif forecast_type == "account" %} Account-based {% else %} Service-based {% endif %}-->
+<!--        </strong>-->
+<!--    </p>-->
+
+<!--    &lt;!&ndash; Forecast filter switch &ndash;&gt;-->
+<!--    <form method="POST" enctype="multipart/form-data" action="{% url 'upload_file' %}">-->
+<!--        {% csrf_token %}-->
+<!--        <input type="hidden" name="dataset" value="{{ dataset }}">-->
+<!--        <label for="forecast_type">Change Forecast Type:</label>-->
+<!--        <select name="forecast_type" id="forecast_type" onchange="this.form.submit()">-->
+<!--            <option value="monthly" {% if forecast_type == 'monthly' %}selected{% endif %}>Monthly</option>-->
+<!--            <option value="account" {% if forecast_type == 'account' %}selected{% endif %}>Account</option>-->
+<!--            <option value="service" {% if forecast_type == 'service' %}selected{% endif %}>Service</option>-->
+<!--        </select>-->
+<!--    </form>-->
+<!--</div>-->
+
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -177,8 +199,9 @@
     </div>
 
     <script>
-        const figure = {{ figure|safe }};
-        Plotly.newPlot('forecastPlot', figure.data, figure.layout);
+        // safely parse the JSON data
+        const figureData = JSON.parse('{{ figure_json|escapejs }}');
+        Plotly.newPlot('forecastPlot', figureData.data, figureData.layout);
     </script>
 </body>
 </html>

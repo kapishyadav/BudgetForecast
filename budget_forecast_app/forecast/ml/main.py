@@ -12,15 +12,15 @@ returns standardized outputs (metrics + Plotly figures).
 import os
 import json
 import numpy as np
-import plotly
 import plotly.io as pio
 
 from .prophet_model import run_prophet_forecast
 from .utils.setup_logging import setup_logging
+from .enums import ForecastType
 
 logger = setup_logging()
 
-def run_forecast(csv_path: str, model_type: str = "prophet"):
+def run_forecast(csv_path: str, forecast_type: ForecastType = ForecastType.MONTHLY ,model_type: str = "prophet"):
     """
     Main entry point for the forecasting pipeline.
 
@@ -36,25 +36,26 @@ def run_forecast(csv_path: str, model_type: str = "prophet"):
             - figures: list of Plotly figure JSONs
     """
     logger.info(f"Starting forecast with model: {model_type.upper()}")
+    logger.info(f"Running forecast with type: {forecast_type.value}")
 
     if not os.path.exists(csv_path):
         raise FileNotFoundError(f"Dataset not found: {csv_path}")
 
     try:
         if model_type.lower() == "prophet":
-            forecast_df, metrics, fig = run_prophet_forecast(csv_path)
+            logger.info("Prophet forecasting starting.")
+            forecast_df, metrics, figure_dict = run_prophet_forecast(csv_path, forecast_type, logger)
             logger.info("Prophet forecasting complete.")
 
             # Convert metrics safely (NumPy → Python)
             metrics = {k: float(v) if isinstance(v, np.generic) else v for k, v in metrics.items()}
 
-            # Convert Plotly figure to JSON-compatible dict
-            figure_json = pio.to_json(fig)
+            figure_dict = json.loads(pio.to_json(figure_dict))
 
             return {
                 "forecast": forecast_df.to_dict(orient="records"),
                 "metrics": metrics,
-                "figure": figure_json
+                "figure_json": figure_dict
             }
 
         elif model_type.lower() == "catboost":

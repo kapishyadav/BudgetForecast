@@ -1,0 +1,4 @@
+2025-10-31 18:27:26 - BudgetForecast - INFO - Logging initialized. Log file: logs/budget_forecast_20251031_182726.log
+2025-10-31 18:27:26 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-10-31 18:27:27 - BudgetForecast - ERROR - Forecasting failed: You are trying to merge on object and datetime64[ns] columns for key 'ds'. If you wish to proceed you should use pd.concat
+2025-10-31 18:27:27 - BudgetForecast - ERROR - Forecasting failed: You are trying to merge on object and datetime64[ns] columns for key 'ds'. If you wish to proceed you should use pd.concat

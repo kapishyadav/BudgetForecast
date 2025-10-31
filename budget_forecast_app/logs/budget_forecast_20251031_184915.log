@@ -1,0 +1,7 @@
+2025-10-31 18:49:22 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-10-31 18:49:22 - BudgetForecast - INFO - Starting forecast with model: PROPHET
+2025-10-31 18:49:22 - BudgetForecast - INFO - Running forecast with type: monthly
+2025-10-31 18:49:22 - BudgetForecast - INFO - Prophet forecasting starting.
+2025-10-31 18:49:22 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-10-31 18:49:23 - BudgetForecast - ERROR - Forecasting failed: [Errno 20] Not a directory: '/Users/kapishyadavbanda/BudgetForecast/budget_forecast_app/media/actual_detail_2025-08-14_6ufDM4X.csv/monthly_total'
+2025-10-31 18:49:23 - BudgetForecast - ERROR - Forecasting failed: [Errno 20] Not a directory: '/Users/kapishyadavbanda/BudgetForecast/budget_forecast_app/media/actual_detail_2025-08-14_6ufDM4X.csv/monthly_total'

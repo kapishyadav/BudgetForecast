@@ -1,0 +1,5 @@
+2025-10-31 18:42:39 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-10-31 18:42:39 - BudgetForecast - INFO - Starting forecast with model: PROPHET
+2025-10-31 18:42:39 - BudgetForecast - INFO - Running forecast with type: monthly
+2025-10-31 18:42:39 - BudgetForecast - ERROR - Forecasting failed: name 'setup_logging' is not defined
+2025-10-31 18:42:39 - BudgetForecast - ERROR - Forecasting failed: name 'setup_logging' is not defined

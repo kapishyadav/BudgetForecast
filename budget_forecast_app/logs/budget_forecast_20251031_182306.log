@@ -1,0 +1,3 @@
+2025-10-31 18:24:35 - BudgetForecast - INFO - Running forecast with type: monthly
+2025-10-31 18:24:35 - BudgetForecast - INFO - Starting forecast with model: PROPHET
+2025-10-31 18:24:35 - BudgetForecast - ERROR - Forecasting failed: 'str' object has no attribute 'value'

@@ -9,10 +9,10 @@ pip install -r requirements.txt
 
 # Run with plotly visualizations
 #Example 1:
-python src/main.py --train true --optimizer bayesian --model catboost
+python src/legacy_models.py --train true --optimizer bayesian --model catboost
 
 #Example 2:
-python src/main.py --train false --optimizer gridSearch --model linearRegression
+python src/legacy_models.py --train false --optimizer gridSearch --model linearRegression
 ```
 
 ## 📋 Table of Contents

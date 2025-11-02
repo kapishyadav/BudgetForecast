@@ -1,6 +1,6 @@
 # Create your views here.
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404, FileResponse
 from django.core.files.storage import FileSystemStorage
 from django.views.decorators.csrf import csrf_exempt
 from .ml.main import run_forecast
@@ -9,6 +9,8 @@ from .ml.enums import ForecastType
 
 import plotly.io as pio
 import json
+import os
+import pandas as pd
 
 logger = setup_logging()
 
@@ -34,18 +36,17 @@ def upload_file(request):
             logger.info(f"Running forecast with type: {forecast_type}")
             result = run_forecast(file_path, forecast_type)
 
-            figure = result["figure_json"]
+            forecast_df = result["forecast"]
+            metrics = result["metrics"]
 
-            if isinstance(figure, dict):
-                figure_json = json.dumps(figure)
-            else:
-                figure_json = pio.to_json(figure)
-            print("DEBUG figure_json:", type(figure_json), figure_json[:500])
+            # Convert forecast dataframe to JSON for Chart.js
+            forecast_json = forecast_df.to_json(orient="records", date_format="iso")
 
-            logger.info(f"Figure JSON: {result['figure_json']}")
+            logger.info("Successfully converted forecast data for Chart.js")
+
             return render(request, "forecast/dashboard.html", {
-                "metrics": result["metrics"],
-                "figure_json": figure_json,
+                "metrics": metrics,
+                "forecast_data": forecast_json,
                 "forecast_type": forecast_type.value if hasattr(forecast_type, "value") else forecast_type,
             })
         except Exception as e:
@@ -53,6 +54,29 @@ def upload_file(request):
             return render(request, "forecast/upload.html", {"error": str(e)})
 
     return render(request, "forecast/upload.html")
+
+def download_csv(request):
+    csv_path = "path/to/your/generated/forecast_results.csv"  # update this
+
+    if not os.path.exists(csv_path):
+        raise Http404("CSV file not found.")
+
+    return FileResponse(open(csv_path, "rb"), as_attachment=True, filename="forecast_results.csv")
+
+
+def dashboard_view(request):
+    # Suppose this is your forecasts DataFrame
+    forecasts_formatted = request['forecast']
+    metrics = request['metrics']
+
+    # Convert to JSON
+    chart_data = forecasts_formatted.to_dict(orient='records')
+    chart_json = json.dumps(chart_data, default=str)
+
+    return render(request, "dashboard.html", {
+        "chart_json": chart_json,
+        "metrics": metrics,
+    })
 
 
 @csrf_exempt

@@ -46,7 +46,7 @@ def run_prophet_forecast(
     #TO DO: make sure that it resturns JSON response to display
     # in the dashboard using Django.
     if forecast_type == ForecastType.MONTHLY:
-        forecast_df, metrics, fig = save_monthly_aggregate_forecasts(data, csv_path, logger)
+        forecast_df, metrics = save_monthly_aggregate_forecasts(data, csv_path, logger)
     elif forecast_type == ForecastType.ACCOUNT:
         forecast_df, metrics, fig = save_forecast_by_accounts(data, csv_path, logger)
     elif forecast_type == ForecastType.SERVICE:
@@ -82,24 +82,5 @@ def run_prophet_forecast(
     # }
     # logger.info(f"Forecasting metrics: {metrics}")
 
-
-    #
-    # # Create Plotly figure
-    # fig = go.Figure()
-    # fig.add_trace(go.Scatter(x=prophet_df["ds"], y=prophet_df["y"], mode="lines+markers", name="Actual Spend"))
-    # fig.add_trace(go.Scatter(x=forecast["ds"], y=forecast["yhat"], mode="lines", name="Forecast"))
-    # fig.add_trace(go.Scatter(x=forecast["ds"], y=forecast["yhat_upper"], mode="lines", name="Upper Bound", line=dict(dash="dot", color="gray")))
-    # fig.add_trace(go.Scatter(x=forecast["ds"], y=forecast["yhat_lower"], mode="lines", name="Lower Bound", line=dict(dash="dot", color="gray")))
-
-    fig.update_layout(
-        title="Prophet Forecast: Actual vs Predicted Spend",
-        xaxis_title="Month",
-        yaxis_title="Spend",
-        template="plotly_white",
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-    )
-
-    figure_dict = json.loads(pio.to_json(fig))
-
     logger.info("Plotly figure created successfully.")
-    return forecast_df, metrics, figure_dict
+    return forecast_df, metrics

@@ -1,32 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<!--<div class="header">-->
-<!--    <p>Viewing:-->
-<!--        <strong>-->
-<!--            {% if forecast_type == "monthly" %} Monthly Aggregate {% elif forecast_type == "account" %} Account-based {% else %} Service-based {% endif %}-->
-<!--        </strong>-->
-<!--    </p>-->
-
-<!--    &lt;!&ndash; Forecast filter switch &ndash;&gt;-->
-<!--    <form method="POST" enctype="multipart/form-data" action="{% url 'upload_file' %}">-->
-<!--        {% csrf_token %}-->
-<!--        <input type="hidden" name="dataset" value="{{ dataset }}">-->
-<!--        <label for="forecast_type">Change Forecast Type:</label>-->
-<!--        <select name="forecast_type" id="forecast_type" onchange="this.form.submit()">-->
-<!--            <option value="monthly" {% if forecast_type == 'monthly' %}selected{% endif %}>Monthly</option>-->
-<!--            <option value="account" {% if forecast_type == 'account' %}selected{% endif %}>Account</option>-->
-<!--            <option value="service" {% if forecast_type == 'service' %}selected{% endif %}>Service</option>-->
-<!--        </select>-->
-<!--    </form>-->
-<!--</div>-->
-
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📊 Forecast Dashboard</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg: #f8f8f8;
@@ -183,9 +161,9 @@
             {% endif %}
         </div>
 
-        <!-- Plotly Forecast -->
+        <!-- Chart.js Forecast Plot -->
         <div class="card plot">
-            <div id="forecastPlot"></div>
+            <canvas id="forecastChart" width="900" height="400"></canvas>
         </div>
 
         <!-- Back Button -->
@@ -193,15 +171,104 @@
             <a href="{% url 'upload_file' %}">⬅️ Upload Another Dataset</a>
         </div>
 
+        <!-- Download CSV Button -->
+        <div class="button">
+            <a href="{% url 'download_csv' %}">⬇️ Download Forecast CSV</a>
+        </div>
+
         <footer>
-            Built with <span>Django</span> · <span>Plotly</span> · <span>Prophet</span>
+            Built with <span>Django</span> · <span>Chart.js</span> · <span>Prophet</span>
         </footer>
     </div>
 
+    <!-- Chart.js Script -->
     <script>
-        // safely parse the JSON data
-        const figureData = JSON.parse('{{ figure_json|escapejs }}');
-        Plotly.newPlot('forecastPlot', figureData.data, figureData.layout);
+        const forecastData = JSON.parse('{{ forecast_data|escapejs }}');
+        console.log("DEBUG forecastData:", forecastData);
+
+        const labels = forecastData.map(d => d.date);
+        const yhat = forecastData.map(d => d.yhat);
+        const yhatLower = forecastData.map(d => d.yhat_lower);
+        const yhatUpper = forecastData.map(d => d.yhat_upper);
+
+        const ctx = document.getElementById('forecastChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Forecast (yhat)',
+                        data: yhat,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 2
+                    },
+                    {
+                        label: 'Lower Bound (yhat_lower)',
+                        data: yhatLower,
+                        borderColor: 'rgba(255, 99, 132, 0.6)',
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0.3,
+                        pointRadius: 0
+                    },
+                    {
+                        label: 'Upper Bound (yhat_upper)',
+                        data: yhatUpper,
+                        borderColor: 'rgba(75, 192, 192, 0.6)',
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0.3,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Forecast with Confidence Intervals',
+                        font: { size: 18 }
+                    },
+                    legend: {
+                        position: 'bottom',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(2)}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        },
+                        ticks: {
+                            maxTicksLimit: 12,
+                            autoSkip: true
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Forecast Value'
+                        },
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
     </script>
 </body>
 </html>

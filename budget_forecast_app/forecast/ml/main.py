@@ -44,18 +44,15 @@ def run_forecast(csv_path: str, forecast_type: ForecastType = ForecastType.MONTH
     try:
         if model_type.lower() == "prophet":
             logger.info("Prophet forecasting starting.")
-            forecast_df, metrics, figure_dict = run_prophet_forecast(csv_path, forecast_type, logger)
+            forecast_df, metrics = run_prophet_forecast(csv_path, forecast_type, logger)
             logger.info("Prophet forecasting complete.")
 
             # Convert metrics safely (NumPy → Python)
             metrics = {k: float(v) if isinstance(v, np.generic) else v for k, v in metrics.items()}
 
-            figure_dict = json.loads(pio.to_json(figure_dict))
-
             return {
-                "forecast": forecast_df.to_dict(orient="records"),
+                "forecast": forecast_df,
                 "metrics": metrics,
-                "figure_json": figure_dict
             }
 
         elif model_type.lower() == "catboost":

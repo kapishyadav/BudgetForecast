@@ -1,0 +1,26 @@
+2025-09-01 18:55:16 - BudgetForecast - INFO - Logging initialized. Log file: logs/budget_forecast_20250901_185516.log
+2025-09-01 18:55:16 - BudgetForecast - INFO - ============================================================
+2025-09-01 18:55:16 - BudgetForecast - INFO - BUDGET FORECASTING MODEL EXECUTION STARTED
+2025-09-01 18:55:16 - BudgetForecast - INFO - ============================================================
+2025-09-01 18:55:16 - BudgetForecast - INFO - Configuration:
+2025-09-01 18:55:16 - BudgetForecast - INFO -   Train: False
+2025-09-01 18:55:16 - BudgetForecast - INFO -   Optimizer: bayesian
+2025-09-01 18:55:16 - BudgetForecast - INFO -   Model: holt-winters
+2025-09-01 18:55:16 - BudgetForecast - INFO -   Bayesian Optimization: True
+2025-09-01 18:55:16 - BudgetForecast - INFO -   Grid Search Optimization: False
+2025-09-01 18:55:16 - BudgetForecast - INFO -   Use Linear Regression: False
+2025-09-01 18:55:16 - BudgetForecast - INFO - ============================================================
+2025-09-01 18:55:16 - BudgetForecast - INFO - STAGE 1: DATA PREPROCESSING
+2025-09-01 18:55:16 - BudgetForecast - INFO - ============================================================
+2025-09-01 18:55:16 - BudgetForecast - INFO - Loading dataset...
+2025-09-01 18:55:16 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (160298, 11)
+2025-09-01 18:55:16 - BudgetForecast - INFO - Processing date columns...
+2025-09-01 18:55:16 - BudgetForecast - INFO - Date columns and 'year_month' processed successfully
+2025-09-01 18:55:16 - BudgetForecast - INFO - Data sorted by month
+2025-09-01 18:55:16 - BudgetForecast - INFO - Converting categorical columns...
+2025-09-01 18:55:17 - BudgetForecast - INFO - Converted 9 columns to categorical
+2025-09-01 18:55:17 - BudgetForecast - INFO - Dropped original 'month' column
+2025-09-01 18:55:17 - BudgetForecast - INFO - Creating lag features...
+2025-09-01 18:55:17 - BudgetForecast - INFO - Lag features created successfully
+2025-09-01 18:55:17 - BudgetForecast - INFO - Creating rolling statistics...
+2025-09-01 18:55:17 - BudgetForecast - INFO - Rolling statistics created successfully

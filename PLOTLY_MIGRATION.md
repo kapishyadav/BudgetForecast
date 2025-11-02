@@ -61,7 +61,7 @@ plotly>=5.15.0
 pip install -r requirements.txt
 
 # Run with plotly visualizations
-python src/main.py --train true --optimizer bayesian --model catboost
+python src/legacy_models.py --train true --optimizer bayesian --model catboost
 ```
 
 ### Viewing Interactive Plots

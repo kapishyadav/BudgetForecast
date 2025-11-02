@@ -1,0 +1,107 @@
+2025-11-02 03:15:42 - BudgetForecast - INFO - Logging initialized. Log file: logs/budget_forecast_20251102_031542.log
+2025-11-02 03:15:42 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-11-02 03:15:42 - BudgetForecast - INFO - Forecasting total spending...
+2025-11-02 03:15:42 - BudgetForecast - INFO - Successfully saved forecasts by monthly total!
+2025-11-02 03:15:42 - BudgetForecast - INFO - Forecasting by accounts... 
+2025-11-02 03:15:42 - BudgetForecast - INFO - Unique accounts: ['ecs-aws-gbl-services-develop', 'ecs-aws-gbl-infra-develop', 'ecs-aws-gbl-securityquarantine-develop']
+2025-11-02 03:15:42 - BudgetForecast - INFO - Successfully saved forecasts by account!
+2025-11-02 03:15:42 - BudgetForecast - INFO - Saved  by service name...
+2025-11-02 03:15:42 - BudgetForecast - INFO - Unique accounts: ['ecs-aws-gbl-services-develop', 'ecs-aws-gbl-infra-develop', 'ecs-aws-gbl-securityquarantine-develop']
+2025-11-02 03:15:42 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS API Gateway
+2025-11-02 03:15:42 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS AppStream
+2025-11-02 03:15:42 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Backup
+2025-11-02 03:15:42 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Certificate Manager
+2025-11-02 03:15:42 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS CloudFront
+2025-11-02 03:15:43 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS CloudWatch
+2025-11-02 03:15:43 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Config
+2025-11-02 03:15:43 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Cost Explorer
+2025-11-02 03:15:43 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Direct Connect
+2025-11-02 03:15:43 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS DynamoDB
+2025-11-02 03:15:43 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS EBS
+2025-11-02 03:15:43 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS EC2
+2025-11-02 03:15:43 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS ECR
+2025-11-02 03:15:43 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Elastic Load Balancing
+2025-11-02 03:15:43 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Glue
+2025-11-02 03:15:43 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS IoT
+2025-11-02 03:15:43 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Key Management Service
+2025-11-02 03:15:43 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Kinesis
+2025-11-02 03:15:44 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Lambda
+2025-11-02 03:15:44 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Location Service
+2025-11-02 03:15:44 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Network Firewall
+2025-11-02 03:15:44 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS RDS
+2025-11-02 03:15:44 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Route 53
+2025-11-02 03:15:44 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS S3
+2025-11-02 03:15:44 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS SNS
+2025-11-02 03:15:44 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS SQS
+2025-11-02 03:15:44 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS SWF
+2025-11-02 03:15:44 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Secrets Manager
+2025-11-02 03:15:44 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Service Catalog
+2025-11-02 03:15:44 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Step Functions
+2025-11-02 03:15:44 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS Systems Manager
+2025-11-02 03:15:44 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS VPC
+2025-11-02 03:15:44 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS WAF
+2025-11-02 03:15:45 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-infra-develop - AWS X-ray
+2025-11-02 03:15:45 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS CloudWatch
+2025-11-02 03:15:45 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS Config
+2025-11-02 03:15:45 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS Cost Explorer
+2025-11-02 03:15:45 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS EBS
+2025-11-02 03:15:45 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS EC2
+2025-11-02 03:15:45 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS ECR
+2025-11-02 03:15:45 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS Glue
+2025-11-02 03:15:45 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS IoT
+2025-11-02 03:15:45 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS Key Management Service
+2025-11-02 03:15:45 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS Lambda
+2025-11-02 03:15:45 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS Location Service
+2025-11-02 03:15:45 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS Marketplace
+2025-11-02 03:15:45 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS Route 53
+2025-11-02 03:15:45 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS S3
+2025-11-02 03:15:46 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS SNS
+2025-11-02 03:15:46 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS SQS
+2025-11-02 03:15:46 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS SWF
+2025-11-02 03:15:46 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS Secrets Manager
+2025-11-02 03:15:46 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS Security Hub
+2025-11-02 03:15:46 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS Service Catalog
+2025-11-02 03:15:46 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS Step Functions
+2025-11-02 03:15:46 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS Systems Manager
+2025-11-02 03:15:46 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-securityquarantine-develop - AWS VPC
+2025-11-02 03:15:46 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Certificate Manager
+2025-11-02 03:15:46 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS CloudTrail
+2025-11-02 03:15:46 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS CloudWatch
+2025-11-02 03:15:46 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Cloudshell
+2025-11-02 03:15:46 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS CodePipeline
+2025-11-02 03:15:46 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Codeartifact
+2025-11-02 03:15:47 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Codebuild
+2025-11-02 03:15:47 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Config
+2025-11-02 03:15:47 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Cost Explorer
+2025-11-02 03:15:47 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Direct Connect
+2025-11-02 03:15:47 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Directory Service
+2025-11-02 03:15:47 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS DynamoDB
+2025-11-02 03:15:47 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS EBS
+2025-11-02 03:15:47 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS EC2
+2025-11-02 03:15:47 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS ECR
+2025-11-02 03:15:47 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS ECS
+2025-11-02 03:15:47 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS ElastiCache
+2025-11-02 03:15:47 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Elastic File System
+2025-11-02 03:15:47 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Elastic Load Balancing
+2025-11-02 03:15:47 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Glue
+2025-11-02 03:15:48 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS IoT
+2025-11-02 03:15:48 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Key Management Service
+2025-11-02 03:15:48 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Kinesis
+2025-11-02 03:15:48 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Lambda
+2025-11-02 03:15:48 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Location Service
+2025-11-02 03:15:48 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Marketplace
+2025-11-02 03:15:48 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS RDS
+2025-11-02 03:15:48 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Route 53
+2025-11-02 03:15:48 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS S3
+2025-11-02 03:15:48 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS SES
+2025-11-02 03:15:48 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS SNS
+2025-11-02 03:15:48 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS SQS
+2025-11-02 03:15:48 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS SWF
+2025-11-02 03:15:48 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Secrets Manager
+2025-11-02 03:15:48 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Security Hub
+2025-11-02 03:15:49 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Service Catalog
+2025-11-02 03:15:49 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Step Functions
+2025-11-02 03:15:49 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS Systems Manager
+2025-11-02 03:15:49 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS VPC
+2025-11-02 03:15:49 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS WAF
+2025-11-02 03:15:49 - BudgetForecast - INFO - Saved forecast for ecs-aws-gbl-services-develop - AWS X-ray

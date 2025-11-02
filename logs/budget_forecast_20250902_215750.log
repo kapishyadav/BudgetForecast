@@ -1,0 +1,96 @@
+2025-09-02 21:57:50 - BudgetForecast - INFO - Logging initialized. Log file: logs/budget_forecast_20250902_215750.log
+2025-09-02 21:57:50 - BudgetForecast - INFO - ============================================================
+2025-09-02 21:57:50 - BudgetForecast - INFO - BUDGET FORECASTING MODEL EXECUTION STARTED
+2025-09-02 21:57:50 - BudgetForecast - INFO - ============================================================
+2025-09-02 21:57:50 - BudgetForecast - INFO - Configuration:
+2025-09-02 21:57:50 - BudgetForecast - INFO -   Train: True
+2025-09-02 21:57:50 - BudgetForecast - INFO -   Optimizer: bayesian
+2025-09-02 21:57:50 - BudgetForecast - INFO -   Model: catboost
+2025-09-02 21:57:50 - BudgetForecast - INFO -   Bayesian Optimization: True
+2025-09-02 21:57:50 - BudgetForecast - INFO -   Grid Search Optimization: False
+2025-09-02 21:57:50 - BudgetForecast - INFO -   Use Linear Regression: False
+2025-09-02 21:57:50 - BudgetForecast - INFO - ============================================================
+2025-09-02 21:57:50 - BudgetForecast - INFO - STAGE 1: DATA PREPROCESSING
+2025-09-02 21:57:50 - BudgetForecast - INFO - ============================================================
+2025-09-02 21:57:50 - BudgetForecast - INFO - Loading dataset...
+2025-09-02 21:57:50 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-09-02 21:57:50 - BudgetForecast - INFO - Processing date columns...
+2025-09-02 21:57:50 - BudgetForecast - INFO - Date columns and 'year_month' processed successfully
+2025-09-02 21:57:50 - BudgetForecast - INFO - Data sorted by month
+2025-09-02 21:57:50 - BudgetForecast - INFO - Dropped 'estimate' column (duplicate of 'spend')
+2025-09-02 21:57:50 - BudgetForecast - INFO - Converting categorical columns...
+2025-09-02 21:57:50 - BudgetForecast - INFO - Converted 9 columns to categorical
+2025-09-02 21:57:50 - BudgetForecast - INFO - Dropped original 'month' column
+2025-09-02 21:57:50 - BudgetForecast - INFO - Creating lag features...
+2025-09-02 21:57:50 - BudgetForecast - INFO - Lag features created successfully
+2025-09-02 21:57:50 - BudgetForecast - INFO - Creating rolling statistics...
+2025-09-02 21:57:50 - BudgetForecast - INFO - Rolling statistics created successfully
+2025-09-02 21:57:50 - BudgetForecast - INFO - Splitting data into training and testing sets...
+2025-09-02 21:57:50 - BudgetForecast - INFO - Shape of training data: (1644, 20)
+2025-09-02 21:57:50 - BudgetForecast - INFO - Shape of testing data: (548, 20)
+2025-09-02 21:57:50 - BudgetForecast - INFO - ============================================================
+2025-09-02 21:57:50 - BudgetForecast - INFO - STAGE 2: MODEL LOADING OR TRAINING
+2025-09-02 21:57:50 - BudgetForecast - INFO - ============================================================
+2025-09-02 21:57:50 - BudgetForecast - INFO - ============================================================
+2025-09-02 21:57:50 - BudgetForecast - INFO - STAGE 3: MODEL TRAINING
+2025-09-02 21:57:50 - BudgetForecast - INFO - ============================================================
+2025-09-02 21:57:50 - BudgetForecast - INFO - Training new model with timestamp: 20250902_215750
+2025-09-02 21:57:50 - BudgetForecast - INFO - --- Bayesian Optimization (Optuna) ---
+2025-09-02 22:00:24 - BudgetForecast - INFO - Best Parameters: {'depth': 4, 'learning_rate': 0.01220420565025743, 'l2_leaf_reg': 7, 'bagging_temperature': 0.04627102310647213}
+2025-09-02 22:00:24 - BudgetForecast - INFO - Best RMSE: 37.08392190529453
+2025-09-02 22:00:25 - BudgetForecast - INFO - Model saved to models/catboost/catboost_bayesian_model_20250902_215750.cbm
+2025-09-02 22:00:25 - BudgetForecast - INFO - ============================================================
+2025-09-02 22:00:25 - BudgetForecast - INFO - STAGE 4: MODEL EVALUATION
+2025-09-02 22:00:25 - BudgetForecast - INFO - ============================================================
+2025-09-02 22:00:25 - BudgetForecast - INFO - CatBoost Model Results:
+2025-09-02 22:00:25 - BudgetForecast - INFO - RMSE: 33.6495
+2025-09-02 22:00:25 - BudgetForecast - INFO - MAE: 8.9483
+2025-09-02 22:00:25 - BudgetForecast - INFO - R²: 0.9512
+2025-09-02 22:00:25 - BudgetForecast - INFO - ============================================================
+2025-09-02 22:00:25 - BudgetForecast - INFO - STAGE 5: GENERATING VISUALIZATIONS
+2025-09-02 22:00:25 - BudgetForecast - INFO - ============================================================
+2025-09-02 22:00:25 - BudgetForecast - INFO - Generating monthly comparison bar chart...
+2025-09-02 22:00:25 - BudgetForecast - INFO - Monthly comparison bar chart saved to plots/monthly_comparison_bar.html
+2025-09-02 22:00:25 - BudgetForecast - INFO - Generating monthly comparison line graph...
+2025-09-02 22:00:25 - BudgetForecast - INFO - Monthly comparison line graph saved to plots/monthly_comparison_line.html
+2025-09-02 22:00:25 - BudgetForecast - INFO - Visualizations generated successfully
+2025-09-02 22:00:25 - BudgetForecast - INFO - ============================================================
+2025-09-02 22:00:25 - BudgetForecast - INFO - STAGE 6: GENERATING FUTURE PREDICTIONS
+2025-09-02 22:00:25 - BudgetForecast - INFO - ============================================================
+2025-09-02 22:00:25 - BudgetForecast - INFO - Generating future predictions visualization...
+2025-09-02 22:00:25 - BudgetForecast - INFO - Future predictions visualization saved to plots/future_predictions.html
+2025-09-02 22:00:25 - BudgetForecast - INFO - ================================================================================
+2025-09-02 22:00:25 - BudgetForecast - INFO - 24-MONTH FUTURE PREDICTIONS COMPARISON
+2025-09-02 22:00:25 - BudgetForecast - INFO - ================================================================================
+2025-09-02 22:00:25 - BudgetForecast - INFO - Month        CatBoost Prediction 
+2025-09-02 22:00:25 - BudgetForecast - INFO - -----------------------------------
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2025-08      $123.06             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2025-09      $123.58             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2025-10      $123.69             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2025-11      $123.68             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2025-12      $122.44             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2026-01      $119.81             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2026-02      $119.88             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2026-03      $122.57             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2026-04      $122.74             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2026-05      $123.09             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2026-06      $123.09             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2026-07      $123.06             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2026-08      $123.06             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2026-09      $123.58             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2026-10      $123.69             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2026-11      $123.68             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2026-12      $122.44             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2027-01      $119.81             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2027-02      $119.88             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2027-03      $122.57             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2027-04      $122.74             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2027-05      $123.09             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2027-06      $123.09             
+2025-09-02 22:00:25 - BudgetForecast - INFO - 2027-07      $123.06             
+2025-09-02 22:00:25 - BudgetForecast - INFO - Average Prediction: $122.56
+2025-09-02 22:00:25 - BudgetForecast - INFO - Prediction Range: $119.81 - $123.69
+2025-09-02 22:00:25 - BudgetForecast - INFO - Future predictions generated successfully
+2025-09-02 22:00:25 - BudgetForecast - INFO - ============================================================
+2025-09-02 22:00:25 - BudgetForecast - INFO - ANALYSIS COMPLETE - SUCCESS
+2025-09-02 22:00:25 - BudgetForecast - INFO - ============================================================

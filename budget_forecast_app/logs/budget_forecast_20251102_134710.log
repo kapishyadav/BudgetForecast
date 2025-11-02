@@ -1,0 +1,16 @@
+2025-11-02 13:47:18 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-11-02 13:47:18 - BudgetForecast - INFO - Starting forecast with model: PROPHET
+2025-11-02 13:47:18 - BudgetForecast - INFO - Running forecast with type: monthly
+2025-11-02 13:47:18 - BudgetForecast - INFO - Prophet forecasting starting.
+2025-11-02 13:47:18 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-11-02 13:47:18 - BudgetForecast - INFO - Successfully saved forecasts by monthly total!
+2025-11-02 13:47:18 - BudgetForecast - ERROR - Forecasting failed: cannot unpack non-iterable NoneType object
+2025-11-02 13:47:18 - BudgetForecast - ERROR - Forecasting failed: cannot unpack non-iterable NoneType object
+2025-11-02 13:47:48 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-11-02 13:47:48 - BudgetForecast - INFO - Starting forecast with model: PROPHET
+2025-11-02 13:47:48 - BudgetForecast - INFO - Running forecast with type: monthly
+2025-11-02 13:47:48 - BudgetForecast - INFO - Prophet forecasting starting.
+2025-11-02 13:47:48 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-11-02 13:47:48 - BudgetForecast - INFO - Successfully saved forecasts by monthly total!
+2025-11-02 13:47:48 - BudgetForecast - ERROR - Forecasting failed: cannot unpack non-iterable NoneType object
+2025-11-02 13:47:48 - BudgetForecast - ERROR - Forecasting failed: cannot unpack non-iterable NoneType object

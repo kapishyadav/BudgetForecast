@@ -1,0 +1,10 @@
+2025-11-02 14:18:38 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-11-02 14:18:38 - BudgetForecast - INFO - Starting forecast with model: PROPHET
+2025-11-02 14:18:38 - BudgetForecast - INFO - Running forecast with type: monthly
+2025-11-02 14:18:38 - BudgetForecast - INFO - Prophet forecasting starting.
+2025-11-02 14:18:38 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-11-02 14:18:38 - BudgetForecast - WARNING - No 'y' column found in data — cannot compute metrics.
+2025-11-02 14:18:38 - BudgetForecast - INFO - Successfully saved forecasts by monthly total!
+2025-11-02 14:18:38 - BudgetForecast - INFO - Plotly figure created successfully.
+2025-11-02 14:18:38 - BudgetForecast - INFO - Prophet forecasting complete.
+2025-11-02 14:18:38 - BudgetForecast - ERROR - Forecasting failed: 'figure_json'

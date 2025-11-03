@@ -14,6 +14,7 @@ def run_prophet_forecast(
         forecast_type: ForecastType = ForecastType.MONTHLY,
         logger=None,
         account_name = None,
+        service_name = None,
         periods: int = 24):
     """
     Train and forecast using Prophet on a monthly spend dataset.
@@ -47,7 +48,7 @@ def run_prophet_forecast(
     elif forecast_type == ForecastType.ACCOUNT:
         forecast_df, metrics = save_forecast_by_accounts(data, csv_path, logger, account_name)
     elif forecast_type == ForecastType.SERVICE:
-        forecast_df, metrics = save_forecasts_by_service(data, csv_path, logger)
+        forecast_df, metrics = save_forecasts_by_service(data, csv_path, logger, account_name, service_name)
     else:
         raise ValueError(f"Invalid forecast type: {forecast_type}")
 

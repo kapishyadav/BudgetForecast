@@ -55,6 +55,16 @@
             color: var(--primary);
         }
 
+        .service-name {
+            margin-top: 0.5rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .service-name span {
+            color: var(--primary);
+        }
+
         .card {
             background: #fff;
             border: 3px solid var(--primary);
@@ -159,6 +169,11 @@
 
         {% if forecast_type == "account" and account_name %}
             <p class="account-name">📊 Forecast for Account: <span>{{ account_name }}</span></p>
+        {% endif %}
+
+        {% if forecast_type == "service" and account_name and service_name %}
+            <p class="account-name">📊 Forecast for Account: <span>{{ account_name }}</span></p>
+            <p class="service-name">📊 Forecast for Service: <span>{{ service_name }}</span></p>
         {% endif %}
 
         <!-- Metrics Grid -->

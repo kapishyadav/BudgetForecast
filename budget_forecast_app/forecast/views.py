@@ -36,6 +36,9 @@ def upload_file(request):
         # Optional account name input
         account_name = request.POST.get("account_name", "").strip()
 
+        # Optional service name input
+        service_name = request.POST.get("service_name", "").strip()
+
         try:
             logger.info(f"Running forecast with type: {forecast_type}")
 
@@ -45,6 +48,12 @@ def upload_file(request):
             # only include account_name if relevant
             if forecast_type == ForecastType.ACCOUNT and account_name:
                 kwargs["account_name"] = account_name
+
+            if forecast_type == ForecastType.SERVICE:
+                if service_name:
+                    kwargs["service_name"] = service_name
+                if account_name:
+                    kwargs["account_name"] = account_name
 
             result = run_forecast(file_path, forecast_type, **kwargs)
 
@@ -78,7 +87,8 @@ def upload_file(request):
                 "forecast_data": forecast_json,
                 "forecast_type": forecast_type.value if hasattr(forecast_type, "value") else forecast_type,
                 "csv_filename": csv_file_name,
-                "account_name": account_name if forecast_type == ForecastType.ACCOUNT else None,
+                "account_name": account_name if forecast_type in [ForecastType.ACCOUNT, ForecastType.SERVICE] else None,
+                "service_name": service_name if forecast_type == ForecastType.SERVICE else None,
             })
         except Exception as e:
             logger.error(f"Forecasting failed: {e}")

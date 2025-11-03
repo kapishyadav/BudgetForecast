@@ -20,7 +20,8 @@ logger = setup_logging()
 
 def run_forecast(csv_path: str,
                  forecast_type: ForecastType = ForecastType.MONTHLY ,
-                 account_name = None):
+                 account_name = None,
+                 service_name = None):
     """
     Main entry point for the forecasting pipeline.
 
@@ -47,13 +48,22 @@ def run_forecast(csv_path: str,
         if forecast_type == ForecastType.ACCOUNT:
             if not account_name:
                 raise ValueError("Account name must be provided for account-level forecast.")
-            forecast_df, metrics = run_prophet_forecast(csv_path, forecast_type, logger, account_name)
+            forecast_df, metrics = run_prophet_forecast(csv_path,
+                                                        forecast_type,
+                                                        logger,
+                                                        account_name)
 
         elif forecast_type == ForecastType.MONTHLY:
             forecast_df, metrics = run_prophet_forecast(csv_path, forecast_type, logger)
 
         elif forecast_type == ForecastType.SERVICE:
-            forecast_df, metrics = run_prophet_forecast(csv_path, forecast_type, logger)
+            if not service_name and not account_name:
+                raise ValueError("Service name and Account name must be provided for service-level forecast.")
+            forecast_df, metrics = run_prophet_forecast(csv_path,
+                                                        forecast_type,
+                                                        logger,
+                                                        account_name,
+                                                        service_name)
         else:
             raise ValueError(f"Unsupported forecast type: {forecast_type}")
         logger.info("Prophet forecasting complete.")

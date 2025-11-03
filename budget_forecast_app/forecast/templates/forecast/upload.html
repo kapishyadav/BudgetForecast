@@ -136,7 +136,6 @@
             <div class="loading" id="loading">Running model... please wait ⏳</div>
         <br><br>
 
-        <form method="POST" enctype="multipart/form-data" class="form">
 
             <label for="forecast_type">📊 Select Forecast Type</label><br><br>
             <select name="forecast_type" id="forecast_type" required>
@@ -147,12 +146,24 @@
 
             <!-- Hidden by default -->
             <div id="account_name_wrapper" style="display: none; margin-top: 1rem;">
-                <label for="account_name">🏦 Enter Account Name</label>
+                <label for="account_name"> Enter Account Name</label>
                 <input
                     type="text"
                     id="account_name"
                     name="account_name"
-                    placeholder="e.g. Marketing Budget"
+                    placeholder="e.g. ecs-aws-gbl-services-develop "
+                    style="margin-top: 0.5rem; padding: 0.6rem; width: 100%; border: 2px solid #111; border-radius: 8px;"
+                >
+            </div>
+
+            <!-- Hidden by default -->
+            <div id="service_name_wrapper" style="display: none; margin-top: 1rem;">
+                <label for="service_name"> Enter Service Name</label>
+                <input
+                    type="text"
+                    id="service_name"
+                    name="service_name"
+                    placeholder="e.g. AWS CloudWatch "
                     style="margin-top: 0.5rem; padding: 0.6rem; width: 100%; border: 2px solid #111; border-radius: 8px;"
                 >
             </div>
@@ -173,13 +184,21 @@
         const loading = document.getElementById('loading');
         const forecastTypeSelect = document.getElementById('forecast_type');
         const accountNameWrapper = document.getElementById('account_name_wrapper');
+        const serviceNameWrapper = document.getElementById('service_name_wrapper');
 
         // Show/hide account input when dropdown changes
         forecastTypeSelect.addEventListener('change', function() {
-            if (this.value === 'account') {
+            const type = this.value;
+
+            if (type === 'account') {
                 accountNameWrapper.style.display = 'block';
+                serviceNameWrapper.style.display = 'none';
+            } else if (type === 'service') {
+                accountNameWrapper.style.display = 'block';
+                serviceNameWrapper.style.display = 'block';
             } else {
                 accountNameWrapper.style.display = 'none';
+                serviceNameWrapper.style.display = 'none';
             }
         });
 

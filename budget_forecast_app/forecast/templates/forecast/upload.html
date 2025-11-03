@@ -3,99 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧠 Budget Forecast Upload</title>
+    <title>Time Series Forecast Upload</title>
     <style>
         :root {
-            --bg-color: #f8f8f8;
-            --primary: #111;
-            --accent: #ff4081;
-            --shadow: 5px 5px 0 #111;
-            --radius: 16px;
-            --transition: all 0.2s ease;
+            /* ☕ Coffee-inspired color palette */
+            --bg-color: #f7f3ee;          /* soft latte background */
+            --primary: #3b2f2f;           /* dark roast text */
+            --accent: #a47148;            /* medium coffee brown */
+            --light-accent: #d8c3a5;      /* cappuccino tone */
+            --shadow: 8px 8px 0 var(--accent);
+            --radius: 14px;
+            --transition: all 0.25s ease;
         }
 
         body {
-            font-family: 'Inter', 'Poppins', sans-serif;
+            font-family: 'Poppins', 'Inter', sans-serif;
             background-color: var(--bg-color);
             display: flex;
             align-items: center;
             justify-content: center;
             height: 100vh;
             margin: 0;
+            color: var(--primary);
         }
 
         .card {
             background: #fff;
             padding: 3rem 2.5rem;
-            border: 3px solid var(--primary);
+            border: 2px solid var(--accent);
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             text-align: center;
-            width: 420px;
+            width: 440px;
             transition: var(--transition);
         }
 
         .card:hover {
             transform: translate(-3px, -3px);
-            box-shadow: 8px 8px 0 var(--primary);
+            box-shadow: 10px 10px 0 var(--light-accent);
         }
 
         h1 {
-            font-size: 1.8rem;
+            font-size: 2.0rem;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: var(--accent);
             margin-bottom: 1rem;
-            color: var(--primary);
+            text-transform: uppercase;
         }
 
         p {
-            color: #333;
+            color: var(--accent);
             margin-bottom: 2rem;
             font-size: 1rem;
+            opacity: 0.8;
         }
 
         form {
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 1rem;
         }
 
         input[type="file"] {
-            border: 3px dashed var(--primary);
+            border: 2px dashed var(--light-accent);
+            background: #fdf9f5;
             padding: 1rem;
             width: 100%;
             border-radius: var(--radius);
             cursor: pointer;
-            background: #fafafa;
             font-size: 0.95rem;
+            color: var(--primary);
             transition: var(--transition);
         }
 
         input[type="file"]:hover {
-            background: #fffae6;
+            background: #f5ede5;
+            border-color: var(--accent);
         }
 
         button {
-            margin-top: 1.5rem;
+            margin-top: 1rem;
             background: var(--accent);
             color: white;
-            border: 3px solid var(--primary);
-            padding: 0.8rem 2rem;
+            border: none;
+            padding: 0.9rem 2rem;
             font-size: 1rem;
             font-weight: 600;
             border-radius: var(--radius);
             cursor: pointer;
-            box-shadow: var(--shadow);
+            box-shadow: 6px 6px 0 var(--primary);
             transition: var(--transition);
         }
 
         button:hover {
-            background: #111;
-            color: #fff;
-            box-shadow: 8px 8px 0 var(--accent);
+            background: var(--primary);
+            box-shadow: 6px 6px 0 var(--accent);
             transform: translate(-3px, -3px);
         }
 
         .error {
-            color: red;
+            color: #c0392b;
             margin-top: 1rem;
             font-weight: 600;
         }
@@ -103,18 +112,20 @@
         .footer {
             margin-top: 2rem;
             font-size: 0.85rem;
-            color: #555;
+            color: var(--primary);
+            opacity: 0.7;
         }
 
         .footer span {
             color: var(--accent);
+            font-weight: 600;
         }
 
         .loading {
             margin-top: 1rem;
             display: none;
             font-weight: 500;
-            color: var(--primary);
+            color: var(--accent);
             animation: pulse 1.2s infinite;
         }
 
@@ -126,7 +137,7 @@
 </head>
 <body>
     <div class="card">
-        <h1>📈 Time Series Forecast</h1>
+        <h1>Time Series Forecast</h1>
         <p>Upload your CSV file to generate a Prophet-based budget forecast.</p>
 
         <form id="uploadForm" method="POST" enctype="multipart/form-data">
@@ -134,7 +145,6 @@
             <input type="file" name="dataset" accept=".csv" required>
             <button type="submit">🚀 Run Forecast</button>
             <div class="loading" id="loading">Running model... please wait ⏳</div>
-        <br><br>
 
 
             <label for="forecast_type">📊 Select Forecast Type</label><br><br>
@@ -146,25 +156,23 @@
 
             <!-- Hidden by default -->
             <div id="account_name_wrapper" style="display: none; margin-top: 1rem;">
-                <label for="account_name"> Enter Account Name</label>
+                <label for="account_name">Enter Account Name</label>
                 <input
                     type="text"
                     id="account_name"
                     name="account_name"
-                    placeholder="e.g. ecs-aws-gbl-services-develop "
-                    style="margin-top: 0.5rem; padding: 0.6rem; width: 100%; border: 2px solid #111; border-radius: 8px;"
+                    placeholder="e.g. ecs-aws-gbl-services-develop"
                 >
             </div>
 
             <!-- Hidden by default -->
             <div id="service_name_wrapper" style="display: none; margin-top: 1rem;">
-                <label for="service_name"> Enter Service Name</label>
+                <label for="service_name">Enter Service Name</label>
                 <input
                     type="text"
                     id="service_name"
                     name="service_name"
-                    placeholder="e.g. AWS CloudWatch "
-                    style="margin-top: 0.5rem; padding: 0.6rem; width: 100%; border: 2px solid #111; border-radius: 8px;"
+                    placeholder="e.g. AWS CloudWatch"
                 >
             </div>
 

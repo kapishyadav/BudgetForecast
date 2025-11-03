@@ -1,0 +1,7 @@
+2025-11-03 13:03:19 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-11-03 13:03:19 - BudgetForecast - INFO - Starting forecast with model: PROPHET
+2025-11-03 13:03:19 - BudgetForecast - INFO - Running forecast with type: monthly
+2025-11-03 13:03:19 - BudgetForecast - INFO - Prophet forecasting starting.
+2025-11-03 13:03:19 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-11-03 13:03:19 - BudgetForecast - ERROR - Forecasting failed: local variable 'forecast' referenced before assignment
+2025-11-03 13:03:19 - BudgetForecast - ERROR - Forecasting failed: local variable 'forecast' referenced before assignment

@@ -1,0 +1,8 @@
+2025-11-02 15:04:08 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-11-02 15:04:08 - BudgetForecast - INFO - Starting forecast with model: PROPHET
+2025-11-02 15:04:08 - BudgetForecast - INFO - Running forecast with type: monthly
+2025-11-02 15:04:08 - BudgetForecast - INFO - Prophet forecasting starting.
+2025-11-02 15:04:08 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-11-02 15:04:08 - BudgetForecast - INFO - DEBUG data columns : ['month', 'spend', 'serviceName', 'usageFamily', 'estimate', 'accountName', 'accountID', 'countryCode', 'buCode', 'region', 'segment', 'costString']
+2025-11-02 15:04:08 - BudgetForecast - ERROR - Forecasting failed: "['month'] not in index"
+2025-11-02 15:04:08 - BudgetForecast - ERROR - Forecasting failed: "['month'] not in index"

@@ -1,0 +1,10 @@
+2025-11-03 13:10:30 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-11-03 13:10:30 - BudgetForecast - INFO - Starting forecast with model: PROPHET
+2025-11-03 13:10:30 - BudgetForecast - INFO - Running forecast with type: monthly
+2025-11-03 13:10:30 - BudgetForecast - INFO - Prophet forecasting starting.
+2025-11-03 13:10:30 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-11-03 13:10:30 - BudgetForecast - INFO - DEBUG data columns : ['month', 'spend', 'serviceName', 'usageFamily', 'estimate', 'accountName', 'accountID', 'countryCode', 'buCode', 'region', 'segment', 'costString']
+2025-11-03 13:10:30 - BudgetForecast - INFO - Successfully saved forecasts by monthly total!
+2025-11-03 13:10:30 - BudgetForecast - INFO - Plotly figure created successfully.
+2025-11-03 13:10:30 - BudgetForecast - ERROR - Forecasting failed: local variable 'metrics' referenced before assignment
+2025-11-03 13:10:30 - BudgetForecast - ERROR - Forecasting failed: local variable 'metrics' referenced before assignment

@@ -1,0 +1,13 @@
+2025-11-03 15:18:51 - BudgetForecast - INFO - DEBUG selected_type from POST: account
+2025-11-03 15:18:51 - BudgetForecast - INFO - Running forecast with type: ForecastType.ACCOUNT
+2025-11-03 15:18:51 - BudgetForecast - INFO - Running forecast with type: account
+2025-11-03 15:18:51 - BudgetForecast - INFO - Prophet forecasting starting.
+2025-11-03 15:18:51 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-11-03 15:18:51 - BudgetForecast - INFO - Unique accounts: ['ecs-aws-gbl-services-develop', 'ecs-aws-gbl-infra-develop', 'ecs-aws-gbl-securityquarantine-develop']
+2025-11-03 15:18:51 - BudgetForecast - INFO -  Computed metrics for monthly aggregate: {'RMSE': np.float64(172.71), 'MAE': 118.73, 'MSE': 29829.26, 'MAPE (%)': np.float64(2.93)}
+2025-11-03 15:18:51 - BudgetForecast - INFO - Successfully saved forecasts by account!
+2025-11-03 15:18:51 - BudgetForecast - INFO - Prophet forecasting complete.
+2025-11-03 15:18:51 - BudgetForecast - INFO - Saved forecast CSV: forecasts/account/actual_detail_2025-08-14_5fvgpJw.csv-ForecastType.ACCOUNT-20251103_151851.csv
+2025-11-03 15:18:51 - BudgetForecast - INFO - Successfully converted forecast data for Chart.js
+2025-11-03 15:18:51 - BudgetForecast - INFO - DEBUG result keys: ['forecast', 'metrics']
+2025-11-03 15:18:51 - BudgetForecast - INFO - DEBUG metrics: {'RMSE': np.float64(172.71), 'MAE': 118.73, 'MSE': 29829.26, 'MAPE (%)': np.float64(2.93)}

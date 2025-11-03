@@ -1,0 +1,8 @@
+2025-11-02 15:04:58 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-11-02 15:04:58 - BudgetForecast - INFO - Starting forecast with model: PROPHET
+2025-11-02 15:04:58 - BudgetForecast - INFO - Running forecast with type: monthly
+2025-11-02 15:04:58 - BudgetForecast - INFO - Prophet forecasting starting.
+2025-11-02 15:04:58 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-11-02 15:04:58 - BudgetForecast - INFO - DEBUG data columns : ['month', 'spend', 'serviceName', 'usageFamily', 'estimate', 'accountName', 'accountID', 'countryCode', 'buCode', 'region', 'segment', 'costString']
+2025-11-02 15:04:58 - BudgetForecast - ERROR - Forecasting failed: You are trying to merge on object and datetime64[ns] columns for key 'month'. If you wish to proceed you should use pd.concat
+2025-11-02 15:04:58 - BudgetForecast - ERROR - Forecasting failed: You are trying to merge on object and datetime64[ns] columns for key 'month'. If you wish to proceed you should use pd.concat

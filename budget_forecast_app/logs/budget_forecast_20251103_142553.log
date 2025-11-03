@@ -1,0 +1,5 @@
+2025-11-03 14:25:58 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-11-03 14:25:58 - BudgetForecast - INFO - Running forecast with type: monthly
+2025-11-03 14:25:58 - BudgetForecast - INFO - Prophet forecasting starting.
+2025-11-03 14:25:58 - BudgetForecast - ERROR - Forecasting failed: string indices must be integers
+2025-11-03 14:25:58 - BudgetForecast - ERROR - Forecasting failed: string indices must be integers

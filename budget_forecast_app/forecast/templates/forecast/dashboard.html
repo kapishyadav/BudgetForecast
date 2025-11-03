@@ -45,6 +45,16 @@
             font-size: 1rem;
         }
 
+        .account-name {
+            margin-top: 0.5rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .account-name span {
+            color: var(--primary);
+        }
+
         .card {
             background: #fff;
             border: 3px solid var(--primary);
@@ -144,8 +154,12 @@
     <div class="container">
         <div class="header">
             <h1>💡 Forecast Dashboard</h1>
-            <p>Your Prophet-powered time series insights</p>
+            <p> Prophet-powered time series insights</p>
         </div>
+
+        {% if forecast_type == "account" and account_name %}
+            <p class="account-name">📊 Forecast for Account: <span>{{ account_name }}</span></p>
+        {% endif %}
 
         <!-- Metrics Grid -->
         <div class="metrics">
@@ -173,7 +187,7 @@
 
         <!-- Download CSV Button -->
         <div class="button">
-            <a href="{% url 'download_csv' %}">⬇️ Download Forecast CSV</a>
+            <a href="{% url 'download_csv' csv_filename %}">⬇️ Download Forecast CSV</a>
         </div>
 
         <footer>
@@ -186,7 +200,7 @@
         const forecastData = JSON.parse('{{ forecast_data|escapejs }}');
         console.log("DEBUG forecastData:", forecastData);
 
-        const labels = forecastData.map(d => d.date);
+        const labels = forecastData.map(d => d.ds);
         const yhat = forecastData.map(d => d.yhat);
         const yhatLower = forecastData.map(d => d.yhat_lower);
         const yhatUpper = forecastData.map(d => d.yhat_upper);

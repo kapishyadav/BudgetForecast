@@ -1,0 +1,39 @@
+2025-11-03 13:33:10 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-11-03 13:33:10 - BudgetForecast - INFO - Starting forecast with model: PROPHET
+2025-11-03 13:33:10 - BudgetForecast - INFO - Running forecast with type: monthly
+2025-11-03 13:33:10 - BudgetForecast - INFO - Prophet forecasting starting.
+2025-11-03 13:33:10 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-11-03 13:33:11 - BudgetForecast - INFO -  Computed metrics for monthly aggregate: {'RMSE': np.float64(443.16), 'MAE': 342.22, 'MSE': 196392.37, 'MAPE (%)': np.float64(4.33)}
+2025-11-03 13:33:11 - BudgetForecast - INFO - DEBUG data columns : ['month', 'spend', 'serviceName', 'usageFamily', 'estimate', 'accountName', 'accountID', 'countryCode', 'buCode', 'region', 'segment', 'costString']
+2025-11-03 13:33:11 - BudgetForecast - INFO - Successfully saved forecasts by monthly total!
+2025-11-03 13:33:11 - BudgetForecast - INFO - Prophet forecasting complete.
+2025-11-03 13:33:11 - BudgetForecast - INFO - Saved forecast CSV: forecasts/monthly/actual_detail_2025-08-14_oWrIfJX.csv-ForecastType.MONTHLY-20251103_133311.csv
+2025-11-03 13:33:11 - BudgetForecast - INFO - Successfully converted forecast data for Chart.js
+2025-11-03 13:33:11 - BudgetForecast - INFO - DEBUG result keys: ['forecast', 'metrics']
+2025-11-03 13:33:11 - BudgetForecast - INFO - DEBUG metrics: {'RMSE': np.float64(443.16), 'MAE': 342.22, 'MSE': 196392.37, 'MAPE (%)': np.float64(4.33)}
+2025-11-03 13:33:23 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-11-03 13:33:23 - BudgetForecast - INFO - Starting forecast with model: PROPHET
+2025-11-03 13:33:23 - BudgetForecast - INFO - Running forecast with type: monthly
+2025-11-03 13:33:23 - BudgetForecast - INFO - Prophet forecasting starting.
+2025-11-03 13:33:23 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-11-03 13:33:23 - BudgetForecast - INFO -  Computed metrics for monthly aggregate: {'RMSE': np.float64(443.16), 'MAE': 342.22, 'MSE': 196392.37, 'MAPE (%)': np.float64(4.33)}
+2025-11-03 13:33:23 - BudgetForecast - INFO - DEBUG data columns : ['month', 'spend', 'serviceName', 'usageFamily', 'estimate', 'accountName', 'accountID', 'countryCode', 'buCode', 'region', 'segment', 'costString']
+2025-11-03 13:33:23 - BudgetForecast - INFO - Successfully saved forecasts by monthly total!
+2025-11-03 13:33:23 - BudgetForecast - INFO - Prophet forecasting complete.
+2025-11-03 13:33:23 - BudgetForecast - INFO - Saved forecast CSV: forecasts/monthly/actual_detail_2025-08-14_sklfto6.csv-ForecastType.MONTHLY-20251103_133323.csv
+2025-11-03 13:33:23 - BudgetForecast - INFO - Successfully converted forecast data for Chart.js
+2025-11-03 13:33:23 - BudgetForecast - INFO - DEBUG result keys: ['forecast', 'metrics']
+2025-11-03 13:33:23 - BudgetForecast - INFO - DEBUG metrics: {'RMSE': np.float64(443.16), 'MAE': 342.22, 'MSE': 196392.37, 'MAPE (%)': np.float64(4.33)}
+2025-11-03 13:34:45 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-11-03 13:34:45 - BudgetForecast - INFO - Starting forecast with model: PROPHET
+2025-11-03 13:34:45 - BudgetForecast - INFO - Running forecast with type: monthly
+2025-11-03 13:34:45 - BudgetForecast - INFO - Prophet forecasting starting.
+2025-11-03 13:34:45 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-11-03 13:34:45 - BudgetForecast - INFO -  Computed metrics for monthly aggregate: {'RMSE': np.float64(443.16), 'MAE': 342.22, 'MSE': 196392.37, 'MAPE (%)': np.float64(4.33)}
+2025-11-03 13:34:45 - BudgetForecast - INFO - DEBUG data columns : ['month', 'spend', 'serviceName', 'usageFamily', 'estimate', 'accountName', 'accountID', 'countryCode', 'buCode', 'region', 'segment', 'costString']
+2025-11-03 13:34:45 - BudgetForecast - INFO - Successfully saved forecasts by monthly total!
+2025-11-03 13:34:45 - BudgetForecast - INFO - Prophet forecasting complete.
+2025-11-03 13:34:45 - BudgetForecast - INFO - Saved forecast CSV: forecasts/monthly/actual_detail_2025-08-14_XX57v8i.csv-ForecastType.MONTHLY-20251103_133445.csv
+2025-11-03 13:34:45 - BudgetForecast - INFO - Successfully converted forecast data for Chart.js
+2025-11-03 13:34:45 - BudgetForecast - INFO - DEBUG result keys: ['forecast', 'metrics']
+2025-11-03 13:34:45 - BudgetForecast - INFO - DEBUG metrics: {'RMSE': np.float64(443.16), 'MAE': 342.22, 'MSE': 196392.37, 'MAPE (%)': np.float64(4.33)}

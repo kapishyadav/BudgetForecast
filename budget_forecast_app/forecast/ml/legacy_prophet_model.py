@@ -24,7 +24,8 @@ def sanitize_filename(name):
     return re.sub(r'[\\/*?:"<>| ]+', "_", name)
 
 
-def forecast_monthly_spend(data):
+def forecast_monthly_spend(data, logger):
+    data['month'] = pd.to_datetime(data['month'], errors='coerce')
     monthly_spend = data.groupby("month", as_index=False)["spend"].sum()
     prophet_df = monthly_spend.rename(columns={"month": "ds", "spend": "y"})
 
@@ -34,23 +35,58 @@ def forecast_monthly_spend(data):
     future = m.make_future_dataframe(periods=12 * 2,
                                      freq='M')
 
-    forecast = m.predict(future)
-    forecast[['ds', 'yhat', 'yhat_lower',
-              'yhat_upper', 'trend',
-              'trend_lower', 'trend_upper']].tail()
-    fig = plot_plotly(m, forecast)
-    return forecast, fig
+    forecast_full = m.predict(future)
+
+    #Evaluation metrics
+    # --- Merge to compare only historical months ---
+    forecast_full['ds'] = pd.to_datetime(forecast_full['ds'], errors='coerce')
+    forecast_eval = forecast_full[['ds', 'yhat']].merge(prophet_df, on='ds', how='inner')
+    y_true = forecast_eval['y'].values
+    y_pred = forecast_eval['yhat'].values
+
+    mse = mean_squared_error(y_true, y_pred)
+    rmse = np.sqrt(mse)
+    mae = mean_absolute_error(y_true, y_pred)
+    mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+    metrics = {
+        "RMSE": round(rmse, 2),
+        "MAE": round(mae, 2),
+        "MSE": round(mse, 2),
+        "MAPE (%)": round(mape, 2)
+    }
+
+    if logger:
+        logger.info(f" Computed metrics for monthly aggregate: {metrics}")
+
+    # --- Step 5: Trim forecast to required fields only ---
+    forecast = forecast_full[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
+
+    return forecast, metrics
 
 
-def get_accounts_dict(data):
+def get_accounts_dict(data, logger, account_name):
+    """
+    Filters the dataset for the given account name and returns a dictionary
+    mapping that single account name to its DataFrame.
+
+    Args:
+        data (pd.DataFrame): Input dataframe containing 'accountName' column.
+        logger (logging.Logger): Logger instance for debug/info messages.
+        account_name (str): The specific account name to filter for.
+
+    Returns:
+        dict: { df_accounts_dict: filtered dataframe by account}
+    """
     unique_accounts = list(data['accountName'].unique())
+    if account_name not in unique_accounts:
+        raise ValueError(f"Account name not found!: {account_name}")
     logger.info("Unique accounts: %s", unique_accounts)
 
-    df_accounts_dict = {}  # dictionary to store 3 DataFrames
+    # Filter only that account
+    df_account = data[data["accountName"] == account_name].copy()
+    df_accounts_dict = {account_name: df_account}
 
-    for acc in unique_accounts:
-        df_acc = data[data["accountName"] == acc].copy()
-        df_accounts_dict[acc] = df_acc
     return df_accounts_dict
 
 
@@ -86,85 +122,39 @@ def save_monthly_aggregate_forecasts(data, file, logger):
     """
 
     file = os.path.splitext(os.path.basename(file))[0]
-    forecast, fig = forecast_monthly_spend(data)
 
-    # --- Compute metrics ---
-    # Merge to align actuals (y) with predicted (yhat)
-    if 'y' in data.columns:
-        merged = data.merge(forecast[['ds', 'yhat']], on='ds', how='inner')
-        y_true = merged['y'].values
-        y_pred = merged['yhat'].values
-
-        mse = mean_squared_error(y_true, y_pred)
-        rmse = np.sqrt(mse)
-        mae = mean_absolute_error(y_true, y_pred)
-        metrics = {
-            "RMSE": round(rmse, 3),
-            "MAE": round(mae, 3),
-            "MSE": round(mse, 3)
-        }
-    else:
-        logger.warning("No 'y' column found in data — cannot compute metrics.")
-        metrics = {}
+    forecast, metrics = forecast_monthly_spend(data, logger)
+    logger.info(f"DEBUG data columns : {list(data.columns)}")
 
 
     # Make sure output directory exists
     output_dir = os.path.join("forecasts", file, "monthly_total")
     os.makedirs(output_dir, exist_ok=True)
     csv_dir = os.path.join(output_dir, "csv")
-    html_dir = os.path.join(output_dir, "html")
+
     os.makedirs(csv_dir, exist_ok=True)
-    os.makedirs(html_dir, exist_ok=True)
-    # store the forecasts as plotly html files
-    html_path = os.path.join(html_dir, "monthly_forecast.html")
-    fig.write_html(html_path)
-    # save forecast CSV
+
     csv_path = os.path.join(csv_dir, "monthly_forecast.csv")
-    forecast_renamed = forecast.rename(columns={
-        'ds': 'date'
-    })
-    logger.info("Forecasts renamed column names:", forecast_renamed.columns)
-    forecast_formatted = forecast_renamed[['date', 'yhat', 'yhat_lower', 'yhat_upper']]
-    forecast_formatted.to_csv(csv_path, index=False)
-    logger.info("Forecasts formatted column names:", forecast_formatted.columns)
+
+    logger.info("Forecasts formatted column names:", forecast.columns)
     logger.info("Successfully saved forecasts by monthly total!")
-    return forecast_formatted, metrics
+    return forecast, metrics
 
 
-def save_forecast_by_accounts(df_accounts_dict, file, logger):
+def save_forecast_by_accounts(data, file, logger, account_name):
+    accounts_dict = get_accounts_dict(data, logger, account_name)
+    account_data = accounts_dict[account_name]
+
+    forecast, metrics = forecast_monthly_spend(account_data, logger)
+
+
     file = os.path.splitext(os.path.basename(file))[0]
     # Make sure output directory exists
     output_dir = os.path.join("forecasts", file, "account_level")
     os.makedirs(output_dir, exist_ok=True)
-    csv_dir = os.path.join(output_dir, "csv")
-
-    html_dir = os.path.join(output_dir, "html")
-
-    os.makedirs(csv_dir, exist_ok=True)
-    os.makedirs(html_dir, exist_ok=True)
-    for account, data in df_accounts_dict.items():
-        # Aggregate monthly spend
-        monthly_spend = data.groupby("month", as_index=False)["spend"].sum()
-        # skip if less than 2 non-NaN rows
-        if monthly_spend.shape[0] < 2:
-            logger.warning(f"Skipping {account}: not enough data points")
-            continue
-
-        forecasts, fig = forecast_monthly_spend(data)
-
-        # store the forecasts as plotly html files
-        html_path = os.path.join(html_dir, f"{account}_forecast.html")
-        fig.write_html(html_path)
-        # save forecast CSV
-        forecast_renamed = forecasts.rename(columns={
-            'ds': 'date'
-        })
-        print("Forecasts renamed column names:", forecast_renamed.columns)
-        forecast_formatted = forecast_renamed[['date', 'yhat', 'yhat_lower', 'yhat_upper']]
-        csv_path = os.path.join(csv_dir, f"{account}_forecast.csv")
-        forecast_formatted.to_csv(csv_path, index=False)
 
     logger.info("Successfully saved forecasts by account!")
+    return forecast, metrics
 
 
 def save_forecasts_by_service(data, file, logger):
@@ -172,7 +162,7 @@ def save_forecasts_by_service(data, file, logger):
     # Make sure output directory exists
     output_dir = os.path.join("forecasts", file, "service_level")
     os.makedirs(output_dir, exist_ok=True)
-    df_accounts_dict = get_accounts_dict(data)
+    df_accounts_dict = get_accounts_dict(data, logger)
     # pivot table
     monthly_service_spend = data.pivot_table(
         index=["accountName", "month"],

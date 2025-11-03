@@ -1,0 +1,47 @@
+2025-11-02 15:20:11 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-11-02 15:20:11 - BudgetForecast - INFO - Starting forecast with model: PROPHET
+2025-11-02 15:20:11 - BudgetForecast - INFO - Running forecast with type: monthly
+2025-11-02 15:20:11 - BudgetForecast - INFO - Prophet forecasting starting.
+2025-11-02 15:20:11 - BudgetForecast - INFO - Dataset loaded successfully. Shape: (2192, 12)
+2025-11-02 15:20:11 - BudgetForecast - INFO - DEBUG data columns : ['month', 'spend', 'serviceName', 'usageFamily', 'estimate', 'accountName', 'accountID', 'countryCode', 'buCode', 'region', 'segment', 'costString']
+2025-11-02 15:20:11 - BudgetForecast - INFO - DEBUG data columns: Index(['month', 'spend', 'serviceName', 'usageFamily', 'estimate',
+       'accountName', 'accountID', 'countryCode', 'buCode', 'region',
+       'segment', 'costString'],
+      dtype='object')
+2025-11-02 15:20:11 - BudgetForecast - INFO - DEBUG forecast columns: Index(['ds', 'trend', 'yhat_lower', 'yhat_upper', 'trend_lower', 'trend_upper',
+       'additive_terms', 'additive_terms_lower', 'additive_terms_upper',
+       'multiplicative_terms', 'multiplicative_terms_lower',
+       'multiplicative_terms_upper', 'yhat'],
+      dtype='object')
+2025-11-02 15:20:11 - BudgetForecast - INFO - Merged sample:
+       month       spend         yhat
+0 2024-08-01    0.000000  7500.217029
+1 2024-08-01    0.025178  7500.217029
+2 2024-08-01    4.115562  7500.217029
+3 2024-08-01   19.584786  7500.217029
+4 2024-08-01    2.848154  7500.217029
+5 2024-08-01    0.135065  7500.217029
+6 2024-08-01  227.873177  7500.217029
+7 2024-08-01    3.736113  7500.217029
+8 2024-08-01   10.512659  7500.217029
+9 2024-08-01    0.000000  7500.217029
+2025-11-02 15:20:11 - BudgetForecast - INFO - Merged sample:
+       month       spend         yhat
+0 2024-08-01    0.000000  7500.217029
+1 2024-08-01    0.025178  7500.217029
+2 2024-08-01    4.115562  7500.217029
+3 2024-08-01   19.584786  7500.217029
+4 2024-08-01    2.848154  7500.217029
+5 2024-08-01    0.135065  7500.217029
+6 2024-08-01  227.873177  7500.217029
+7 2024-08-01    3.736113  7500.217029
+8 2024-08-01   10.512659  7500.217029
+9 2024-08-01    0.000000  7500.217029
+2025-11-02 15:20:11 - BudgetForecast - INFO -  Computed metrics: {'RMSE': np.float64(8011.85), 'MAE': 8003.61, 'MSE': 64189750.98, 'MAPE (%)': np.float64(inf)}
+2025-11-02 15:20:11 - BudgetForecast - INFO - Successfully saved forecasts by monthly total!
+2025-11-02 15:20:11 - BudgetForecast - INFO - Plotly figure created successfully.
+2025-11-02 15:20:11 - BudgetForecast - INFO - Prophet forecasting complete.
+2025-11-02 15:20:11 - BudgetForecast - INFO - Saved forecast CSV: forecasts/monthly/actual_detail_2025-08-14_06F8Iw7.csv-ForecastType.MONTHLY-20251102_152011.csv
+2025-11-02 15:20:11 - BudgetForecast - INFO - Successfully converted forecast data for Chart.js
+2025-11-02 15:20:11 - BudgetForecast - INFO - DEBUG result keys: ['forecast', 'metrics']
+2025-11-02 15:20:11 - BudgetForecast - INFO - DEBUG metrics: {'RMSE': np.float64(8011.85), 'MAE': 8003.61, 'MSE': 64189750.98, 'MAPE (%)': np.float64(inf)}

@@ -134,16 +134,28 @@
             <input type="file" name="dataset" accept=".csv" required>
             <button type="submit">🚀 Run Forecast</button>
             <div class="loading" id="loading">Running model... please wait ⏳</div>
-        </form>
+        <br><br>
 
         <form method="POST" enctype="multipart/form-data" class="form">
 
-            <label for="forecast_type">📊 Select Forecast Type</label>
+            <label for="forecast_type">📊 Select Forecast Type</label><br><br>
             <select name="forecast_type" id="forecast_type" required>
                 <option value="monthly">Forecast by Monthly Aggregate</option>
                 <option value="account">Forecast by Account</option>
                 <option value="service">Forecast by Service</option>
-            </select>
+            </select><br><br>
+
+            <!-- Hidden by default -->
+            <div id="account_name_wrapper" style="display: none; margin-top: 1rem;">
+                <label for="account_name">🏦 Enter Account Name</label>
+                <input
+                    type="text"
+                    id="account_name"
+                    name="account_name"
+                    placeholder="e.g. Marketing Budget"
+                    style="margin-top: 0.5rem; padding: 0.6rem; width: 100%; border: 2px solid #111; border-radius: 8px;"
+                >
+            </div>
 
         </form>
 
@@ -152,17 +164,30 @@
         {% endif %}
 
         <div class="footer">
-            Built with <span>Prophet</span> · Django · Plotly ⚡
+            Built with <span>Prophet</span> · Django · ChartJS ⚡
         </div>
     </div>
 
     <script>
         const form = document.getElementById('uploadForm');
         const loading = document.getElementById('loading');
+        const forecastTypeSelect = document.getElementById('forecast_type');
+        const accountNameWrapper = document.getElementById('account_name_wrapper');
 
+        // Show/hide account input when dropdown changes
+        forecastTypeSelect.addEventListener('change', function() {
+            if (this.value === 'account') {
+                accountNameWrapper.style.display = 'block';
+            } else {
+                accountNameWrapper.style.display = 'none';
+            }
+        });
+
+        // Loading animation when form is submitted
         form.addEventListener('submit', () => {
             loading.style.display = 'block';
         });
     </script>
+
 </body>
 </html>

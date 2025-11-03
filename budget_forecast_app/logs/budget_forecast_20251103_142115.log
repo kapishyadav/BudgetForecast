@@ -1,0 +1,4 @@
+2025-11-03 14:21:30 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-11-03 14:21:30 - BudgetForecast - ERROR - Forecasting failed: run_forecast() got multiple values for argument 'forecast_type'
+2025-11-03 14:21:46 - BudgetForecast - INFO - Running forecast with type: ForecastType.MONTHLY
+2025-11-03 14:21:46 - BudgetForecast - ERROR - Forecasting failed: run_forecast() got multiple values for argument 'forecast_type'

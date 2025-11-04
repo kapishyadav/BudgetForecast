@@ -7,12 +7,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg: #f8f8f8;
-            --primary: #111;
-            --accent: #ff4081;
+            --bg: #fdf9f5;                  /* light coffee cream */
+            --primary: #4b2e05;             /* deep espresso */
+            --accent: #a37448;              /* medium roast */
+            --light-accent: #d6bfa7;        /* latte tone */
             --radius: 16px;
-            --shadow: 6px 6px 0 var(--primary);
-            --transition: all 0.2s ease;
+            --shadow: 5px 5px 0 var(--primary);
+            --transition: all 0.25s ease-in-out;
         }
 
         body {
@@ -20,6 +21,7 @@
             background: var(--bg);
             margin: 0;
             padding: 2rem;
+            color: var(--primary);
         }
 
         .container {
@@ -27,6 +29,7 @@
             margin: 0 auto;
         }
 
+        /* ============ HEADER ============ */
         .header {
             text-align: center;
             margin-bottom: 2rem;
@@ -38,35 +41,31 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--accent), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .header p {
-            color: #444;
+            color: #6b4a2b;
             font-size: 1rem;
+            margin: 0.3rem 0;
         }
 
-        .account-name {
+        .account-name, .service-name {
             margin-top: 0.5rem;
             font-weight: 600;
             color: var(--accent);
         }
 
-        .account-name span {
-            color: var(--primary);
-        }
-
-        .service-name {
-            margin-top: 0.5rem;
-            font-weight: 600;
-            color: var(--accent);
-        }
-
+        .account-name span,
         .service-name span {
             color: var(--primary);
         }
 
+        /* ============ CARDS ============ */
         .card {
-            background: #fff;
+            background: #fffdfa;
             border: 3px solid var(--primary);
             border-radius: var(--radius);
             box-shadow: var(--shadow);
@@ -76,9 +75,10 @@
 
         .card:hover {
             transform: translate(-4px, -4px);
-            box-shadow: 8px 8px 0 var(--primary);
+            box-shadow: 7px 7px 0 var(--accent);
         }
 
+        /* ============ METRICS ============ */
         .metrics {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -87,7 +87,7 @@
         }
 
         .metric {
-            background: #fff;
+            background: #fefaf6;
             border: 3px solid var(--primary);
             border-radius: var(--radius);
             box-shadow: var(--shadow);
@@ -98,12 +98,12 @@
 
         .metric:hover {
             transform: translate(-3px, -3px);
-            box-shadow: 8px 8px 0 var(--accent);
+            box-shadow: 7px 7px 0 var(--accent);
         }
 
         .metric h3 {
             font-size: 0.95rem;
-            color: #444;
+            color: #6b4a2b;
             text-transform: uppercase;
             margin-bottom: 0.5rem;
         }
@@ -115,14 +115,16 @@
             margin: 0;
         }
 
+        /* ============ PLOT SECTION ============ */
         .plot {
             border: 3px solid var(--primary);
             border-radius: var(--radius);
             box-shadow: var(--shadow);
-            background: #fff;
+            background: #fffdfa;
             padding: 1rem;
         }
 
+        /* ============ BUTTONS ============ */
         .button {
             margin-top: 2rem;
             text-align: center;
@@ -131,9 +133,9 @@
         .button a {
             display: inline-block;
             background: var(--accent);
-            color: #fff;
+            color: #fffdfa;
             text-decoration: none;
-            padding: 0.8rem 2rem;
+            padding: 0.9rem 2rem;
             font-weight: 600;
             border: 3px solid var(--primary);
             border-radius: var(--radius);
@@ -143,22 +145,25 @@
 
         .button a:hover {
             background: var(--primary);
-            color: #fff;
-            box-shadow: 8px 8px 0 var(--accent);
-            transform: translate(-4px, -4px);
+            color: #fffdfa;
+            box-shadow: 7px 7px 0 var(--accent);
+            transform: translate(-3px, -3px);
         }
 
+        /* ============ FOOTER ============ */
         footer {
             margin-top: 3rem;
             text-align: center;
             font-size: 0.85rem;
-            color: #444;
+            color: #6b4a2b;
         }
 
         footer span {
             color: var(--accent);
+            font-weight: 600;
         }
     </style>
+
 </head>
 <body>
     <div class="container">
@@ -202,7 +207,7 @@
 
         <!-- Download CSV Button -->
         <div class="button">
-            <a href="{% url 'download_csv' csv_filename %}">⬇️ Download Forecast CSV</a>
+            <a href="{% url 'download_csv' %}">⬇️ Download Forecast CSV</a>
         </div>
 
         <footer>

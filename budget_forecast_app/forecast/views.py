@@ -19,11 +19,23 @@ logger = setup_logging()
 def upload_file(request):
     """Renders the upload form and handles forecast display."""
     if request.method == "POST" and request.FILES.get("dataset"):
+
+        # Clear any old session data to avoid stale suggestions
+        for key in ["csv_base_filename", "uploaded_file_path"]:
+            if key in request.session:
+                del request.session[key]
+
+
         file = request.FILES["dataset"]
         # forecast_type = request.POST.get("forecast_type", "monthly")  # default to monthly
         fs = FileSystemStorage()
         filename = fs.save(file.name, file)
         file_path = fs.path(filename)
+
+        # Make sure it's stored in session right away
+        request.session["csv_base_filename"] = filename
+        request.session["uploaded_file_path"] = file_path
+        request.session.modified = True
 
         # Safely convert to enum
         selected_type = request.POST.get("forecast_type", "monthly")
@@ -79,6 +91,14 @@ def upload_file(request):
 
             forecast_df.to_csv(csv_path, index=False)
 
+            # Store the forecast data in session for later CSV download
+            request.session['forecast_csv'] = forecast_df.to_csv(index=False)
+            request.session['csv_base_filename'] = filename  # original uploaded file name
+            request.session['forecast_type'] = forecast_type.value if hasattr(forecast_type, "value") else str(
+                forecast_type)
+            request.session['account_name'] = account_name
+            request.session['service_name'] = service_name
+
             logger.info(f"DEBUG result keys: {list(result.keys())}")
             logger.info(f"DEBUG metrics: {result.get('metrics')}")
 
@@ -96,15 +116,89 @@ def upload_file(request):
 
     return render(request, "forecast/upload.html")
 
-def download_forecast_csv(request, filename):
-    # Forecasts are stored under /forecasts/<forecast_type>/<filename>
-    forecast_type = filename.split("-")[1]  # e.g., "monthly" from "monthly-20251102_190900.csv"
-    csv_path = os.path.join("forecasts", forecast_type, filename)
+def get_suggestions(request):
+    query = request.GET.get("q", "").strip().lower()
+    field = request.GET.get("field")  # 'account' or 'service'
 
-    if not os.path.exists(csv_path):
-        return HttpResponse("Forecast CSV not found.", status=404)
+    filename = request.session.get("csv_base_filename")
+    if not filename:
+        print("❌ No file found in session — likely no upload in this session.")
+        # Try to get the most recently uploaded file (as fallback)
+        fs = FileSystemStorage()
+        files = sorted(fs.listdir(fs.location)[1], key=lambda f: os.path.getctime(os.path.join(fs.location, f)),
+                       reverse=True)
+        if files:
+            filename = files[0]
+            print(f"⚠️ Using fallback file: {filename}")
+            request.session["csv_base_filename"] = filename
+        else:
+            return JsonResponse({"suggestions": []})
 
-    return FileResponse(open(csv_path, "rb"), as_attachment=True, filename=filename)
+    fs = FileSystemStorage()
+    file_path = fs.path(filename)
+
+    if not os.path.exists(file_path):
+        print(f"❌ File not found: {file_path}")
+        return JsonResponse({"suggestions": []})
+
+    try:
+        df = pd.read_csv(file_path)
+        print(f"✅ Loaded file with columns: {list(df.columns)}")
+
+        if field == "account":
+            col_name = "accountName"
+        elif field == "service":
+            col_name = "serviceName"
+        else:
+            return JsonResponse({"error": "Invalid field"}, status=400)
+
+        if col_name not in df.columns:
+            print(f"❌ Column {col_name} not found in CSV.")
+            return JsonResponse({"suggestions": []})
+
+        unique_vals = df[col_name].dropna().unique().tolist()
+        matches = [v for v in unique_vals if query in str(v).lower()]
+        print(f"🔍 Query='{query}' found {len(matches)} matches: {matches[:5]}")
+        print(f"🧪 First 5 accountName values: {df['accountName'].dropna().unique()[:5]}")
+
+        return JsonResponse({"suggestions": matches[:10]})
+
+    except Exception as e:
+        print(f"ERROR in get_suggestions: {e}")
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+def download_forecast_csv(request):
+    """Return the forecast CSV stored in session as a downloadable file."""
+    csv_data = request.session.get("forecast_csv")
+    if not csv_data:
+        return HttpResponse("No forecast data available. Please generate a forecast first.", status=404)
+
+    base_filename = request.session.get("csv_base_filename", "forecast")
+    account_name = request.session.get("account_name", "")
+    service_name = request.session.get("service_name", "")
+    forecast_type = request.session.get("forecast_type", "monthly")
+
+    # Strip the .csv extension if present
+    base_filename = os.path.splitext(base_filename)[0]
+
+    # Clean up names (remove spaces, lower-case)
+    def clean(name): return name.strip().replace(" ", "_").lower() if name else ""
+
+    account_name = clean(account_name)
+    service_name = clean(service_name)
+
+    # Construct filename based on conditions
+    if account_name and service_name:
+        filename = f"{base_filename}-forecasts-{account_name}-{service_name}.csv"
+    elif account_name:
+        filename = f"{base_filename}-forecasts-{account_name}.csv"
+    else:
+        filename = f"{base_filename}-forecasts-{forecast_type}-aggregate.csv"
+
+    response = HttpResponse(csv_data, content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
 
 
 def dashboard_view(request):

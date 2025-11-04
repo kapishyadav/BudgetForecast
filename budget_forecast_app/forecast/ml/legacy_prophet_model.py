@@ -41,6 +41,12 @@ def forecast_monthly_spend(data, logger):
     y_true = forecast_eval['y'].values
     y_pred = forecast_eval['yhat'].values
 
+    # --- Standard deviation and variance ---
+    y_std = np.std(y_true, ddof=1)        # sample standard deviation
+    y_var = np.var(y_true, ddof=1)
+    y_pred_std = np.std(y_pred, ddof=1)
+    y_pred_var = np.var(y_pred, ddof=1)
+
     mse = mean_squared_error(y_true, y_pred)
     rmse = np.sqrt(mse)
     mae = mean_absolute_error(y_true, y_pred)
@@ -50,7 +56,11 @@ def forecast_monthly_spend(data, logger):
         "RMSE": round(rmse, 2),
         "MAE": round(mae, 2),
         "MSE": round(mse, 2),
-        "MAPE (%)": round(mape, 2)
+        "MAPE (%)": round(mape, 2),
+        "Y Std Dev": round(y_std, 2),
+        "Y Variance": round(y_var, 2),
+        "Y_Pred Std Dev": round(y_pred_std, 2),
+        "Y_Pred Variance": round(y_pred_var, 2),
     }
 
     if logger:

@@ -134,6 +134,15 @@
             50% { opacity: 0.4; }
         }
     </style>
+    <!-- ✅ Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- ✅ jQuery (required by Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- ✅ Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 </head>
 <body>
     <div class="card">
@@ -156,24 +165,18 @@
 
             <!-- Hidden by default -->
             <div id="account_name_wrapper" style="display: none; margin-top: 1rem;">
-                <label for="account_name">Enter Account Name</label>
-                <input
-                    type="text"
-                    id="account_name"
-                    name="account_name"
-                    placeholder="e.g. ecs-aws-gbl-services-develop"
-                >
+                <label for="account_name">Select Account Name</label>
+                <select id="account_name" name="account_name" style="width: 100%;">
+                    <!-- Options will be loaded dynamically -->
+                </select>
             </div>
 
             <!-- Hidden by default -->
             <div id="service_name_wrapper" style="display: none; margin-top: 1rem;">
-                <label for="service_name">Enter Service Name</label>
-                <input
-                    type="text"
-                    id="service_name"
-                    name="service_name"
-                    placeholder="e.g. AWS CloudWatch"
-                >
+                <label for="service_name">Select Service Name</label>
+                <select id="service_name" name="service_name" style="width: 100%;">
+                    <!-- Options will be loaded dynamically -->
+                </select>
             </div>
 
         </form>
@@ -194,7 +197,11 @@
         const accountNameWrapper = document.getElementById('account_name_wrapper');
         const serviceNameWrapper = document.getElementById('service_name_wrapper');
 
-        // Show/hide account input when dropdown changes
+        // Hide dropdowns initially
+        accountNameWrapper.style.display = 'none';
+        serviceNameWrapper.style.display = 'none';
+
+        // Show/hide account & service inputs based on forecast type
         forecastTypeSelect.addEventListener('change', function() {
             const type = this.value;
 
@@ -208,13 +215,84 @@
                 accountNameWrapper.style.display = 'none';
                 serviceNameWrapper.style.display = 'none';
             }
+
+            // Initialize Select2 when dropdown becomes visible
+            initializeSelect2();
         });
 
         // Loading animation when form is submitted
-        form.addEventListener('submit', () => {
+        form.addEventListener('submit', (e) => {
             loading.style.display = 'block';
+
+            // Wait a short moment to ensure Django session is updated
+            setTimeout(() => {
+                initializeSelect2();
+            }, 1500); // enough for session save
         });
+
+        // --- Function to initialize Select2 dynamically ---
+        function initializeSelect2() {
+            console.log("🔁 Initializing Select2 with latest file data...");
+
+            // Destroy previous instances (to avoid duplicate bindings)
+            if ($('#account_name').data('select2')) {
+                $('#account_name').select2('destroy');
+            }
+            if ($('#service_name').data('select2')) {
+                $('#service_name').select2('destroy');
+            }
+
+            // Initialize Select2 for Account Name
+            $('#account_name').select2({
+                placeholder: 'Search or select an account...',
+                minimumInputLength: 1,
+                width: '100%',
+                ajax: {
+                    url: '/get_suggestions/',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term,
+                            field: 'account'
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: (data.suggestions || []).map(item => ({ id: item, text: item }))
+                        };
+                    },
+                    cache: false
+                }
+            });
+
+            // Initialize Select2 for Service Name
+            $('#service_name').select2({
+                placeholder: 'Search or select a service...',
+                minimumInputLength: 1,
+                width: '100%',
+                ajax: {
+                    url: '/get_suggestions/',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term,
+                            field: 'service'
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: (data.suggestions || []).map(item => ({ id: item, text: item }))
+                        };
+                    },
+                    cache: false
+                }
+            });
+        }
     </script>
+
+
 
 </body>
 </html>

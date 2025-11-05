@@ -1,50 +1,78 @@
 # Budget Forecasting Model
 
-A comprehensive machine learning system for predicting budget spending using advanced time series forecasting techniques. This project implements multiple models with hyperparameter optimization to provide accurate budget predictions for financial planning and analysis.
+
+A full-stack **time series forecasting platform** for predicting cloud infrastructure expenses using **Prophet**.  
+It provides an interactive **Django + Chart.js dashboard** to visualize forecasts, manage uploaded data, and analyze metrics intuitively.
 
 ### Running the Main Script
 ```bash
 # Install dependencies
 pip install -r requirements.txt
 
-# Run with plotly visualizations
-#Example 1:
-python src/legacy_models.py --train true --optimizer bayesian --model catboost
-
-#Example 2:
-python src/legacy_models.py --train false --optimizer gridSearch --model linearRegression
+# Run Server to open localhost site
+#Navigate to /BudgetForecast/budget_forecast_app and run
+python manage.py runserver 
 ```
 
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Project Structure](#project-structure)
-- [Installation](#installation)
-- [Data Requirements](#data-requirements)
-- [Usage](#usage)
-- [Models](#models)
-- [Optimization Techniques](#optimization-techniques)
-- [Visualization Features](#visualization-features)
-- [Model Evaluation](#model-evaluation)
-- [Future Predictions](#future-predictions)
-- [Configuration Options](#configuration-options)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
-
 ## 🎯 Overview
+This application enables users to:
+- Upload cloud cost data (e.g., AWS, GCP, Azure).
+- Run forecasting pipelines using Prophet model.
+- Visualize budget forecasts using **interactive Chart.js** plots.
+- Filter forecasts by **Account Name** or **Service Name** dynamically.
+- View key metrics and download forecast results as CSV files.
 
-The Budget Forecasting Model is designed to predict future spending patterns based on historical financial data. It employs sophisticated machine learning algorithms with time series analysis capabilities to provide accurate forecasts for budget planning and financial decision-making.
 
-The system supports multiple model types and optimization strategies, allowing users to choose the most appropriate approach for their specific use case. It includes comprehensive evaluation metrics, visualization tools, and automated model management features.
+## ️ Detailed Flow Explanation
 
-## ✨ Features
+### User Uploads a File
+
+- The user navigates to the **Upload Page** (`upload.html`).
+- They select the **Account Name** and **Service Name** from dynamic dropdowns.
+- Upon clicking **Upload**, the CSV file is sent via an HTTP **POST** request.
+
+---
+
+###  Django Handles the Request
+
+- The request is routed through `forecast/urls.py` → handled by the `upload_forecast` view in `forecast/views.py`.
+- The uploaded file is saved under the `/data/` directory for persistence.
+
+---
+
+###  Machine Learning Pipeline Invoked
+
+- The backend invokes the core forecasting logic in `forecast/ml/main.py`.
+
+#### The pipeline performs the following steps:
+1. Reads the uploaded CSV.
+2. Cleans and transforms data using `data_transformations.py`.
+3. Loads the selected forecasting model (`prophet_model.py`, `legacy_models.py`, etc.).
+4. Generates **future predictions**.
+
+---
+
+###  Result Visualization
+
+- Predictions and metrics (**MAE**, **RMSE**, etc.) are prepared and serialized.
+- The backend sends the results as **JSON** data to the frontend.
+- The **Dashboard Page** (`dashboard.html`) dynamically renders charts via **Chart.js**.
+
+---
+
+### Interactive Updates
+
+Users can:
+- Switch between **Account** or **Service** forecasts dynamically.
+- Upload new CSVs to refresh predictions.
+
+Each new upload automatically triggers the entire forecasting pipeline.
+
+
+## Features
 
 ### Core Functionality
-- **Multi-Model Support**: CatBoost and Linear Regression models
-- **Advanced Optimization**: Bayesian optimization and Grid Search techniques
-- **Time Series Analysis**: Lag features and rolling statistics
+- **Prophet Support**
 - **Automated Model Management**: Version control and cleanup
 - **Comprehensive Evaluation**: Multiple performance metrics
 - **Rich Visualizations**: Interactive plots and comparisons
@@ -62,24 +90,77 @@ The system supports multiple model types and optimization strategies, allowing u
 
 ```
 BudgetForecast/
-├── README.md                           # Project documentation
-├── actual_detail_2025-08-14.csv       # Input dataset
-├── src/
-│   ├── main.py                        # Main execution script
-│   └── data_exploration.py            # Data analysis utilities
-├── models/                            # Trained model storage
-│   ├── catboost/                      # CatBoost model files
-│   └── linear_regression/             # Linear Regression models
-├── plots/                             # Generated visualizations
-│   ├── spend/                         # Spending analysis plots
-│   └── *.png                          # Model comparison plots
-└── catboost_info/                     # CatBoost training logs
+├── README.md                            # Project documentation
+├── requirements.txt                     # Python dependencies
+│
+├── data/                                # Data directory for input CSV files
+│   ├── Forecast Data July 2022.csv
+│   └── actual_detail_2025-08-14.csv
+│
+│
+├── plots/                               # Generated visualizations and reports
+│   ├── future_predictions.html           # ChartJS future forecast output
+│   ├── monthly_comparison_bar.html       # Monthly comparison (bar chart)
+│   ├── monthly_comparison_line.html      # Monthly comparison (line chart)
+│   └── spend/html/                       # Detailed spend analysis reports
+│       ├── 01_monthly_total_spend_trend.html
+│       ├── 02_monthly_average_spend_trend.html
+│       ├── 03_monthly_record_count.html
+│       ├── ...
+│       └── 18_monthly_spend_trend_by_region.html
+│
+│
+├── budget_forecast_app/                 # Django application root
+│   ├── db.sqlite3                       # SQLite database for development
+│   ├── actual_detail_2025-08-14.csv     # Example input dataset
+│   ├── manage.py                        # Django management script
+│
+│   ├── budget_forecast_app/             # Django project configuration
+│   │   ├── __init__.py
+│   │   ├── settings.py                  # Django settings (integrates ML & frontend)
+│   │   ├── urls.py                      # Project-level URL routing
+│   │   ├── asgi.py                      # ASGI entry point
+│   │   └── wsgi.py                      # WSGI entry point
+│
+│   ├── forecast/                        # Main forecasting app
+│   │   ├── admin.py                     # Django admin integration
+│   │   ├── apps.py                      # App configuration
+│   │   ├── models.py                    # (Optional) ORM models if used
+│   │   ├── urls.py                      # URL routing for app views
+│   │   ├── views.py                     # Handles dashboard, upload, and forecasting logic
+│   │   ├── tests.py                     # Unit tests for the forecasting module
+│   │
+│   │   ├── ml/                          # Machine Learning pipeline modules
+│   │   │   ├── main.py                  # Entry point for training & forecasting logic
+│   │   │   ├── legacy_models.py         # Older ML implementations (CatBoost, LR)
+│   │   │   ├── legacy_prophet_model.py  # Legacy Prophet-based model for time series
+│   │   │   ├── prophet_model.py         # Updated Prophet-based forecasting module
+│   │   │   ├── data_exploration.py      # Exploratory data analysis utilities
+│   │   │   ├── enums.py                 # Enum definitions for forecast types
+│   │   │   ├── utils/                   # Utility scripts
+│   │   │   │   ├── data_transformations.py  # Data preprocessing and feature engineering
+│   │   │   │   └── setup_logging.py         # Logging configuration
+│   │   │   ├── models/                  # Trained models for CatBoost, Linear Regression
+│   │   │   │   ├── catboost/
+│   │   │   │   └── linear_regression/
+│   │   │   └── catboost_info/           # Local CatBoost logs within app context
+│   │
+│   │   ├── templates/forecast/          # Frontend templates
+│   │   │   ├── dashboard.html           # Main dashboard (ChartJS plots + metrics)
+│   │   │   └── upload.html              # File upload interface for new datasets
+│   │
+│   │   └── migrations/                  # Django migrations for the app
+│   │       └── __init__.py
+│
+└── __pycache__/                         # Cached Python files (auto-generated)
+
 ```
 
 ## 🚀 Installation
 
 ### Prerequisites
 - Python 3.8 or higher
+- Django 4.2.25
 - pip package manager
 - Sufficient disk space for model storage
 
@@ -88,7 +169,7 @@ The project requires the following Python packages:
 - pandas: Data manipulation and analysis
 - numpy: Numerical computing
 - scikit-learn: Machine learning algorithms
-- catboost: Gradient boosting framework
+- Django : Web framework
 - optuna: Hyperparameter optimization
 - matplotlib: Data visualization
 - joblib: Model serialization
@@ -120,125 +201,9 @@ The system expects a CSV file with the following structure:
 The system automatically performs the following preprocessing steps:
 - Converts date columns to datetime format
 - Extracts year and month components
-- Converts categorical columns to appropriate data types
-- Creates lag features for time series analysis
-- Generates rolling statistics for additional signals
 - Handles missing values appropriately
 
-## 🎮 Usage
 
-### Command Line Interface
-The main script supports command-line arguments for flexible execution:
-
-**Basic Usage:**
-- Load existing models and run evaluation
-- Train new models with specified optimization
-- Compare different model types
-- Generate future predictions
-
-**Argument Options:**
-- **train**: Boolean flag to control training vs loading
-- **optimizer**: Choice between Bayesian and Grid Search optimization
-- **model**: Selection between CatBoost and Linear Regression
-
-### Execution Examples
-- Load existing CatBoost model with Bayesian optimization
-- Train new Linear Regression model
-- Compare CatBoost vs Linear Regression performance
-- Generate 24-month future predictions
-
-### Interactive Mode
-The system provides detailed progress information during execution:
-- Data preprocessing status
-- Model training progress
-- Optimization trial results
-- Evaluation metrics display
-- Visualization generation status
-
-## 🤖 Models
-
-### CatBoost Model
-**Description**: Gradient boosting framework optimized for categorical features
-**Strengths**: 
-- Handles categorical variables natively
-- Robust to overfitting
-- Excellent performance on structured data
-- Built-in feature importance analysis
-
-**Configuration**:
-- Loss function: RMSE (Root Mean Square Error)
-- Random seed: 42 (for reproducibility)
-- Iterations: 1000 (configurable)
-- Verbose output for monitoring
-
-**Hyperparameters**:
-- Tree depth: 4-10 (optimizable)
-- Learning rate: 0.01-0.1 (log scale)
-- L2 regularization: 1-10
-- Bagging temperature: 0.0-1.0
-
-### Linear Regression Model
-**Description**: Traditional linear regression with feature engineering
-**Strengths**:
-- Interpretable results
-- Fast training and prediction
-- Good baseline performance
-- Feature importance through coefficients
-
-**Configuration**:
-- One-hot encoding for categorical variables
-- Standard scaling for numerical features
-- Ridge regularization support
-- Cross-validation for model selection
-
-**Preprocessing**:
-- Automatic categorical encoding
-- Feature scaling and normalization
-- Missing value imputation
-- Dimensionality management
-
-## 🔧 Optimization Techniques
-
-### Bayesian Optimization (Optuna)
-**Method**: Sequential model-based optimization
-**Advantages**:
-- Efficient hyperparameter search
-- Intelligent trial selection
-- Parallel optimization support
-- Early stopping capabilities
-
-**Configuration**:
-- Number of trials: 50 (configurable)
-- Optimization direction: Minimize RMSE
-- Study creation: In-memory storage
-- Trial timeout: Automatic handling
-
-**Search Space**:
-- Tree depth: Integer range 4-10
-- Learning rate: Float range 0.01-0.1 (log scale)
-- L2 regularization: Integer range 1-10
-- Bagging temperature: Float range 0.0-1.0
-
-### Grid Search Optimization
-**Method**: Exhaustive parameter search
-**Advantages**:
-- Guaranteed optimal solution within grid
-- Systematic parameter exploration
-- Reproducible results
-- Comprehensive coverage
-
-**Configuration**:
-- Cross-validation folds: 3
-- Parameter grid: Predefined combinations
-- Evaluation metric: RMSE
-- Parallel processing support
-
-**Search Space**:
-- Tree depth: [3, 6, 8, 10, 12]
-- Learning rate: [0.01, 0.05, 0.1]
-- Iterations: [200, 500, 800, 1000]
-- Bootstrap type: ['Bayesian', 'Bernoulli']
-- L2 regularization: [1, 3, 5]
 
 ## 📈 Visualization Features
 

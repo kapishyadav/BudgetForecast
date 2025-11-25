@@ -13,8 +13,11 @@ import plotly.io as pio
 import json
 import os
 import pandas as pd
+import traceback
+from pathlib import Path
 
 logger = setup_logging()
+
 
 def upload_file(request):
     """Renders the upload form and handles forecast display."""
@@ -25,12 +28,13 @@ def upload_file(request):
             if key in request.session:
                 del request.session[key]
 
-
         file = request.FILES["dataset"]
         # forecast_type = request.POST.get("forecast_type", "monthly")  # default to monthly
         fs = FileSystemStorage()
         filename = fs.save(file.name, file)
         file_path = fs.path(filename)
+        logger.info(f"DEBUG select filename from POST: {filename}")
+        logger.info(f"DEBUG select filename from POST: {file_path}")
 
         # Make sure it's stored in session right away
         request.session["csv_base_filename"] = filename
@@ -53,6 +57,29 @@ def upload_file(request):
 
         try:
             logger.info(f"Running forecast with type: {forecast_type}")
+            forecast_type_str = forecast_type.value if hasattr(forecast_type, "value") else str(forecast_type)
+            # Save CSV file
+            # output_dir = Path("forecasts_results")
+            # output_dir.mkdir(parents=True, exist_ok=True)
+
+            # Strip .csv from filename if present
+            # base_filename = Path(filename).stem
+
+            # Get current timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+            # Create CSV filename
+            # csv_file_name = f"{base_filename}-{forecast_type_str}-{timestamp}.csv"
+
+            # csv_path = output_dir / forecast_type_str
+            # csv_path.mkdir(parents=True, exist_ok=True)
+
+            # full_csv_path = csv_path / csv_file_name
+
+            logger.info(f"DEBUG forecast_type_str: {forecast_type_str}")
+            # logger.info(f"DEBUG output_dir : {output_dir}")
+            # logger.info(f"DEBUG csv_path : {csv_path}")
+            # logger.info(f"DEBUG full_csv_path : {full_csv_path}")
 
             # "Method overloading" behavior via kwargs
             kwargs = {}
@@ -71,28 +98,27 @@ def upload_file(request):
 
             forecast_df = result["forecast"]
 
-
-            # Create timestamped filename
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            csv_file_name = f"{filename}-{forecast_type}-{timestamp}.csv"
-
-            # Save CSV file
-            forecast_type_str = forecast_type.value if hasattr(forecast_type, "value") else str(forecast_type)
-            output_dir = os.path.join("forecasts", forecast_type_str)
-            os.makedirs(output_dir, exist_ok=True)
-            csv_path = os.path.join(output_dir, csv_file_name)
-
-            logger.info(f"Saved forecast CSV: {csv_path}")
-
             # Convert forecast dataframe to JSON for Chart.js
             forecast_json = forecast_df.to_json(orient="records", date_format="iso")
 
             logger.info("Successfully converted forecast data for Chart.js")
 
-            forecast_df.to_csv(csv_path, index=False)
+            # if not os.path.exists(csv_path):
+            #     logger.error(f"File does not exist at expected path: {csv_path}")
+            # else:
+            #     logger.info("File exists and is ready for access.")
+
+            # logger.info(f"CSV filename repr: {repr(csv_file_name)}")
+
+            # logger.info(f"DEBUG Forecast DF length: {len(forecast_df)}")
+            # forecast_df.to_csv(full_csv_path, index=False)
+            # logger.info(f"DEBUG Forecast CSV saved at: {full_csv_path}")
+            # assert os.path.exists(full_csv_path), f"File not found after saving: {csv_path}"
+            # logger.error(traceback.format_exc())
 
             # Store the forecast data in session for later CSV download
-            request.session['forecast_csv'] = forecast_df.to_csv(index=False)
+            request.session['forecast_csv_json'] = forecast_df.to_json(orient="records", date_format="iso")
+
             request.session['csv_base_filename'] = filename  # original uploaded file name
             request.session['forecast_type'] = forecast_type.value if hasattr(forecast_type, "value") else str(
                 forecast_type)
@@ -100,21 +126,22 @@ def upload_file(request):
             request.session['service_name'] = service_name
 
             logger.info(f"DEBUG result keys: {list(result.keys())}")
-            logger.info(f"DEBUG metrics: {result.get('metrics')}")
+            # logger.info(f"DEBUG metrics: {result.get('metrics')}")
 
             return render(request, "forecast/dashboard.html", {
-                "metrics": result["metrics"],
+                # "metrics": result["metrics"],
                 "forecast_data": forecast_json,
                 "forecast_type": forecast_type.value if hasattr(forecast_type, "value") else forecast_type,
-                "csv_filename": csv_file_name,
+                # "csv_filename": csv_file_name,
                 "account_name": account_name if forecast_type in [ForecastType.ACCOUNT, ForecastType.SERVICE] else None,
                 "service_name": service_name if forecast_type == ForecastType.SERVICE else None,
             })
         except Exception as e:
-            logger.error(f"Forecasting failed: {e}")
+            logger.error(f"Forecasting failed in views: {e}")
             return render(request, "forecast/upload.html", {"error": str(e)})
 
     return render(request, "forecast/upload.html")
+
 
 def get_suggestions(request):
     query = request.GET.get("q", "").strip().lower()
@@ -170,7 +197,12 @@ def get_suggestions(request):
 
 def download_forecast_csv(request):
     """Return the forecast CSV stored in session as a downloadable file."""
-    csv_data = request.session.get("forecast_csv")
+    csv_data = request.session.get("forecast_csv_json")
+    forecast_df = pd.read_json(csv_data, orient="records")
+
+    # Convert DataFrame to CSV string
+    csv_string = forecast_df.to_csv(index=False)
+
     if not csv_data:
         return HttpResponse("No forecast data available. Please generate a forecast first.", status=404)
 
@@ -183,7 +215,8 @@ def download_forecast_csv(request):
     base_filename = os.path.splitext(base_filename)[0]
 
     # Clean up names (remove spaces, lower-case)
-    def clean(name): return name.strip().replace(" ", "_").lower() if name else ""
+    def clean(name):
+        return name.strip().replace(" ", "_").lower() if name else ""
 
     account_name = clean(account_name)
     service_name = clean(service_name)
@@ -196,7 +229,9 @@ def download_forecast_csv(request):
     else:
         filename = f"{base_filename}-forecasts-{forecast_type}-aggregate.csv"
 
-    response = HttpResponse(csv_data, content_type="text/csv")
+    forecast_df.to_csv(filename, index=False)
+
+    response = HttpResponse(csv_string, content_type="text/csv")
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
 
@@ -242,4 +277,3 @@ def forecast_api(request):
             return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
     return JsonResponse({"status": "error", "message": "No dataset uploaded"}, status=400)
-

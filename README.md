@@ -7,6 +7,13 @@ It provides an interactive **Django + Chart.js dashboard** to visualize forecast
 ### Running the Main Script
 ```bash
 # Install dependencies
+
+# Create virutal environment (Optional)
+pip install pipenv
+
+#Enter virtual env (Optional) (cd /path/to/your/project)
+pipenv shell
+
 pip install -r requirements.txt
 
 # Run Server to open localhost site

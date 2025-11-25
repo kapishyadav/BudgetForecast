@@ -48,10 +48,14 @@ def run_forecast(csv_path: str,
         if forecast_type == ForecastType.ACCOUNT:
             if not account_name:
                 raise ValueError("Account name must be provided for account-level forecast.")
-            forecast_df, metrics = run_prophet_forecast(csv_path,
-                                                        forecast_type,
-                                                        logger,
-                                                        account_name)
+            # forecast_df, metrics = run_prophet_forecast(csv_path,
+            #                                             forecast_type,
+            #                                             logger,
+            #                                             account_name)
+            forecast_df = run_prophet_forecast(csv_path,
+                                                forecast_type,
+                                                logger,
+                                                account_name)
 
         elif forecast_type == ForecastType.MONTHLY:
             forecast_df, metrics = run_prophet_forecast(csv_path, forecast_type, logger)
@@ -71,9 +75,9 @@ def run_forecast(csv_path: str,
 
         return {
             "forecast": forecast_df,
-            "metrics": metrics,
+            # "metrics": metrics,
         }
 
     except Exception as e:
-        logger.error(f"Forecasting failed: {e}")
+        logger.error(f"Forecasting failed in main : {e}")
         raise

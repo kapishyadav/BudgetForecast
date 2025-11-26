@@ -46,6 +46,7 @@ def upload_file(request):
         logger.info(f"DEBUG selected_type from POST: {selected_type}")
         try:
             forecast_type = ForecastType(selected_type)
+
         except ValueError:
             forecast_type = ForecastType.MONTHLY
 
@@ -54,6 +55,17 @@ def upload_file(request):
 
         # Optional service name input
         service_name = request.POST.get("service_name", "").strip()
+
+        # Optional bu code input
+        bu_code_raw = request.POST.get("bu_code", "").strip()
+        logger.info(f"DEBUG bu_code_raw: {bu_code_raw}")
+        logger.info(f"DEBUG bu_code_raw type: {type(bu_code_raw)}")
+        bu_code = int(bu_code_raw)
+        logger.info(f"DEBUG bu_code type: {type(bu_code)}")
+
+
+        # Optional segment name input
+        segment_name = request.POST.get("segment_name", "").strip()
 
         try:
             logger.info(f"Running forecast with type: {forecast_type}")
@@ -94,6 +106,22 @@ def upload_file(request):
                 if account_name:
                     kwargs["account_name"] = account_name
 
+            if forecast_type == ForecastType.BUCODE:
+                if bu_code is not None:
+                    kwargs["bu_code"] = bu_code
+                # if service_name:
+                #     kwargs["service_name"] = service_name
+                # if account_name:
+                #     kwargs["account_name"] = account_name
+
+            if forecast_type == ForecastType.SEGMENT:
+                if segment_name:
+                    kwargs["segment_name"] = segment_name
+                if service_name:
+                    kwargs["service_name"] = service_name
+                if account_name:
+                    kwargs["account_name"] = account_name
+
             result = run_forecast(file_path, forecast_type, **kwargs)
 
             forecast_df = result["forecast"]
@@ -124,6 +152,8 @@ def upload_file(request):
                 forecast_type)
             request.session['account_name'] = account_name
             request.session['service_name'] = service_name
+            request.session['bu_code'] = bu_code
+            request.session['segment_name'] = segment_name
 
             logger.info(f"DEBUG result keys: {list(result.keys())}")
             # logger.info(f"DEBUG metrics: {result.get('metrics')}")
@@ -135,6 +165,8 @@ def upload_file(request):
                 # "csv_filename": csv_file_name,
                 "account_name": account_name if forecast_type in [ForecastType.ACCOUNT, ForecastType.SERVICE] else None,
                 "service_name": service_name if forecast_type == ForecastType.SERVICE else None,
+                "bu_code": bu_code if forecast_type == ForecastType.BUCODE else None,
+                "segment_name": segment_name if forecast_type == ForecastType.SEGMENT else None,
             })
         except Exception as e:
             logger.error(f"Forecasting failed in views: {e}")
@@ -145,7 +177,7 @@ def upload_file(request):
 
 def get_suggestions(request):
     query = request.GET.get("q", "").strip().lower()
-    field = request.GET.get("field")  # 'account' or 'service'
+    field = request.GET.get("field")  # 'account', 'service', 'bucode', 'segment'
 
     filename = request.session.get("csv_base_filename")
     if not filename:
@@ -176,6 +208,10 @@ def get_suggestions(request):
             col_name = "accountName"
         elif field == "service":
             col_name = "serviceName"
+        elif field == "bu_code":
+            col_name = "buCode"
+        elif field == "segment":
+            col_name = "segment"
         else:
             return JsonResponse({"error": "Invalid field"}, status=400)
 

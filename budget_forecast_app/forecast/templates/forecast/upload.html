@@ -152,8 +152,6 @@
         <form id="uploadForm" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="file" name="dataset" accept=".csv" required>
-            <button type="submit">🚀 Run Forecast</button>
-            <div class="loading" id="loading">Running model... please wait ⏳</div>
 
 
             <label for="forecast_type">📊 Select Forecast Type</label><br><br>
@@ -161,6 +159,8 @@
                 <option value="monthly">Forecast by Monthly Aggregate</option>
                 <option value="account">Forecast by Account</option>
                 <option value="service">Forecast by Service</option>
+                <option value="bu_code">Forecast by BU Code</option>
+                <option value="segment">Forecast by Segment</option>
             </select><br><br>
 
             <!-- Hidden by default -->
@@ -179,6 +179,26 @@
                 </select>
             </div>
 
+            <!-- Hidden by default -->
+            <div id="bu_code_wrapper" style="display: none; margin-top: 1rem;">
+                <label for="bu_code">Select BU Code</label>
+                <select id="bu_code" name="bu_code" style="width: 100%;">
+                    <!-- Options will be loaded dynamically -->
+                </select>
+            </div>
+
+            <!-- Hidden by default -->
+            <div id="segment_name_wrapper" style="display: none; margin-top: 1rem;">
+                <label for="segment_name">Select Segment Name</label>
+                <select id="segment_name" name="segment_name" style="width: 100%;">
+                    <!-- Options will be loaded dynamically -->
+                </select>
+            </div>
+
+
+            <button type="submit">🚀 Run Forecast</button>
+            <div class="loading" id="loading">Running model... please wait ⏳</div>
+
         </form>
 
         {% if error %}
@@ -196,10 +216,14 @@
         const forecastTypeSelect = document.getElementById('forecast_type');
         const accountNameWrapper = document.getElementById('account_name_wrapper');
         const serviceNameWrapper = document.getElementById('service_name_wrapper');
+        const buCodeWrapper = document.getElementById('bu_code_wrapper');
+        const segmentNameWrapper = document.getElementById('segment_name_wrapper');
 
         // Hide dropdowns initially
         accountNameWrapper.style.display = 'none';
         serviceNameWrapper.style.display = 'none';
+        buCodeWrapper.style.display = 'none';
+        segmentNameWrapper.style.display = 'none';
 
         // Show/hide account & service inputs based on forecast type
         forecastTypeSelect.addEventListener('change', function() {
@@ -211,9 +235,19 @@
             } else if (type === 'service') {
                 accountNameWrapper.style.display = 'block';
                 serviceNameWrapper.style.display = 'block';
+            } else if (type === 'bu_code') {
+<!--                accountNameWrapper.style.display = 'block';-->
+<!--                serviceNameWrapper.style.display = 'block';-->
+                buCodeWrapper.style.display = 'block';
+            } else if (type === 'segment') {
+                accountNameWrapper.style.display = 'block';
+                serviceNameWrapper.style.display = 'block';
+                segmentNameWrapper.style.display = 'block';
             } else {
                 accountNameWrapper.style.display = 'none';
                 serviceNameWrapper.style.display = 'none';
+                buCodeWrapper.style.display = 'none';
+                segmentNameWrapper.style.display = 'none';
             }
 
             // Initialize Select2 when dropdown becomes visible
@@ -240,6 +274,12 @@
             }
             if ($('#service_name').data('select2')) {
                 $('#service_name').select2('destroy');
+            }
+            if ($('#bu_code').data('select2')) {
+                $('#bu_code').select2('destroy');
+            }
+            if ($('#segment_name').data('select2')) {
+                $('#segment_name').select2('destroy');
             }
 
             // Initialize Select2 for Account Name
@@ -279,6 +319,54 @@
                         return {
                             q: params.term,
                             field: 'service'
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: (data.suggestions || []).map(item => ({ id: item, text: item }))
+                        };
+                    },
+                    cache: false
+                }
+            });
+
+            // Initialize Select2 for BU Code
+            $('#bu_code').select2({
+                placeholder: 'Search or select a bu code...',
+                minimumInputLength: 1,
+                width: '100%',
+                ajax: {
+                    url: '/get_suggestions/',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term,
+                            field: 'bu_code'
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: (data.suggestions || []).map(item => ({ id: item, text: item }))
+                        };
+                    },
+                    cache: false
+                }
+            });
+
+            // Initialize Select2 for Segment Name
+            $('#segment_name').select2({
+                placeholder: 'Search or select a segment...',
+                minimumInputLength: 1,
+                width: '100%',
+                ajax: {
+                    url: '/get_suggestions/',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term,
+                            field: 'segment'
                         };
                     },
                     processResults: function (data) {

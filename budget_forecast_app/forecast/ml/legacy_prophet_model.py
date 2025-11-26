@@ -59,6 +59,10 @@ def forecast_monthly_spend(data, logger, forecast_type):
         monthly_spend = data.groupby(['month', 'accountName'], as_index=False)['spend'].sum()
     elif forecast_type == ForecastType.SERVICE:
         monthly_spend = data.groupby(['month', 'accountName', 'serviceName'], as_index=False)['spend'].sum()
+    elif forecast_type == ForecastType.BUCODE:
+        monthly_spend = data.groupby(['month', 'accountName', 'serviceName', 'buCode'], as_index=False)['spend'].sum()
+    elif forecast_type == ForecastType.SEGMENT:
+        monthly_spend = data.groupby(['month', 'accountName', 'serviceName', 'segment'], as_index=False)['spend'].sum()
     else:
         raise ValueError(f"Unsupported forecast type: {forecast_type}")
 
@@ -241,6 +245,52 @@ def save_forecasts_by_service(data, file, logger, account_name, service_name):
 
     forecast = forecast_monthly_spend(service_data, logger, ForecastType.SERVICE)
     logger.info(f"DEBUG service_data columns : {list(service_data.columns)}")
+
+    return forecast
+
+def save_forecasts_by_bucode(data, file, logger, bu_code):
+    logger.info(f"DEBUG In save_forecasts_by_bucode function with bu_code type:", type(bu_code))
+    # Filter for only that service
+    bu_data = data[data["buCode"] == int(bu_code)].copy()
+
+    # accounts_dict = get_accounts_dict(bu_data, logger, account_name)
+    # account_data = accounts_dict[account_name]
+    #
+    # # check if service_name exists in this account
+    # if service_name not in account_data["serviceName"].unique():
+    #     raise ValueError(f"Service name '{service_name}' not found under account '{account_name}'")
+    #
+    # # Filter for only that service
+    # service_data = account_data[account_data["serviceName"] == service_name].copy()
+    # logger.info(f"Filtered data for only account '{account_name}' : {len(account_data)} rows")
+    # logger.info(f"Filtered data for account '{account_name}' and service '{service_name}': {len(service_data)} rows")
+    logger.info(f"Filtered data for only bu code '{bu_code}' : {len(bu_data)} rows")
+
+    forecast = forecast_monthly_spend(bu_data, logger, ForecastType.BUCODE)
+    logger.info(f"DEBUG bu_data columns : {list(bu_data.columns)}")
+
+    return forecast
+
+def save_forecasts_by_segment(data, file, logger, account_name, service_name, segment_name):
+    # Filter for only that service
+    segment_data = data[data["segment"] == segment_name].copy()
+
+    accounts_dict = get_accounts_dict(segment_data, logger, account_name)
+    account_data = accounts_dict[account_name]
+
+    # check if service_name exists in this account
+    if service_name not in account_data["serviceName"].unique():
+        raise ValueError(f"Service name '{service_name}' not found under account '{account_name}'")
+
+    # Filter for only that service
+    service_data = account_data[account_data["serviceName"] == service_name].copy()
+    logger.info(f"Filtered data for only account '{account_name}' : {len(account_data)} rows")
+    logger.info(f"Filtered data for account '{account_name}' and service '{service_name}': {len(service_data)} rows")
+    logger.info(f"Filtered data for segment '{segment_name}' , account '{account_name}' "
+                f"and service '{service_name}': {len(service_data)} rows")
+
+    forecast = forecast_monthly_spend(service_data, logger, ForecastType.SEGMENT)
+    logger.info(f"DEBUG segment columns : {list(service_data.columns)}")
 
     return forecast
 

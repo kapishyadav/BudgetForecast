@@ -15,6 +15,8 @@ def run_prophet_forecast(
         logger=None,
         account_name = None,
         service_name = None,
+        bu_code = None,
+        segment_name = None,
         periods: int = 24):
     """
     Train and forecast using Prophet on a monthly spend dataset.
@@ -44,13 +46,18 @@ def run_prophet_forecast(
         raise ValueError("CSV must contain 'month' and 'spend' columns.")
 
     if forecast_type == ForecastType.MONTHLY:
-        forecast_df, metrics = save_monthly_aggregate_forecasts(data, csv_path, logger)
+        forecast_df = save_monthly_aggregate_forecasts(data, csv_path, logger)
     elif forecast_type == ForecastType.ACCOUNT:
-        forecast_df, metrics = save_forecast_by_accounts(data, csv_path, logger, account_name)
+        forecast_df = save_forecast_by_accounts(data, csv_path, logger, account_name)
     elif forecast_type == ForecastType.SERVICE:
-        forecast_df, metrics = save_forecasts_by_service(data, csv_path, logger, account_name, service_name)
+        forecast_df = save_forecasts_by_service(data, csv_path, logger, account_name, service_name)
+    elif forecast_type == ForecastType.BUCODE:
+        logger.info(f"Value of bu Code in prophet_model.py : {bu_code}, type: {type(bu_code)}")
+        forecast_df = save_forecasts_by_bucode(data, csv_path, logger, bu_code)
+    elif forecast_type == ForecastType.SEGMENT:
+        forecast_df = save_forecasts_by_segment(data, csv_path, logger, account_name, service_name, segment_name)
     else:
         raise ValueError(f"Invalid forecast type: {forecast_type}")
 
 
-    return forecast_df, metrics
+    return forecast_df

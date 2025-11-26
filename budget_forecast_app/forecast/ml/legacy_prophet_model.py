@@ -272,6 +272,8 @@ def save_forecasts_by_bucode(data, file, logger, bu_code):
     return forecast
 
 def save_forecasts_by_segment(data, file, logger, account_name, service_name, segment_name):
+    logger.info(f"DEBUG In save_forecasts_by_segment function with segment type: {type(segment_name)},"
+                f" segment name: {segment_name}")
     # Filter for only that service
     segment_data = data[data["segment"] == segment_name].copy()
 

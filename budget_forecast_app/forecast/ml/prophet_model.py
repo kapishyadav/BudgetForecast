@@ -55,6 +55,7 @@ def run_prophet_forecast(
         logger.info(f"Value of bu Code in prophet_model.py : {bu_code}, type: {type(bu_code)}")
         forecast_df = save_forecasts_by_bucode(data, csv_path, logger, bu_code)
     elif forecast_type == ForecastType.SEGMENT:
+        logger.info(f"Value of segment in prophet_model.py : {segment_name}, type: {type(segment_name)}")
         forecast_df = save_forecasts_by_segment(data, csv_path, logger, account_name, service_name, segment_name)
     else:
         raise ValueError(f"Invalid forecast type: {forecast_type}")

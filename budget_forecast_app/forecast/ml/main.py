@@ -90,6 +90,8 @@ def run_forecast(csv_path: str,
                 csv_path=csv_path,
                 forecast_type=forecast_type,
                 logger=logger,
+                account_name= account_name,
+                service_name= service_name,
                 segment_name=segment_name
             )
 

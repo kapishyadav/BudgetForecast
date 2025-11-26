@@ -5,6 +5,8 @@ class ForecastType(Enum):
     MONTHLY = "monthly"
     ACCOUNT = "account"
     SERVICE = "service"
+    BUCODE = "bu_code"
+    SEGMENT = "segment"
 
     @classmethod
     def choices(cls):

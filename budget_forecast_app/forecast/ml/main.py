@@ -21,7 +21,9 @@ logger = setup_logging()
 def run_forecast(csv_path: str,
                  forecast_type: ForecastType = ForecastType.MONTHLY ,
                  account_name = None,
-                 service_name = None):
+                 service_name = None,
+                 bu_code = None,
+                 segment_name = None):
     """
     Main entry point for the forecasting pipeline.
 
@@ -58,16 +60,39 @@ def run_forecast(csv_path: str,
                                                 account_name)
 
         elif forecast_type == ForecastType.MONTHLY:
-            forecast_df, metrics = run_prophet_forecast(csv_path, forecast_type, logger)
+            forecast_df = run_prophet_forecast(csv_path, forecast_type, logger)
 
         elif forecast_type == ForecastType.SERVICE:
             if not service_name and not account_name:
                 raise ValueError("Service name and Account name must be provided for service-level forecast.")
-            forecast_df, metrics = run_prophet_forecast(csv_path,
+            forecast_df = run_prophet_forecast(csv_path,
                                                         forecast_type,
                                                         logger,
                                                         account_name,
                                                         service_name)
+
+        elif forecast_type == ForecastType.BUCODE:
+            if not bu_code:
+                raise ValueError("BU Code must be provided for bu-code-level forecast.")
+            logger.info(f"Value of bu Code in main.py : {bu_code}, type: {type(bu_code)}")
+            forecast_df = run_prophet_forecast(
+                csv_path=csv_path,
+                forecast_type=forecast_type,
+                logger=logger,
+                bu_code=bu_code
+            )
+
+        elif forecast_type == ForecastType.SEGMENT:
+            if not segment_name and not service_name and not account_name:
+                raise ValueError("Segment Name, Service name and Account name must be provided for "
+                                 "segment-level forecast.")
+            forecast_df = run_prophet_forecast(
+                csv_path=csv_path,
+                forecast_type=forecast_type,
+                logger=logger,
+                segment_name=segment_name
+            )
+
         else:
             raise ValueError(f"Unsupported forecast type: {forecast_type}")
         logger.info("Prophet forecasting complete.")

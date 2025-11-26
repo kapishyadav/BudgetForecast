@@ -58,10 +58,11 @@ def upload_file(request):
 
         # Optional bu code input
         bu_code_raw = request.POST.get("bu_code", "").strip()
-        logger.info(f"DEBUG bu_code_raw: {bu_code_raw}")
-        logger.info(f"DEBUG bu_code_raw type: {type(bu_code_raw)}")
-        bu_code = int(bu_code_raw)
-        logger.info(f"DEBUG bu_code type: {type(bu_code)}")
+
+        if bu_code_raw == "":
+            bu_code = None
+        else:
+            bu_code = int(bu_code_raw)  # will only run when non-empty
 
 
         # Optional segment name input

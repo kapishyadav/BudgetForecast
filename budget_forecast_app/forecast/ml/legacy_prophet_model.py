@@ -60,7 +60,7 @@ def forecast_monthly_spend(data, logger, forecast_type):
     elif forecast_type == ForecastType.SERVICE:
         monthly_spend = data.groupby(['month', 'accountName', 'serviceName'], as_index=False)['spend'].sum()
     elif forecast_type == ForecastType.BUCODE:
-        monthly_spend = data.groupby(['month', 'accountName', 'serviceName', 'buCode'], as_index=False)['spend'].sum()
+        monthly_spend = data.groupby(['month','buCode'], as_index=False)['spend'].sum()
     elif forecast_type == ForecastType.SEGMENT:
         monthly_spend = data.groupby(['month', 'accountName', 'serviceName', 'segment'], as_index=False)['spend'].sum()
     else:
@@ -125,7 +125,7 @@ def forecast_monthly_spend(data, logger, forecast_type):
     # --- Step 5: Trim forecast to required fields only ---
     forecast = forecast_future[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
 
-    return forecast
+    return forecast, prophet_df
 
 
 def get_accounts_dict(data, logger, account_name):
@@ -185,7 +185,7 @@ def save_monthly_aggregate_forecasts(data, file, logger):
 
     file = os.path.splitext(os.path.basename(file))[0]
 
-    forecast = forecast_monthly_spend(data, logger, ForecastType.MONTHLY)
+    forecast, history = forecast_monthly_spend(data, logger, ForecastType.MONTHLY)
     logger.info(f"DEBUG data columns : {list(data.columns)}")
 
     # Shorten file name to avoid path length issues
@@ -203,9 +203,10 @@ def save_monthly_aggregate_forecasts(data, file, logger):
     # Save forecast
     forecast.to_csv(csv_path, index=False)
 
-    logger.info("Forecasts formatted column names:", forecast.columns)
+    logger.info(f"Forecasts formatted column names: {forecast.columns}")
+    logger.info(f"History formatted column names: {history.columns}")
     logger.info("Successfully saved forecasts by monthly total!")
-    return forecast
+    return forecast, history
 
 
 def save_forecast_by_accounts(data, file, logger, account_name):
@@ -213,7 +214,7 @@ def save_forecast_by_accounts(data, file, logger, account_name):
     account_data = accounts_dict[account_name]
 
     # forecast, metrics = forecast_monthly_spend(account_data, logger)
-    forecast = forecast_monthly_spend(account_data, logger, ForecastType.ACCOUNT)
+    forecast, history = forecast_monthly_spend(account_data, logger, ForecastType.ACCOUNT)
 
     file = os.path.splitext(os.path.basename(file))[0]
     # Make sure output directory exists
@@ -227,7 +228,7 @@ def save_forecast_by_accounts(data, file, logger, account_name):
 
     logger.info("Successfully saved forecasts by account!")
     # return forecast, metrics
-    return forecast
+    return forecast, history
 
 
 def save_forecasts_by_service(data, file, logger, account_name, service_name):
@@ -243,10 +244,10 @@ def save_forecasts_by_service(data, file, logger, account_name, service_name):
     logger.info(f"Filtered data for only account '{account_name}' : {len(account_data)} rows")
     logger.info(f"Filtered data for account '{account_name}' and service '{service_name}': {len(service_data)} rows")
 
-    forecast = forecast_monthly_spend(service_data, logger, ForecastType.SERVICE)
+    forecast, history = forecast_monthly_spend(service_data, logger, ForecastType.SERVICE)
     logger.info(f"DEBUG service_data columns : {list(service_data.columns)}")
 
-    return forecast
+    return forecast, history
 
 def save_forecasts_by_bucode(data, file, logger, bu_code):
     logger.info(f"DEBUG In save_forecasts_by_bucode function with bu_code type:", type(bu_code))
@@ -266,10 +267,10 @@ def save_forecasts_by_bucode(data, file, logger, bu_code):
     # logger.info(f"Filtered data for account '{account_name}' and service '{service_name}': {len(service_data)} rows")
     logger.info(f"Filtered data for only bu code '{bu_code}' : {len(bu_data)} rows")
 
-    forecast = forecast_monthly_spend(bu_data, logger, ForecastType.BUCODE)
+    forecast, history = forecast_monthly_spend(bu_data, logger, ForecastType.BUCODE)
     logger.info(f"DEBUG bu_data columns : {list(bu_data.columns)}")
 
-    return forecast
+    return forecast, history
 
 def save_forecasts_by_segment(data, file, logger, account_name, service_name, segment_name):
     logger.info(f"DEBUG In save_forecasts_by_segment function with segment type: {type(segment_name)},"
@@ -291,8 +292,8 @@ def save_forecasts_by_segment(data, file, logger, account_name, service_name, se
     logger.info(f"Filtered data for segment '{segment_name}' , account '{account_name}' "
                 f"and service '{service_name}': {len(service_data)} rows")
 
-    forecast = forecast_monthly_spend(service_data, logger, ForecastType.SEGMENT)
+    forecast, history = forecast_monthly_spend(service_data, logger, ForecastType.SEGMENT)
     logger.info(f"DEBUG segment columns : {list(service_data.columns)}")
 
-    return forecast
+    return forecast, history
 

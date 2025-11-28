@@ -46,19 +46,20 @@ def run_prophet_forecast(
         raise ValueError("CSV must contain 'month' and 'spend' columns.")
 
     if forecast_type == ForecastType.MONTHLY:
-        forecast_df = save_monthly_aggregate_forecasts(data, csv_path, logger)
+        forecast_df, historical_df = save_monthly_aggregate_forecasts(data, csv_path, logger)
+        logger.info(f"DEBUG save_monthly_aggregate_forecasts complete!")
     elif forecast_type == ForecastType.ACCOUNT:
-        forecast_df = save_forecast_by_accounts(data, csv_path, logger, account_name)
+        forecast_df, historical_df = save_forecast_by_accounts(data, csv_path, logger, account_name)
     elif forecast_type == ForecastType.SERVICE:
-        forecast_df = save_forecasts_by_service(data, csv_path, logger, account_name, service_name)
+        forecast_df, historical_df = save_forecasts_by_service(data, csv_path, logger, account_name, service_name)
     elif forecast_type == ForecastType.BUCODE:
         logger.info(f"Value of bu Code in prophet_model.py : {bu_code}, type: {type(bu_code)}")
-        forecast_df = save_forecasts_by_bucode(data, csv_path, logger, bu_code)
+        forecast_df, historical_df = save_forecasts_by_bucode(data, csv_path, logger, bu_code)
     elif forecast_type == ForecastType.SEGMENT:
         logger.info(f"Value of segment in prophet_model.py : {segment_name}, type: {type(segment_name)}")
-        forecast_df = save_forecasts_by_segment(data, csv_path, logger, account_name, service_name, segment_name)
+        forecast_df, historical_df = save_forecasts_by_segment(data, csv_path, logger, account_name, service_name, segment_name)
     else:
         raise ValueError(f"Invalid forecast type: {forecast_type}")
 
 
-    return forecast_df
+    return forecast_df, historical_df

@@ -126,9 +126,12 @@ def upload_file(request):
             result = run_forecast(file_path, forecast_type, **kwargs)
 
             forecast_df = result["forecast"]
+            historical_df = result["history"]
 
             # Convert forecast dataframe to JSON for Chart.js
             forecast_json = forecast_df.to_json(orient="records", date_format="iso")
+            historical_json = historical_df.to_json(orient="records", date_format="iso")
+
 
             logger.info("Successfully converted forecast data for Chart.js")
 
@@ -148,6 +151,7 @@ def upload_file(request):
             # Store the forecast data in session for later CSV download
             request.session['forecast_csv_json'] = forecast_df.to_json(orient="records", date_format="iso")
 
+
             request.session['csv_base_filename'] = filename  # original uploaded file name
             request.session['forecast_type'] = forecast_type.value if hasattr(forecast_type, "value") else str(
                 forecast_type)
@@ -162,10 +166,13 @@ def upload_file(request):
             return render(request, "forecast/dashboard.html", {
                 # "metrics": result["metrics"],
                 "forecast_data": forecast_json,
+                "historical_data": historical_json,
                 "forecast_type": forecast_type.value if hasattr(forecast_type, "value") else forecast_type,
                 # "csv_filename": csv_file_name,
-                "account_name": account_name if forecast_type in [ForecastType.ACCOUNT, ForecastType.SERVICE] else None,
-                "service_name": service_name if forecast_type == ForecastType.SERVICE else None,
+                "account_name": account_name if forecast_type in [ForecastType.ACCOUNT, ForecastType.SERVICE,
+                                                                  ForecastType.SEGMENT] else None,
+                "service_name": service_name if forecast_type in [ForecastType.SERVICE,
+                                                                  ForecastType.SEGMENT] else None,
                 "bu_code": bu_code if forecast_type == ForecastType.BUCODE else None,
                 "segment_name": segment_name if forecast_type == ForecastType.SEGMENT else None,
             })

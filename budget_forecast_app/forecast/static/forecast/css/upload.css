@@ -1,0 +1,127 @@
+:root {
+    --bg-color: #f7f3ee;
+    --primary: #3b2f2f;
+    --accent: #a47148;
+    --light-accent: #d8c3a5;
+    --shadow: 8px 8px 0 var(--accent);
+    --radius: 14px;
+    --transition: all 0.25s ease;
+}
+
+body {
+    font-family: 'Poppins', 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    color: var(--primary);
+}
+
+.card {
+    background: #fff;
+    padding: 3rem 2.5rem;
+    border: 2px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    text-align: center;
+    width: 440px;
+    transition: var(--transition);
+}
+
+.card:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 10px 10px 0 var(--light-accent);
+}
+
+h1 {
+    font-size: 2.0rem;
+    letter-spacing: 1px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+}
+
+p {
+    color: var(--accent);
+    margin-bottom: 2rem;
+    font-size: 1rem;
+    opacity: 0.8;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+input[type="file"] {
+    border: 2px dashed var(--light-accent);
+    background: #fdf9f5;
+    padding: 1rem;
+    width: 100%;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--primary);
+    transition: var(--transition);
+}
+
+input[type="file"]:hover {
+    background: #f5ede5;
+    border-color: var(--accent);
+}
+
+button {
+    margin-top: 1rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 0.9rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: var(--radius);
+    cursor: pointer;
+    box-shadow: 6px 6px 0 var(--primary);
+    transition: var(--transition);
+}
+
+button:hover {
+    background: var(--primary);
+    box-shadow: 6px 6px 0 var(--accent);
+    transform: translate(-3px, -3px);
+}
+
+.error {
+    color: #c0392b;
+    margin-top: 1rem;
+    font-weight: 600;
+}
+
+.footer {
+    margin-top: 2rem;
+    font-size: 0.85rem;
+    color: var(--primary);
+    opacity: 0.7;
+}
+
+.footer span {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.loading {
+    margin-top: 1rem;
+    display: none;
+    font-weight: 500;
+    color: var(--accent);
+    animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}

@@ -6,19 +6,21 @@ It provides an interactive **Django + Chart.js dashboard** to visualize forecast
 
 ### Running the Main Script
 ```bash
-# Install dependencies
 
-# Create virutal environment (Optional)
-pip install pipenv
+# Build Docker image
+docker build -t my-forecast-docker-image .
 
-#Enter virtual env (Optional) (cd /path/to/your/project)
-pipenv shell
+# Run Docker image
+docker run -d --name django-forecast-container -p 8001:8000 my-forecast-docker-image
 
-pip install -r requirements.txt
+# Run application in Docker detached mode
+docker compose up -d  
 
-# Run Server to open localhost site
-#Navigate to /BudgetForecast/budget_forecast_app and run
-python manage.py runserver 
+```
+
+### Test Docker start up
+```bash
+bash tests/test_docker_start.sh 
 ```
 
 ## 🎯 Overview

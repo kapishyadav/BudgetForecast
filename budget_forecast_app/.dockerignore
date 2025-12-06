@@ -1,0 +1,12 @@
+.env
+.venv/
+Dockerfile
+__pycache__/
+.history
+.idea
+catboost_info
+data
+logs
+plots
+models
+.DS_Store

@@ -14,44 +14,18 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 warnings.filterwarnings("ignore")
 
-import re
-
-
-def sanitize_filename(name):
-    return re.sub(r'[\\/*?:"<>| ]+', "_", name)
-
-
-def forecast_account_spend(data, logger):
-    data['month'] = pd.to_datetime(data['month'], errors='coerce')
-    monthly_account_spend = data.groupby(['month', 'accountName'], as_index=False)['spend'].sum()
-
-    prophet_df = monthly_account_spend.rename(columns={"month": "ds", "spend": "y"})
-
-    # Get the last date from your historical data
-    last_date = prophet_df['ds'].max()
-
-    m = Prophet()
-    m.fit(prophet_df)
-
-    future = m.make_future_dataframe(periods=12 * 2,
-                                     freq='M')
-
-    forecast_full = m.predict(future)
-
-    # Filter forecast_full to include only future predictions
-    forecast_future = forecast_full[forecast_full['ds'] > last_date]
-
-    rows, columns = forecast_future.shape
-
-    if logger:
-        logger.info(f" no of months rows forecast_future: {rows}")
-
-    forecast = forecast_future[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
-
-    return forecast
-
-
 def forecast_monthly_spend(data, logger, forecast_type):
+    """_summary_
+
+    Args:
+        data (_type_): input historical data containing 'month' and 'spend' columns
+        logger (_type_): logger instance for logging
+        forecast_type (_type_): forecast type from ForecastType enum : MONTHLY, ACCOUNT, SERVICE, BUCODE or SEGMENT
+
+    Returns:
+        forecast: forecast dataframe with future predictions
+        history: historical dataframe used for training the model and plotting history for Chartly JS
+    """
     data['month'] = pd.to_datetime(data['month'], errors='coerce')
     if forecast_type == ForecastType.MONTHLY:
         monthly_spend = data.groupby("month", as_index=False)["spend"].sum()
@@ -82,45 +56,10 @@ def forecast_monthly_spend(data, logger, forecast_type):
     # Filter forecast_full to include only future predictions
     forecast_future = forecast_full[forecast_full['ds'] > last_date]
 
-    # Optional: Reset index for clean output
-    # forecast_future = forecast_future.reset_index(drop=True)
-
     rows, columns = forecast_future.shape
 
     if logger:
         logger.info(f" no of months rows forecast_future: {rows}")
-
-    # Evaluation metrics
-    # --- Merge to compare only historical months ---
-    # forecast_full['ds'] = pd.to_datetime(forecast_full['ds'], errors='coerce')
-    # forecast_eval = forecast_full[['ds', 'yhat']].merge(prophet_df, on='ds', how='inner')
-    # y_true = forecast_eval['y'].values
-    # y_pred = forecast_eval['yhat'].values
-
-    # --- Standard deviation and variance ---
-    # y_std = np.std(y_true, ddof=1)        # sample standard deviation
-    # y_var = np.var(y_true, ddof=1)
-    # y_pred_std = np.std(y_pred, ddof=1)
-    # y_pred_var = np.var(y_pred, ddof=1)
-
-    # mse = mean_squared_error(y_true, y_pred)
-    # rmse = np.sqrt(mse)
-    # mae = mean_absolute_error(y_true, y_pred)
-    # mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
-
-    # metrics = {
-    #     "RMSE": round(rmse, 2),
-    #     "MAE": round(mae, 2),
-    #     "MSE": round(mse, 2),
-    #     "MAPE (%)": round(mape, 2),
-    #     "Y Std Dev": round(y_std, 2),
-    #     "Y Variance": round(y_var, 2),
-    #     "Y_Pred Std Dev": round(y_pred_std, 2),
-    #     "Y_Pred Variance": round(y_pred_var, 2),
-    # }
-
-    # if logger:
-    #     logger.info(f" Computed metrics for monthly aggregate: {metrics}")
 
     # --- Step 5: Trim forecast to required fields only ---
     forecast = forecast_future[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
@@ -153,24 +92,6 @@ def get_accounts_dict(data, logger, account_name):
     return df_accounts_dict
 
 
-def forecast_service_spend(data):
-    prophet_df = data.rename(columns={"month": "ds", "spend": "y"})
-    prophet_df["ds"] = pd.to_datetime(prophet_df["ds"])
-
-    m = Prophet()
-    m.fit(prophet_df)
-
-    future = m.make_future_dataframe(periods=12 * 2,
-                                     freq='M')
-
-    forecast = m.predict(future)
-    forecast[['ds', 'yhat', 'yhat_lower',
-              'yhat_upper', 'trend',
-              'trend_lower', 'trend_upper']].tail()
-    fig = plot_plotly(m, forecast)
-    return forecast, fig
-
-
 def save_monthly_aggregate_forecasts(data, file, logger):
     """
     Arguments:
@@ -178,9 +99,8 @@ def save_monthly_aggregate_forecasts(data, file, logger):
     csv path -> file
     logger setup -> logger
 
-    Returns: (forecast_df, metrics, figure_dict)
-    forecasts_formatted: forecast ds with only yhat, yhat_upper, yhat_lower
-    metrics: RMSE, MAE, MSE
+    Returns: (forecast_df, historical_df)
+    forecasts formatted with: forecast ds with only yhat, yhat_upper, yhat_lower
     """
 
     file = os.path.splitext(os.path.basename(file))[0]
@@ -210,6 +130,16 @@ def save_monthly_aggregate_forecasts(data, file, logger):
 
 
 def save_forecast_by_accounts(data, file, logger, account_name):
+    """
+    Arguments:
+    csv file -> data
+    csv path -> file
+    logger setup -> logger
+    account_name -> account name to filter
+
+    Returns: (forecast_df, historical_df)
+    forecasts formatted with: forecast ds with only yhat, yhat_upper, yhat_lower
+    """
     accounts_dict = get_accounts_dict(data, logger, account_name)
     account_data = accounts_dict[account_name]
 
@@ -232,6 +162,16 @@ def save_forecast_by_accounts(data, file, logger, account_name):
 
 
 def save_forecasts_by_service(data, file, logger, account_name, service_name):
+    """
+    Arguments:
+    csv file -> data
+    csv path -> file
+    logger setup -> logger
+    service_name -> service name to filter
+
+    Returns: (forecast_df, historical_df)
+    forecasts formatted with: forecast ds with only yhat, yhat_upper, yhat_lower
+    """
     accounts_dict = get_accounts_dict(data, logger, account_name)
     account_data = accounts_dict[account_name]
 
@@ -250,21 +190,19 @@ def save_forecasts_by_service(data, file, logger, account_name, service_name):
     return forecast, history
 
 def save_forecasts_by_bucode(data, file, logger, bu_code):
+    """
+    Arguments:
+    csv file -> data
+    csv path -> file
+    logger setup -> logger
+    bu_code -> bu_code to filter
+
+    Returns: (forecast_df, historical_df)
+    forecasts formatted with: forecast ds with only yhat, yhat_upper, yhat_lower
+    """
     logger.info(f"DEBUG In save_forecasts_by_bucode function with bu_code type:", type(bu_code))
     # Filter for only that service
     bu_data = data[data["buCode"] == int(bu_code)].copy()
-
-    # accounts_dict = get_accounts_dict(bu_data, logger, account_name)
-    # account_data = accounts_dict[account_name]
-    #
-    # # check if service_name exists in this account
-    # if service_name not in account_data["serviceName"].unique():
-    #     raise ValueError(f"Service name '{service_name}' not found under account '{account_name}'")
-    #
-    # # Filter for only that service
-    # service_data = account_data[account_data["serviceName"] == service_name].copy()
-    # logger.info(f"Filtered data for only account '{account_name}' : {len(account_data)} rows")
-    # logger.info(f"Filtered data for account '{account_name}' and service '{service_name}': {len(service_data)} rows")
     logger.info(f"Filtered data for only bu code '{bu_code}' : {len(bu_data)} rows")
 
     forecast, history = forecast_monthly_spend(bu_data, logger, ForecastType.BUCODE)
@@ -273,6 +211,18 @@ def save_forecasts_by_bucode(data, file, logger, bu_code):
     return forecast, history
 
 def save_forecasts_by_segment(data, file, logger, account_name, service_name, segment_name):
+    """
+    Arguments:
+    csv file -> data
+    csv path -> file
+    logger setup -> logger
+    account_name -> account name to filter
+    service_name -> service name to filter
+    segment_name -> segment name to filter
+
+    Returns: (forecast_df, historical_df)
+    forecasts formatted with: forecast ds with only yhat, yhat_upper, yhat_lower
+    """
     logger.info(f"DEBUG In save_forecasts_by_segment function with segment type: {type(segment_name)},"
                 f" segment name: {segment_name}")
     # Filter for only that service

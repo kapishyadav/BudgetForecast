@@ -18,6 +18,11 @@ docker compose up -d
 
 ```
 
+### Test Docker start up
+```bash
+bash tests/test_docker_start.sh 
+```
+
 ## 🎯 Overview
 This application enables users to:
 - Upload cloud cost data (e.g., AWS, GCP, Azure).

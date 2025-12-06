@@ -1,0 +1,10 @@
+name: django-forecast-project
+
+services:
+  app:
+    image: my-forecast-docker-image
+    container_name: django-forecast-container
+    ports:
+      - "8001:8000"
+    volumes:
+      - .:/app

@@ -1,3 +1,9 @@
 forecasts/
 logs/
 media/
+.DS_Store
+.history/
+.idea/
+node_modules/
+data/.DS_Store
+db.sqlite3

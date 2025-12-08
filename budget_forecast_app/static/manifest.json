@@ -1,0 +1,8 @@
+{
+  "assets/index.js": {
+    "file": "js/index-bundle.js",
+    "name": "index",
+    "src": "assets/index.js",
+    "isEntry": true
+  }
+}

@@ -18,6 +18,9 @@ from pathlib import Path
 
 logger = setup_logging()
 
+def hello_vite(request):
+    return render(request, "hello_vite.html")
+
 
 def upload_file(request):
     """Renders the upload form and handles forecast display."""

@@ -1,8 +1,23 @@
 {
+  "assets/hello.jsx": {
+    "file": "js/hello-bundle.js",
+    "name": "hello",
+    "src": "assets/hello.jsx",
+    "isEntry": true
+  },
   "assets/index.js": {
     "file": "js/index-bundle.js",
     "name": "index",
     "src": "assets/index.js",
     "isEntry": true
+  },
+  "assets/styles/style.css": {
+    "file": "css/style.css",
+    "src": "assets/styles/style.css",
+    "isEntry": true,
+    "name": "style",
+    "names": [
+      "style.css"
+    ]
   }
 }

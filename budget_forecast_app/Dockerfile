@@ -5,13 +5,24 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app/
 
-COPY requirements.txt /app
+# copy requirements FIRST
+COPY requirements.txt /app/
 
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
+# Install Node.js 20
+RUN apt-get update && apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# copy project AFTER node/python is installed
 COPY . /app/
 
-EXPOSE 8000
+# Install node dependencies inside container
+RUN npm install
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+EXPOSE 8000 5173
+
+CMD sh -c "npm run dev & python manage.py runserver 0.0.0.0:8000"

@@ -30,6 +30,7 @@ def forecast_monthly_spend(data, logger, forecast_type):
     if forecast_type == ForecastType.MONTHLY:
         monthly_spend = data.groupby("month", as_index=False)["spend"].sum()
     elif forecast_type == ForecastType.ACCOUNT:
+        logger.info(f" DEBUG in forecast_monthly_spend's ACCOUNT forecast, grouping data by 'month' and 'accountName'")
         monthly_spend = data.groupby(['month', 'accountName'], as_index=False)['spend'].sum()
     elif forecast_type == ForecastType.SERVICE:
         monthly_spend = data.groupby(['month', 'accountName', 'serviceName'], as_index=False)['spend'].sum()
@@ -46,10 +47,11 @@ def forecast_monthly_spend(data, logger, forecast_type):
     last_date = prophet_df['ds'].max()
 
     m = Prophet()
+    logger.info(f" DEBUG Fitting Prophet model in forecast_monthly_spend!")
     m.fit(prophet_df)
 
     future = m.make_future_dataframe(periods=12 * 2,
-                                     freq='M')
+                                     freq='ME')
 
     forecast_full = m.predict(future)
 
@@ -57,6 +59,7 @@ def forecast_monthly_spend(data, logger, forecast_type):
     forecast_future = forecast_full[forecast_full['ds'] > last_date]
 
     rows, columns = forecast_future.shape
+    logger.info(f"DEBUG forecast_future coputed successfully. Shape: {forecast_future.shape}")
 
     if logger:
         logger.info(f" no of months rows forecast_future: {rows}")
@@ -83,11 +86,12 @@ def get_accounts_dict(data, logger, account_name):
     unique_accounts = list(data['accountName'].unique())
     if account_name not in unique_accounts:
         raise ValueError(f"Account name not found!: {account_name}")
-    logger.info("Unique accounts: %s", unique_accounts)
+    logger.info(f"DEBUG unique_accounts in legacy_prophet_model.py -> get_accounts_dict() :  {unique_accounts}")
 
     # Filter only that account
     df_account = data[data["accountName"] == account_name].copy()
     df_accounts_dict = {account_name: df_account}
+    logger.info(f"DEBUG df_accounts_dict accounts:  {df_accounts_dict}")
 
     return df_accounts_dict
 
@@ -140,10 +144,12 @@ def save_forecast_by_accounts(data, file, logger, account_name):
     Returns: (forecast_df, historical_df)
     forecasts formatted with: forecast ds with only yhat, yhat_upper, yhat_lower
     """
+    logger.info(f" DEBUG calling get_accounts_dict in legacy_prophet_model!")
     accounts_dict = get_accounts_dict(data, logger, account_name)
     account_data = accounts_dict[account_name]
 
     # forecast, metrics = forecast_monthly_spend(account_data, logger)
+    logger.info(f" DEBUG account_data field in legacy_prophet_model : {account_data}")
     forecast, history = forecast_monthly_spend(account_data, logger, ForecastType.ACCOUNT)
 
     file = os.path.splitext(os.path.basename(file))[0]

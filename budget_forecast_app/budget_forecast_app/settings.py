@@ -134,6 +134,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DJANGO_VITE = {
   "default": {
-    "dev_mode": True
+    "dev_mode": True,
+    "dev_server_port": 5174, 
   }
 }

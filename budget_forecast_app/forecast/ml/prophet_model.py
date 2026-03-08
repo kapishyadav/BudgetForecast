@@ -49,7 +49,9 @@ def run_prophet_forecast(
         forecast_df, historical_df = save_monthly_aggregate_forecasts(data, csv_path, logger)
         logger.info(f"DEBUG save_monthly_aggregate_forecasts complete!")
     elif forecast_type == ForecastType.ACCOUNT:
+        logger.info(f"DEBUG starting save_forecast_by_accounts now!")
         forecast_df, historical_df = save_forecast_by_accounts(data, csv_path, logger, account_name)
+        logger.info(f"DEBUG save_forecast_by_accounts complete!")
     elif forecast_type == ForecastType.SERVICE:
         forecast_df, historical_df = save_forecasts_by_service(data, csv_path, logger, account_name, service_name)
     elif forecast_type == ForecastType.BUCODE:

@@ -2,6 +2,7 @@
 # 🧩 Core Framework
 # ===========================
 Django==4.2.25
+django-vite==3.0.1
 
 # Core data science libraries
 pandas>=1.5.0

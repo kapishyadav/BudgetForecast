@@ -2,9 +2,10 @@
 # 🧩 Core Framework
 # ===========================
 Django==4.2.25
+django-vite>=2.0
 
 # Core data science libraries
-pandas>=1.5.0
+pandas==3.0.1
 numpy>=1.21.0
 
 # Machine learning libraries

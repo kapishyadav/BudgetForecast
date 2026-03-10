@@ -4,6 +4,7 @@ from datetime import datetime
 from django.shortcuts import render
 from django.http import JsonResponse, Http404, FileResponse, HttpResponse
 from django.core.files.storage import FileSystemStorage
+from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from .ml.main import run_forecast
 from .ml.utils.setup_logging import setup_logging
@@ -39,6 +40,9 @@ def upload_file(request):
         file_path = fs.path(filename)
         logger.info(f"DEBUG select filename from POST: {filename}")
         logger.info(f"DEBUG select filename from POST: {file_path}")
+
+        # --- CLEANUP FUNCTION ---
+        delete_old_files(max_files=5)
 
         # Make sure it's stored in session right away
         request.session["csv_base_filename"] = filename
@@ -343,3 +347,30 @@ def forecast_api(request):
             return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
     return JsonResponse({"status": "error", "message": "No dataset uploaded"}, status=400)
+
+
+def delete_old_files(max_files=5):
+    folder = settings.MEDIA_ROOT
+
+    # Ensure the directory exists to avoid errors
+    if not os.path.exists(folder):
+        return
+
+    # Get ONLY files (ignore directories) with their full paths
+    files = [
+        os.path.join(folder, f)
+        for f in os.listdir(folder)
+        if os.path.isfile(os.path.join(folder, f))
+    ]
+
+    # Sort files by modification time, newest first
+    files.sort(key=os.path.getmtime, reverse=True)
+
+    # Delete files older than the limit
+    if len(files) > max_files:
+        for file_path in files[max_files:]:
+            try:
+                os.remove(file_path)
+                logger.info(f"Deleted old file to maintain limit: {file_path}")
+            except OSError as e:
+                logger.error(f"Error deleting file {file_path}: {e}")

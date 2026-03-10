@@ -27,10 +27,16 @@
             {% csrf_token %}
             <input type="file" name="dataset" accept=".csv" required>
 
+            <label> Select Time Granularity</label><br>
+            <div style="display: flex; gap: 15px; margin-bottom: 1.5rem; margin-top: 0.5rem;">
+                <label><input type="radio" name="granularity" value="monthly" checked> Monthly</label>
+                <label><input type="radio" name="granularity" value="daily"> Daily</label>
+            </div>
+
 
             <label for="forecast_type">📊 Select Forecast Type</label><br><br>
             <select name="forecast_type" id="forecast_type" required>
-                <option value="monthly">Forecast by Monthly Aggregate</option>
+                <option value="overall_aggregate">Overall Aggregate (No Filter)</option>
                 <option value="account">Forecast by Account</option>
                 <option value="service">Forecast by Service</option>
                 <option value="bu_code">Forecast by BU Code</option>

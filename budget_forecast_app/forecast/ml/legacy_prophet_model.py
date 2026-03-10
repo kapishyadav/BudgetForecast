@@ -8,7 +8,7 @@ import os
 import warnings
 import numpy as np
 import hashlib
-from .enums import ForecastType
+from .enums import ForecastType, Granularity
 
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
@@ -20,14 +20,14 @@ def forecast_monthly_spend(data, logger, forecast_type):
     Args:
         data (_type_): input historical data containing 'month' and 'spend' columns
         logger (_type_): logger instance for logging
-        forecast_type (_type_): forecast type from ForecastType enum : MONTHLY, ACCOUNT, SERVICE, BUCODE or SEGMENT
+        forecast_type (_type_): forecast type from ForecastType enum : OVERALL_AGGREGATE, ACCOUNT, SERVICE, BUCODE or SEGMENT
 
     Returns:
         forecast: forecast dataframe with future predictions
         history: historical dataframe used for training the model and plotting history for Chartly JS
     """
     data['month'] = pd.to_datetime(data['month'], errors='coerce')
-    if forecast_type == ForecastType.MONTHLY:
+    if forecast_type == ForecastType.OVERALL_AGGREGATE:
         monthly_spend = data.groupby("month", as_index=False)["spend"].sum()
     elif forecast_type == ForecastType.ACCOUNT:
         logger.info(f" DEBUG in forecast_monthly_spend's ACCOUNT forecast, grouping data by 'month' and 'accountName'")
@@ -59,7 +59,69 @@ def forecast_monthly_spend(data, logger, forecast_type):
     forecast_future = forecast_full[forecast_full['ds'] > last_date]
 
     rows, columns = forecast_future.shape
-    logger.info(f"DEBUG forecast_future coputed successfully. Shape: {forecast_future.shape}")
+    logger.info(f"DEBUG forecast_future computed successfully. Shape: {forecast_future.shape}")
+
+    if logger:
+        logger.info(f" no of months rows forecast_future: {rows}")
+
+    # --- Step 5: Trim forecast to required fields only ---
+    forecast = forecast_future[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
+
+    return forecast, prophet_df
+
+def forecast_daily_spend(data, logger, forecast_type):
+    """_summary_
+
+    Args:
+        data (_type_): input historical data containing 'date' and 'spend' columns
+        logger (_type_): logger instance for logging
+        forecast_type (_type_): forecast type from ForecastType enum : OVERALL_AGGREGATE, ACCOUNT, SERVICE, BUCODE or SEGMENT
+
+    Returns:
+        forecast: forecast dataframe with future predictions
+        history: historical dataframe used for training the model and plotting history for Chartly JS
+    """
+    data['date'] = pd.to_datetime(data['date'], errors='coerce')
+    if forecast_type == ForecastType.OVERALL_AGGREGATE:
+        daily_spend = data.groupby("date", as_index=False)["spend"].sum()
+    elif forecast_type == ForecastType.ACCOUNT:
+        logger.info(f" DEBUG in forecast_daily_spend's ACCOUNT forecast, grouping data by 'date' and 'accountName'")
+        daily_spend = data.groupby(['date', 'accountName'], as_index=False)['spend'].sum()
+    elif forecast_type == ForecastType.SERVICE:
+        daily_spend = data.groupby(['date', 'accountName', 'serviceName'], as_index=False)['spend'].sum()
+    elif forecast_type == ForecastType.BUCODE:
+        daily_spend = data.groupby(['date','buCode'], as_index=False)['spend'].sum()
+    elif forecast_type == ForecastType.SEGMENT:
+        daily_spend = data.groupby(['date', 'accountName', 'serviceName', 'segment'], as_index=False)['spend'].sum()
+    else:
+        raise ValueError(f"Unsupported forecast type: {forecast_type}")
+
+    prophet_df = daily_spend.rename(columns={"date": "ds", "spend": "y"})
+    # 1. Keep ONLY the columns Prophet needs (drops accountName, serviceName, etc.)
+    prophet_df = prophet_df[['ds', 'y']]
+    # 2. Drop any rows where the date couldn't be parsed (NaT)
+    prophet_df = prophet_df.dropna(subset=['ds'])
+    # 3. Force unique dates by aggregating any accidental same-day duplicates
+    prophet_df = prophet_df.groupby('ds', as_index=False)['y'].sum()
+    logger.info(f" DEBUG Force unique dates by aggregating any accidental same-day duplicates in Prophet model!")
+
+    # Get the last date from your historical data
+    last_date = prophet_df['ds'].max()
+
+    m = Prophet()
+    logger.info(f" DEBUG Fitting Prophet model in forecast_daily_spend!")
+    m.fit(prophet_df)
+
+    future = m.make_future_dataframe(periods=90,
+                                     freq='D')
+
+    forecast_full = m.predict(future)
+
+    # Filter forecast_full to include only future predictions
+    forecast_future = forecast_full[forecast_full['ds'] > last_date]
+
+    rows, columns = forecast_future.shape
+    logger.info(f"DEBUG forecast_future computed successfully. Shape: {forecast_future.shape}")
 
     if logger:
         logger.info(f" no of months rows forecast_future: {rows}")
@@ -96,7 +158,7 @@ def get_accounts_dict(data, logger, account_name):
     return df_accounts_dict
 
 
-def save_monthly_aggregate_forecasts(data, file, logger):
+def save_overall_aggregate_forecasts(data, file, logger, granularity):
     """
     Arguments:
     csv file -> data
@@ -109,7 +171,14 @@ def save_monthly_aggregate_forecasts(data, file, logger):
 
     file = os.path.splitext(os.path.basename(file))[0]
 
-    forecast, history = forecast_monthly_spend(data, logger, ForecastType.MONTHLY)
+    if granularity == Granularity.MONTHLY:
+        logger.info(f"DEBUG Running overall aggregate MONTHLY")
+        forecast, history = forecast_monthly_spend(data, logger, ForecastType.OVERALL_AGGREGATE)
+    elif granularity == Granularity.DAILY:
+        logger.info(f"DEBUG Running overall aggregate DAILY")
+        forecast, history = forecast_daily_spend(data, logger, ForecastType.OVERALL_AGGREGATE)
+    else:
+        raise ValueError(f"Granularity field must be MONTHLY OR DAILY. Currently: {granularity} with type {type(granularity)}")
     logger.info(f"DEBUG data columns : {list(data.columns)}")
 
     # Shorten file name to avoid path length issues
@@ -133,7 +202,7 @@ def save_monthly_aggregate_forecasts(data, file, logger):
     return forecast, history
 
 
-def save_forecast_by_accounts(data, file, logger, account_name):
+def save_forecast_by_accounts(data, file, logger, account_name, granularity):
     """
     Arguments:
     csv file -> data
@@ -150,7 +219,15 @@ def save_forecast_by_accounts(data, file, logger, account_name):
 
     # forecast, metrics = forecast_monthly_spend(account_data, logger)
     logger.info(f" DEBUG account_data field in legacy_prophet_model : {account_data}")
-    forecast, history = forecast_monthly_spend(account_data, logger, ForecastType.ACCOUNT)
+
+    if granularity == Granularity.MONTHLY:
+        logger.info(f"DEBUG Running account forecasts MONTHLY")
+        forecast, history = forecast_monthly_spend(account_data, logger, ForecastType.ACCOUNT)
+    elif granularity == Granularity.DAILY:
+        logger.info(f"DEBUG Running account forecasts DAILY")
+        forecast, history = forecast_daily_spend(account_data, logger, ForecastType.ACCOUNT)
+    else:
+        raise ValueError("Granularity field must be MONTHLY OR DAILY.")
 
     file = os.path.splitext(os.path.basename(file))[0]
     # Make sure output directory exists
@@ -167,7 +244,7 @@ def save_forecast_by_accounts(data, file, logger, account_name):
     return forecast, history
 
 
-def save_forecasts_by_service(data, file, logger, account_name, service_name):
+def save_forecasts_by_service(data, file, logger, account_name, service_name, granularity):
     """
     Arguments:
     csv file -> data
@@ -190,12 +267,20 @@ def save_forecasts_by_service(data, file, logger, account_name, service_name):
     logger.info(f"Filtered data for only account '{account_name}' : {len(account_data)} rows")
     logger.info(f"Filtered data for account '{account_name}' and service '{service_name}': {len(service_data)} rows")
 
-    forecast, history = forecast_monthly_spend(service_data, logger, ForecastType.SERVICE)
+    if granularity == Granularity.MONTHLY:
+        logger.info(f"DEBUG Running service forecasts MONTHLY")
+        forecast, history = forecast_monthly_spend(service_data, logger, ForecastType.SERVICE)
+    elif granularity == Granularity.DAILY:
+        logger.info(f"DEBUG Running service forecasts DAILY")
+        forecast, history = forecast_daily_spend(service_data, logger, ForecastType.SERVICE)
+    else:
+        raise ValueError("Granularity field must be MONTHLY OR DAILY.")
+
     logger.info(f"DEBUG service_data columns : {list(service_data.columns)}")
 
     return forecast, history
 
-def save_forecasts_by_bucode(data, file, logger, bu_code):
+def save_forecasts_by_bucode(data, file, logger, bu_code, granularity):
     """
     Arguments:
     csv file -> data
@@ -211,12 +296,20 @@ def save_forecasts_by_bucode(data, file, logger, bu_code):
     bu_data = data[data["buCode"] == int(bu_code)].copy()
     logger.info(f"Filtered data for only bu code '{bu_code}' : {len(bu_data)} rows")
 
-    forecast, history = forecast_monthly_spend(bu_data, logger, ForecastType.BUCODE)
+    if granularity == Granularity.MONTHLY:
+        logger.info(f"DEBUG Running bu code forecasts MONTHLY")
+        forecast, history = forecast_monthly_spend(bu_data, logger, ForecastType.BUCODE)
+    elif granularity == Granularity.DAILY:
+        logger.info(f"DEBUG Running bu code forecasts DAILY")
+        forecast, history = forecast_daily_spend(bu_data, logger, ForecastType.BUCODE)
+    else:
+        raise ValueError("Granularity field must be MONTHLY OR DAILY.")
+
     logger.info(f"DEBUG bu_data columns : {list(bu_data.columns)}")
 
     return forecast, history
 
-def save_forecasts_by_segment(data, file, logger, account_name, service_name, segment_name):
+def save_forecasts_by_segment(data, file, logger, account_name, service_name, segment_name, granularity):
     """
     Arguments:
     csv file -> data
@@ -248,7 +341,15 @@ def save_forecasts_by_segment(data, file, logger, account_name, service_name, se
     logger.info(f"Filtered data for segment '{segment_name}' , account '{account_name}' "
                 f"and service '{service_name}': {len(service_data)} rows")
 
-    forecast, history = forecast_monthly_spend(service_data, logger, ForecastType.SEGMENT)
+    if granularity == Granularity.MONTHLY:
+        logger.info(f"DEBUG Running segment forecasts MONTHLY")
+        forecast, history = forecast_monthly_spend(service_data, logger, ForecastType.SEGMENT)
+    elif granularity == Granularity.DAILY:
+        logger.info(f"DEBUG Running segment forecasts DAILY")
+        forecast, history = forecast_daily_spend(service_data, logger, ForecastType.SEGMENT)
+    else:
+        raise ValueError("Granularity field must be MONTHLY OR DAILY.")
+
     logger.info(f"DEBUG segment columns : {list(service_data.columns)}")
 
     return forecast, history

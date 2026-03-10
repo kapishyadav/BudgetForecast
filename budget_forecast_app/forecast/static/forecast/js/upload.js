@@ -16,6 +16,11 @@ segmentNameWrapper.style.display = 'none';
 forecastTypeSelect.addEventListener('change', function() {
     const type = this.value;
 
+    accountNameWrapper.style.display = 'none';
+    serviceNameWrapper.style.display = 'none';
+    buCodeWrapper.style.display = 'none';
+    segmentNameWrapper.style.display = 'none';
+
     if (type === 'account') {
         accountNameWrapper.style.display = 'block';
         serviceNameWrapper.style.display = 'none';
@@ -23,18 +28,11 @@ forecastTypeSelect.addEventListener('change', function() {
         accountNameWrapper.style.display = 'block';
         serviceNameWrapper.style.display = 'block';
     } else if (type === 'bu_code') {
-<!--                accountNameWrapper.style.display = 'block';-->
-<!--                serviceNameWrapper.style.display = 'block';-->
         buCodeWrapper.style.display = 'block';
     } else if (type === 'segment') {
         accountNameWrapper.style.display = 'block';
         serviceNameWrapper.style.display = 'block';
         segmentNameWrapper.style.display = 'block';
-    } else {
-        accountNameWrapper.style.display = 'none';
-        serviceNameWrapper.style.display = 'none';
-        buCodeWrapper.style.display = 'none';
-        segmentNameWrapper.style.display = 'none';
     }
 
     // Initialize Select2 when dropdown becomes visible

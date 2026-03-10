@@ -8,6 +8,7 @@ Loads CSV, trains Prophet model, and returns forecast + Plotly figure.
 from .legacy_prophet_model import *
 from .enums import ForecastType
 from .utils.setup_logging import setup_logging
+from typing import List, Dict
 
 def run_prophet_forecast(
         csv_path: str,
@@ -34,6 +35,22 @@ def run_prophet_forecast(
     try:
         data = pd.read_csv(csv_path)
         logger.info(f"Dataset loaded successfully. Shape: {data.shape}")
+        COLUMN_MAPPINGS = {
+            "accountName": ["accountName", "vendor_name", "vendor_account_name"],
+            "spend": ["spend", "cost", "public_on_demand", "public_on_demand_cost", "total_amortized_cost"],
+            "serviceName": ["serviceName", "enhanced_service_name"],
+            "month": ["month", "date", "year_month"]
+        }
+
+        mapped_columns = get_mapped_columns(data.columns.tolist(), COLUMN_MAPPINGS)
+        logger.info(f"DEBUG mapped columns after get_mapped_columns method in prophet_model.py - {mapped_columns}")
+        rename_dict = {actual_col: canonical_col for canonical_col, actual_col in mapped_columns.items()}
+        logger.info(f"DEBUG Renamed Dict Column Names: {rename_dict}")
+        # Apply the mapping to the DataFrame
+        data = data.rename(columns=rename_dict)
+        logger.info(f"DEBUG Data Column Names after renaming post remap: {data.columns}")
+
+
     except FileNotFoundError:
         logger.error("Dataset file not found.")
         raise
@@ -65,3 +82,21 @@ def run_prophet_forecast(
 
 
     return forecast_df, historical_df
+
+
+def get_mapped_columns(available_columns, COLUMN_MAPPINGS: Dict[str, str]) -> Dict[str, str]:
+    """
+    Maps available column names to standardized canonical names based on COLUMN_MAPPINGS.
+    """
+    columns_dict = {}
+
+    # 2. Iterate dynamically through the mappings
+    for canonical_name, possible_names in COLUMN_MAPPINGS.items():
+        # 3. Find the first matching column name
+        match = next((name for name in possible_names if name in available_columns), None)
+
+        if match:
+            columns_dict[canonical_name] = match
+
+    return columns_dict
+

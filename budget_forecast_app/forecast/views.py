@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .ml.main import run_forecast
 from .ml.utils.setup_logging import setup_logging
 from .ml.enums import ForecastType
+from .ml.prophet_model import get_mapped_columns
 
 import plotly.io as pio
 import json
@@ -187,8 +188,11 @@ def upload_file(request):
 
 
 def get_suggestions(request):
+    logger.info(f"DEBUG in get_suggestions views")
+    logger.info(f"DEBUG request in get_suggestions views- {request}")
+    logger.info(f"DEBUG REQUEST SESSION in get_suggestions views- {request.session}")
     query = request.GET.get("q", "").strip().lower()
-    field = request.GET.get("field")  # 'account', 'service', 'bucode', 'segment'
+    field = request.GET.get("field")  # 'account', 'service', 'bucode'or 'segment'
 
     filename = request.session.get("csv_base_filename")
     if not filename:
@@ -214,6 +218,21 @@ def get_suggestions(request):
     try:
         df = pd.read_csv(file_path)
         print(f"✅ Loaded file with columns: {list(df.columns)}")
+        logger.info(f"Dataset loaded successfully for get_suggestions. Shape: {df.shape}")
+        COLUMN_MAPPINGS = {
+            "accountName": ["accountName", "vendor_name", "vendor_account_name"],
+            "spend": ["spend", "cost", "public_on_demand", "public_on_demand_cost", "total_amortized_cost"],
+            "serviceName": ["serviceName", "enhanced_service_name"],
+            "month": ["month", "date", "year_month"]
+        }
+
+        mapped_columns = get_mapped_columns(df.columns.tolist(), COLUMN_MAPPINGS)
+        logger.info(f"DEBUG for get_suggestions mapped columns after get_mapped_columns method in prophet_model.py - {mapped_columns}")
+        rename_dict = {actual_col: canonical_col for canonical_col, actual_col in mapped_columns.items()}
+        logger.info(f"DEBUG for get_suggestions Renamed Dict Column Names: {rename_dict}")
+        # Apply the mapping to the DataFrame
+        df = df.rename(columns=rename_dict)
+        logger.info(f"DEBUG for get_suggestions DF Column Names after renaming post remap: {df.columns}")
 
         if field == "account":
             col_name = "accountName"

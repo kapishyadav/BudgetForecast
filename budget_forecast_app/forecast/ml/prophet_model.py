@@ -6,19 +6,19 @@ Loads CSV, trains Prophet model, and returns forecast + Plotly figure.
 """
 
 from .legacy_prophet_model import *
-from .enums import ForecastType
+from .enums import ForecastType, Granularity
 from .utils.setup_logging import setup_logging
 from typing import List, Dict
 
 def run_prophet_forecast(
         csv_path: str,
-        forecast_type: ForecastType = ForecastType.MONTHLY,
+        forecast_type: ForecastType = ForecastType.OVERALL_AGGREGATE,
+        granularity: Granularity = Granularity.MONTHLY,
         logger=None,
         account_name = None,
         service_name = None,
         bu_code = None,
-        segment_name = None,
-        periods: int = 24):
+        segment_name = None):
     """
     Train and forecast using Prophet on a monthly spend dataset.
 
@@ -39,7 +39,8 @@ def run_prophet_forecast(
             "accountName": ["accountName", "vendor_name", "vendor_account_name"],
             "spend": ["spend", "cost", "public_on_demand", "public_on_demand_cost", "total_amortized_cost"],
             "serviceName": ["serviceName", "enhanced_service_name"],
-            "month": ["month", "date", "year_month"]
+            "month": ["month", "year_month", "Month(Year)"],
+            "date": ["Date"]
         }
 
         mapped_columns = get_mapped_columns(data.columns.tolist(), COLUMN_MAPPINGS)
@@ -59,24 +60,29 @@ def run_prophet_forecast(
         raise
 
     # Validate columns
-    if "month" not in data.columns or "spend" not in data.columns:
-        raise ValueError("CSV must contain 'month' and 'spend' columns.")
+    if granularity == Granularity.MONTHLY:
+        if "month" not in data.columns or "spend" not in data.columns:
+            raise ValueError("CSV must contain 'month' and 'spend' columns for MONTHLY granularity.")
+    elif granularity == Granularity.DAILY:
+        if "date" not in data.columns or "spend" not in data.columns:
+            raise ValueError("CSV must contain 'date' and 'spend' columns for DAILY granularity.")
 
-    if forecast_type == ForecastType.MONTHLY:
-        forecast_df, historical_df = save_monthly_aggregate_forecasts(data, csv_path, logger)
+    if forecast_type == ForecastType.OVERALL_AGGREGATE:
+        forecast_df, historical_df = save_overall_aggregate_forecasts(data, csv_path, logger, granularity)
         logger.info(f"DEBUG save_monthly_aggregate_forecasts complete!")
     elif forecast_type == ForecastType.ACCOUNT:
         logger.info(f"DEBUG starting save_forecast_by_accounts now!")
-        forecast_df, historical_df = save_forecast_by_accounts(data, csv_path, logger, account_name)
+        forecast_df, historical_df = save_forecast_by_accounts(data, csv_path, logger, account_name, granularity)
         logger.info(f"DEBUG save_forecast_by_accounts complete!")
     elif forecast_type == ForecastType.SERVICE:
-        forecast_df, historical_df = save_forecasts_by_service(data, csv_path, logger, account_name, service_name)
+        forecast_df, historical_df = save_forecasts_by_service(data, csv_path, logger, account_name, service_name, granularity)
     elif forecast_type == ForecastType.BUCODE:
         logger.info(f"Value of bu Code in prophet_model.py : {bu_code}, type: {type(bu_code)}")
-        forecast_df, historical_df = save_forecasts_by_bucode(data, csv_path, logger, bu_code)
+        forecast_df, historical_df = save_forecasts_by_bucode(data, csv_path, logger, bu_code, granularity)
     elif forecast_type == ForecastType.SEGMENT:
         logger.info(f"Value of segment in prophet_model.py : {segment_name}, type: {type(segment_name)}")
-        forecast_df, historical_df = save_forecasts_by_segment(data, csv_path, logger, account_name, service_name, segment_name)
+        forecast_df, historical_df = save_forecasts_by_segment(data, csv_path, logger, account_name, service_name,
+                                                               segment_name, granularity)
     else:
         raise ValueError(f"Invalid forecast type: {forecast_type}")
 

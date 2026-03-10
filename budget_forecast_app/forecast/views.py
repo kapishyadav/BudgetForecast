@@ -8,7 +8,7 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from .ml.main import run_forecast
 from .ml.utils.setup_logging import setup_logging
-from .ml.enums import ForecastType
+from .ml.enums import ForecastType, Granularity
 from .ml.prophet_model import get_mapped_columns
 
 import plotly.io as pio
@@ -50,13 +50,18 @@ def upload_file(request):
         request.session.modified = True
 
         # Safely convert to enum
-        selected_type = request.POST.get("forecast_type", "monthly")
+        selected_type = request.POST.get("forecast_type", "overall_aggregate")
+        granularity = request.POST.get("granularity", "monthly")
+
         logger.info(f"DEBUG selected_type from POST: {selected_type}")
+        logger.info(f"DEBUG granularity from POST: {granularity}")
         try:
             forecast_type = ForecastType(selected_type)
+            granularity = Granularity(granularity)
 
         except ValueError:
-            forecast_type = ForecastType.MONTHLY
+            forecast_type = ForecastType.OVERALL_AGGREGATE
+            granularity = Granularity.MONTHLY
 
         # Optional account name input
         account_name = request.POST.get("account_name", "").strip()
@@ -77,30 +82,13 @@ def upload_file(request):
         segment_name = request.POST.get("segment_name", "").strip()
 
         try:
-            logger.info(f"Running forecast with type: {forecast_type}")
+            logger.info(f"Running forecast with type: {forecast_type} and granularity : {granularity}")
             forecast_type_str = forecast_type.value if hasattr(forecast_type, "value") else str(forecast_type)
-            # Save CSV file
-            # output_dir = Path("forecasts_results")
-            # output_dir.mkdir(parents=True, exist_ok=True)
-
-            # Strip .csv from filename if present
-            # base_filename = Path(filename).stem
 
             # Get current timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-            # Create CSV filename
-            # csv_file_name = f"{base_filename}-{forecast_type_str}-{timestamp}.csv"
-
-            # csv_path = output_dir / forecast_type_str
-            # csv_path.mkdir(parents=True, exist_ok=True)
-
-            # full_csv_path = csv_path / csv_file_name
-
             logger.info(f"DEBUG forecast_type_str: {forecast_type_str}")
-            # logger.info(f"DEBUG output_dir : {output_dir}")
-            # logger.info(f"DEBUG csv_path : {csv_path}")
-            # logger.info(f"DEBUG full_csv_path : {full_csv_path}")
 
             # "Method overloading" behavior via kwargs
             kwargs = {}
@@ -118,10 +106,6 @@ def upload_file(request):
             if forecast_type == ForecastType.BUCODE:
                 if bu_code is not None:
                     kwargs["bu_code"] = bu_code
-                # if service_name:
-                #     kwargs["service_name"] = service_name
-                # if account_name:
-                #     kwargs["account_name"] = account_name
 
             if forecast_type == ForecastType.SEGMENT:
                 if segment_name:
@@ -131,7 +115,7 @@ def upload_file(request):
                 if account_name:
                     kwargs["account_name"] = account_name
 
-            result = run_forecast(file_path, forecast_type, **kwargs)
+            result = run_forecast(file_path, forecast_type, granularity=granularity, **kwargs)
 
             forecast_df = result["forecast"]
             historical_df = result["history"]
@@ -140,26 +124,10 @@ def upload_file(request):
             forecast_json = forecast_df.to_json(orient="records", date_format="iso")
             historical_json = historical_df.to_json(orient="records", date_format="iso")
 
-
             logger.info("Successfully converted forecast data for Chart.js")
-
-            # if not os.path.exists(csv_path):
-            #     logger.error(f"File does not exist at expected path: {csv_path}")
-            # else:
-            #     logger.info("File exists and is ready for access.")
-
-            # logger.info(f"CSV filename repr: {repr(csv_file_name)}")
-
-            # logger.info(f"DEBUG Forecast DF length: {len(forecast_df)}")
-            # forecast_df.to_csv(full_csv_path, index=False)
-            # logger.info(f"DEBUG Forecast CSV saved at: {full_csv_path}")
-            # assert os.path.exists(full_csv_path), f"File not found after saving: {csv_path}"
-            # logger.error(traceback.format_exc())
 
             # Store the forecast data in session for later CSV download
             request.session['forecast_csv_json'] = forecast_df.to_json(orient="records", date_format="iso")
-
-
             request.session['csv_base_filename'] = filename  # original uploaded file name
             request.session['forecast_type'] = forecast_type.value if hasattr(forecast_type, "value") else str(
                 forecast_type)
@@ -227,7 +195,8 @@ def get_suggestions(request):
             "accountName": ["accountName", "vendor_name", "vendor_account_name"],
             "spend": ["spend", "cost", "public_on_demand", "public_on_demand_cost", "total_amortized_cost"],
             "serviceName": ["serviceName", "enhanced_service_name"],
-            "month": ["month", "date", "year_month"]
+            "month": ["month", "date", "year_month"],
+            "date": ["Date"]
         }
 
         mapped_columns = get_mapped_columns(df.columns.tolist(), COLUMN_MAPPINGS)
@@ -374,3 +343,4 @@ def delete_old_files(max_files=5):
                 logger.info(f"Deleted old file to maintain limit: {file_path}")
             except OSError as e:
                 logger.error(f"Error deleting file {file_path}: {e}")
+

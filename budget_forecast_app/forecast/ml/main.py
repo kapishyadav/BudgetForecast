@@ -13,13 +13,14 @@ import os
 
 from .prophet_model import run_prophet_forecast
 from .utils.setup_logging import setup_logging
-from .enums import ForecastType
+from .enums import ForecastType, Granularity
 from .legacy_prophet_model import *
 
 logger = setup_logging()
 
 def run_forecast(csv_path: str,
-                 forecast_type: ForecastType = ForecastType.MONTHLY ,
+                 forecast_type: ForecastType = ForecastType.OVERALL_AGGREGATE,
+                 granularity: Granularity = Granularity.MONTHLY,
                  account_name = None,
                  service_name = None,
                  bu_code = None,
@@ -50,17 +51,14 @@ def run_forecast(csv_path: str,
         if forecast_type == ForecastType.ACCOUNT:
             if not account_name:
                 raise ValueError("Account name must be provided for account-level forecast.")
-            # forecast_df, metrics = run_prophet_forecast(csv_path,
-            #                                             forecast_type,
-            #                                             logger,
-            #                                             account_name)
             forecast_df, historical_df = run_prophet_forecast(csv_path,
                                                 forecast_type,
+                                                granularity,
                                                 logger,
                                                 account_name)
 
-        elif forecast_type == ForecastType.MONTHLY:
-            forecast_df, historical_df = run_prophet_forecast(csv_path, forecast_type, logger)
+        elif forecast_type == ForecastType.OVERALL_AGGREGATE:
+            forecast_df, historical_df = run_prophet_forecast(csv_path, forecast_type, granularity, logger)
             logger.info(f"DEBUG run_prophet_forecast complete!")
 
         elif forecast_type == ForecastType.SERVICE:
@@ -68,6 +66,7 @@ def run_forecast(csv_path: str,
                 raise ValueError("Service name and Account name must be provided for service-level forecast.")
             forecast_df, historical_df = run_prophet_forecast(csv_path,
                                                         forecast_type,
+                                                        granularity,
                                                         logger,
                                                         account_name,
                                                         service_name)
@@ -79,6 +78,7 @@ def run_forecast(csv_path: str,
             forecast_df, historical_df = run_prophet_forecast(
                 csv_path=csv_path,
                 forecast_type=forecast_type,
+                granularity=granularity,
                 logger=logger,
                 bu_code=bu_code
             )
@@ -90,6 +90,7 @@ def run_forecast(csv_path: str,
             forecast_df, historical_df = run_prophet_forecast(
                 csv_path=csv_path,
                 forecast_type=forecast_type,
+                granularity=granularity,
                 logger=logger,
                 account_name= account_name,
                 service_name= service_name,

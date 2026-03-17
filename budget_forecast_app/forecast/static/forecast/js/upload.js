@@ -1,53 +1,43 @@
-const form = document.getElementById('uploadForm');
-const loading = document.getElementById('loading');
 const forecastTypeSelect = document.getElementById('forecast_type');
 const accountNameWrapper = document.getElementById('account_name_wrapper');
 const serviceNameWrapper = document.getElementById('service_name_wrapper');
 const buCodeWrapper = document.getElementById('bu_code_wrapper');
 const segmentNameWrapper = document.getElementById('segment_name_wrapper');
 
-// Hide dropdowns initially
-accountNameWrapper.style.display = 'none';
-serviceNameWrapper.style.display = 'none';
-buCodeWrapper.style.display = 'none';
-segmentNameWrapper.style.display = 'none';
+// Hide dropdowns initially (Only if the elements exist on the page)
+if (accountNameWrapper) accountNameWrapper.style.display = 'none';
+if (serviceNameWrapper) serviceNameWrapper.style.display = 'none';
+if (buCodeWrapper) buCodeWrapper.style.display = 'none';
+if (segmentNameWrapper) segmentNameWrapper.style.display = 'none';
 
 // Show/hide account & service inputs based on forecast type
-forecastTypeSelect.addEventListener('change', function() {
-    const type = this.value;
+if (forecastTypeSelect) {
+    forecastTypeSelect.addEventListener('change', function() {
+        const type = this.value;
 
-    accountNameWrapper.style.display = 'none';
-    serviceNameWrapper.style.display = 'none';
-    buCodeWrapper.style.display = 'none';
-    segmentNameWrapper.style.display = 'none';
-
-    if (type === 'account') {
-        accountNameWrapper.style.display = 'block';
+        accountNameWrapper.style.display = 'none';
         serviceNameWrapper.style.display = 'none';
-    } else if (type === 'service') {
-        accountNameWrapper.style.display = 'block';
-        serviceNameWrapper.style.display = 'block';
-    } else if (type === 'bu_code') {
-        buCodeWrapper.style.display = 'block';
-    } else if (type === 'segment') {
-        accountNameWrapper.style.display = 'block';
-        serviceNameWrapper.style.display = 'block';
-        segmentNameWrapper.style.display = 'block';
-    }
+        buCodeWrapper.style.display = 'none';
+        segmentNameWrapper.style.display = 'none';
 
-    // Initialize Select2 when dropdown becomes visible
-    initializeSelect2();
-});
+        if (type === 'account') {
+            accountNameWrapper.style.display = 'block';
+            serviceNameWrapper.style.display = 'none';
+        } else if (type === 'service') {
+            accountNameWrapper.style.display = 'block';
+            serviceNameWrapper.style.display = 'block';
+        } else if (type === 'bu_code') {
+            buCodeWrapper.style.display = 'block';
+        } else if (type === 'segment') {
+            accountNameWrapper.style.display = 'block';
+            serviceNameWrapper.style.display = 'block';
+            segmentNameWrapper.style.display = 'block';
+        }
 
-// Loading animation when form is submitted
-form.addEventListener('submit', (e) => {
-    loading.style.display = 'block';
-
-    // Wait a short moment to ensure Django session is updated
-    setTimeout(() => {
+        // Initialize Select2 when a dropdown becomes visible
         initializeSelect2();
-    }, 1500); // enough for session save
-});
+    });
+}
 
 // --- Function to initialize Select2 dynamically ---
 function initializeSelect2() {

@@ -7,5 +7,6 @@ urlpatterns = [
     path('', views.upload_file, name='upload_file'),
     path('api/forecast/', views.forecast_api, name='forecast_api'),
     path("download_csv/", views.download_forecast_csv, name="download_csv"),
-    path("get_suggestions/", views.get_suggestions, name="get_suggestions")
+    path("get_suggestions/", views.get_suggestions, name="get_suggestions"),
+    path('status/<str:task_id>/', views.check_task_status, name='check_task_status'),
 ]

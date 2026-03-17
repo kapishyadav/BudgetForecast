@@ -1,0 +1,67 @@
+
+{% load static %}
+
+<style>
+    body { display: block !important; height: auto !important; padding: 2rem !important; }
+</style>
+
+<div id="dashboard-container" class="container">
+    <div class="header">
+        <h1>💡 Forecast Dashboard</h1>
+        <p> Prophet-powered time series insights</p>
+    </div>
+
+    {% if forecast_type == "account" and account_name %}
+        <p class="account-name">📊 Forecast for Account: <span>{{ account_name }}</span></p>
+    {% endif %}
+
+    {% if forecast_type == "service" and account_name and service_name %}
+        <p class="account-name">📊 Forecast for Account: <span>{{ account_name }}</span></p>
+        <p class="service-name">📊 Forecast for Service: <span>{{ service_name }}</span></p>
+    {% endif %}
+
+    {% if forecast_type == "bu_code" and bu_code %}
+        <p class="bu-code">📊 Forecast for BU Code: <span>{{ bu_code }}</span></p>
+    {% endif %}
+
+    {% if forecast_type == "segment" and segment_name %}
+        {% if account_name %}<p class="account-name">📊 Forecast for Account: <span>{{ account_name }}</span></p>{% endif %}
+        {% if service_name %}<p class="service-name">📊 Forecast for Service: <span>{{ service_name }}</span></p>{% endif %}
+        <p class="segment-name">📊 Forecast for Segment: <span>{{ segment_name }}</span></p>
+    {% endif %}
+
+    <div class="metrics">
+        {% if metrics %}
+            {% for key, value in metrics.items %}
+                <div class="metric">
+                    <h3>{{ key|title }}</h3>
+                    <p>{{ value }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            {% endif %}
+    </div>
+
+    <div class="plot">
+        <canvas id="forecastChart" width="900" height="400"></canvas>
+    </div>
+
+    <div style="display: flex; justify-content: center; gap: 2rem;">
+        <div class="button">
+            <a href="{% url 'upload_file' %}">⬅️ Upload Another Dataset</a>
+        </div>
+        <div class="button">
+            <a href="{% url 'download_csv' %}">⬇️ Download Forecast CSV</a>
+        </div>
+    </div>
+
+    <footer>
+        Built with <span>Django</span> · <span>Chart.js</span> · <span>Prophet</span>
+    </footer>
+
+    <script>
+        window.forecastData = JSON.parse('{{ forecast_data|escapejs }}');
+        window.historicalData = JSON.parse('{{ historical_data|escapejs }}');
+    </script>
+    <script src="{% static 'forecast/js/dashboard.js' %}"></script>
+</div>

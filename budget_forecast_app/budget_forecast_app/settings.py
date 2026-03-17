@@ -138,3 +138,16 @@ DJANGO_VITE = {
     "dev_server_port": 5174, 
   }
 }
+
+# --- CELERY SETTINGS ---
+# The URL pointing to your Redis Docker container
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+
+# Security and formatting settings for the message broker
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+# Ensure Celery uses the same timezone as your Django app
+CELERY_TIMEZONE = TIME_ZONE

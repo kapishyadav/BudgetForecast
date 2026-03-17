@@ -1,9 +1,21 @@
 forecasts/
 logs/
 media/
+budget_forecast_app/media
 .DS_Store
 .history/
 .idea/
 node_modules/
 data/.DS_Store
 db.sqlite3
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore the local SQLite database
+db.sqlite3
+
+# Ignore all files in the media folder (but keep the folder)
+media/*
+# Except the .gitignore inside it if you have one
+!media/.gitignore

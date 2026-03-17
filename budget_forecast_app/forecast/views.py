@@ -39,7 +39,7 @@ def upload_file(request):
         # forecast_type = request.POST.get("forecast_type", "monthly")  # default to monthly
         extension = os.path.splitext(file.name)[1]
         # Create a short, unique name: e.g. "7a3b4c.csv"
-        short_filename = f"{uuid.uuid4().hex[:12]}{extension}"
+        short_filename = f"Forecasts-{uuid.uuid4().hex[:12]}{extension}"
         fs = FileSystemStorage()
         filename = fs.save(short_filename, file)
         file_path = fs.path(filename)

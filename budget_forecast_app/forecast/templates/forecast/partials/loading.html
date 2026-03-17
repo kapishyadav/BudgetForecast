@@ -1,0 +1,18 @@
+
+<div id="dashboard-container"
+     hx-get="{% url 'check_task_status' task_id %}" 
+     hx-trigger="every 2s" 
+     hx-swap="outerHTML"
+     class="card">
+    
+    <h1>Running Forecast</h1>
+    <p>Prophet is crunching the numbers. This may take a moment...</p>
+    
+    <div class="loading" style="display: block; font-size: 1.2rem; margin: 2.5rem 0;">
+        ⏳ Generating Predictions...
+    </div>
+    
+    <div class="footer">
+        Task ID: <span>{{ task_id }}</span>
+    </div>
+</div>

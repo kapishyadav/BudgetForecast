@@ -11,6 +11,9 @@ from .ml.utils.setup_logging import setup_logging
 from .ml.enums import ForecastType, Granularity
 from .ml.prophet_model import get_mapped_columns
 
+from .tasks import generate_forecast_task
+from celery.result import AsyncResult
+
 import plotly.io as pio
 import json
 import os
@@ -27,142 +30,93 @@ def hello_vite(request):
 
 
 def upload_file(request):
-    """Renders the upload form and handles forecast display."""
+    """Renders the upload form and delegates forecasting to Celery."""
     if request.method == "POST" and request.FILES.get("dataset"):
 
         # Clear any old session data to avoid stale suggestions
-        for key in ["csv_base_filename", "uploaded_file_path"]:
+        for key in ["csv_base_filename", "uploaded_file_path", "forecast_csv_json"]:
             if key in request.session:
                 del request.session[key]
 
         file = request.FILES["dataset"]
-        # forecast_type = request.POST.get("forecast_type", "monthly")  # default to monthly
         extension = os.path.splitext(file.name)[1]
-        # Create a short, unique name: e.g. "7a3b4c.csv"
+
+        # Create a short, unique name
         short_filename = f"Forecasts-{uuid.uuid4().hex[:12]}{extension}"
         fs = FileSystemStorage()
         filename = fs.save(short_filename, file)
         file_path = fs.path(filename)
+
         logger.info(f"DEBUG select filename from POST: {filename}")
         logger.info(f"DEBUG select filename from POST: {file_path}")
 
         # --- CLEANUP FUNCTION ---
         delete_old_files(max_files=5)
 
-        # Make sure it's stored in session right away
-        request.session["csv_base_filename"] = filename
-        request.session["uploaded_file_path"] = file_path
-        request.session.modified = True
-
-        # Safely convert to enum
+        # Safely convert to enum strings for Celery (Celery can't handle complex objects)
         selected_type = request.POST.get("forecast_type", "overall_aggregate")
         granularity = request.POST.get("granularity", "monthly")
 
-        logger.info(f"DEBUG selected_type from POST: {selected_type}")
-        logger.info(f"DEBUG granularity from POST: {granularity}")
         try:
             forecast_type = ForecastType(selected_type)
-            granularity = Granularity(granularity)
-
+            granularity_val = Granularity(granularity).value if hasattr(Granularity(granularity), "value") else str(
+                Granularity(granularity))
         except ValueError:
             forecast_type = ForecastType.OVERALL_AGGREGATE
-            granularity = Granularity.MONTHLY
+            granularity_val = Granularity.MONTHLY.value
 
-        # Optional account name input
+        forecast_type_str = forecast_type.value if hasattr(forecast_type, "value") else str(forecast_type)
+
+        # Optional inputs
         account_name = request.POST.get("account_name", "").strip()
-
-        # Optional service name input
         service_name = request.POST.get("service_name", "").strip()
-
-        # Optional bu code input
         bu_code_raw = request.POST.get("bu_code", "").strip()
-
-        if bu_code_raw == "":
-            bu_code = None
-        else:
-            bu_code = int(bu_code_raw)  # will only run when non-empty
-
-
-        # Optional segment name input
+        bu_code = int(bu_code_raw) if bu_code_raw != "" else None
         segment_name = request.POST.get("segment_name", "").strip()
 
+        # Build kwargs for the task
+        kwargs = {}
+        if forecast_type == ForecastType.ACCOUNT and account_name:
+            kwargs["account_name"] = account_name
+        if forecast_type == ForecastType.SERVICE:
+            if service_name: kwargs["service_name"] = service_name
+            if account_name: kwargs["account_name"] = account_name
+        if forecast_type == ForecastType.BUCODE and bu_code is not None:
+            kwargs["bu_code"] = bu_code
+        if forecast_type == ForecastType.SEGMENT:
+            if segment_name: kwargs["segment_name"] = segment_name
+            if service_name: kwargs["service_name"] = service_name
+            if account_name: kwargs["account_name"] = account_name
+
         try:
-            logger.info(f"Running forecast with type: {forecast_type} and granularity : {granularity}")
-            forecast_type_str = forecast_type.value if hasattr(forecast_type, "value") else str(forecast_type)
+            logger.info("Sending ML pipeline to Celery worker...")
 
-            # Get current timestamp
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            # Send the job to the background worker using .delay()
+            task = generate_forecast_task.delay(
+                file_path=file_path,
+                forecast_type_str=forecast_type_str,
+                granularity_str=granularity_val,
+                **kwargs
+            )
 
-            logger.info(f"DEBUG forecast_type_str: {forecast_type_str}")
-
-            # "Method overloading" behavior via kwargs
-            kwargs = {}
-
-            # only include account_name if relevant
-            if forecast_type == ForecastType.ACCOUNT and account_name:
-                kwargs["account_name"] = account_name
-
-            if forecast_type == ForecastType.SERVICE:
-                if service_name:
-                    kwargs["service_name"] = service_name
-                if account_name:
-                    kwargs["account_name"] = account_name
-
-            if forecast_type == ForecastType.BUCODE:
-                if bu_code is not None:
-                    kwargs["bu_code"] = bu_code
-
-            if forecast_type == ForecastType.SEGMENT:
-                if segment_name:
-                    kwargs["segment_name"] = segment_name
-                if service_name:
-                    kwargs["service_name"] = service_name
-                if account_name:
-                    kwargs["account_name"] = account_name
-
-            result = run_forecast(file_path, forecast_type, granularity=granularity, **kwargs)
-
-            forecast_df = result["forecast"]
-            historical_df = result["history"]
-
-            # Convert forecast dataframe to JSON for Chart.js
-            forecast_json = forecast_df.to_json(orient="records", date_format="iso")
-            historical_json = historical_df.to_json(orient="records", date_format="iso")
-
-            logger.info("Successfully converted forecast data for Chart.js")
-
-            # Store the forecast data in session for later CSV download
-            request.session['forecast_csv_json'] = forecast_df.to_json(orient="records", date_format="iso")
-            request.session['csv_base_filename'] = filename  # original uploaded file name
-            request.session['forecast_type'] = forecast_type.value if hasattr(forecast_type, "value") else str(
-                forecast_type)
+            # Store session data NOW so it is ready for the download step later
+            request.session['csv_base_filename'] = filename
+            request.session['uploaded_file_path'] = file_path
+            request.session['forecast_type'] = forecast_type_str
             request.session['account_name'] = account_name
             request.session['service_name'] = service_name
             request.session['bu_code'] = bu_code
             request.session['segment_name'] = segment_name
+            request.session.modified = True
 
-            logger.info(f"DEBUG result keys: {list(result.keys())}")
-            # logger.info(f"DEBUG metrics: {result.get('metrics')}")
+            # Return the loading template, passing the task_id to HTMX
+            return render(request, "forecast/partials/loading.html", {"task_id": task.id})
 
-            return render(request, "forecast/dashboard.html", {
-                # "metrics": result["metrics"],
-                "forecast_data": forecast_json,
-                "historical_data": historical_json,
-                "forecast_type": forecast_type.value if hasattr(forecast_type, "value") else forecast_type,
-                # "csv_filename": csv_file_name,
-                "account_name": account_name if forecast_type in [ForecastType.ACCOUNT, ForecastType.SERVICE,
-                                                                  ForecastType.SEGMENT] else None,
-                "service_name": service_name if forecast_type in [ForecastType.SERVICE,
-                                                                  ForecastType.SEGMENT] else None,
-                "bu_code": bu_code if forecast_type == ForecastType.BUCODE else None,
-                "segment_name": segment_name if forecast_type == ForecastType.SEGMENT else None,
-            })
         except Exception as e:
-            logger.error(f"Forecasting failed in views: {e}")
+            logger.error(f"Forecasting failed to start: {e}")
             return render(request, "forecast/upload.html", {"error": str(e)})
 
     return render(request, "forecast/upload.html")
-
 
 def get_suggestions(request):
     logger.info(f"DEBUG in get_suggestions views")
@@ -355,4 +309,40 @@ def delete_old_files(max_files=5):
                 logger.info(f"Deleted old file to maintain limit: {file_path}")
             except OSError as e:
                 logger.error(f"Error deleting file {file_path}: {e}")
+
+
+def check_task_status(request, task_id):
+    """HTMX endpoint to poll Celery task status."""
+    task = AsyncResult(task_id)
+
+    if task.state == 'PENDING' or task.state == 'STARTED':
+        # Still working! Return the loading spinner snippet again.
+        return render(request, "forecast/partials/loading.html", {"task_id": task_id})
+
+    elif task.state == 'SUCCESS':
+        # Task is done! Grab the dictionary returned by tasks.py
+        result = task.result
+
+        # Check if our task caught an error gracefully
+        if result.get("status") == "error":
+            return render(request, "forecast/partials/error.html", {"error": result.get("message")})
+
+        # Success! Save the big JSON string for the CSV download feature
+        request.session['forecast_csv_json'] = result["forecast_json"]
+
+        # Render the final dashboard HTML snippet containing the charts
+        return render(request, "forecast/partials/dashboard_results.html", {
+            "forecast_data": result["forecast_json"],
+            "historical_data": result["historical_json"],
+            "forecast_type": request.session.get('forecast_type'),
+            "account_name": request.session.get('account_name'),
+            "service_name": request.session.get('service_name'),
+            "bu_code": request.session.get('bu_code'),
+            "segment_name": request.session.get('segment_name'),
+        })
+
+    elif task.state == 'FAILURE':
+        # Something crashed hard inside the Celery worker
+        return render(request, "forecast/partials/error.html",
+                      {"error": "A critical error occurred during background processing."})
 

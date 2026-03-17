@@ -39,7 +39,6 @@ def upload_file(request):
         fs = FileSystemStorage()
         filename = fs.save(file.name, file)
         file_path = fs.path(filename)
-        filename = filename[:10]
         logger.info(f"DEBUG select filename from POST: {filename}")
         logger.info(f"DEBUG select filename from POST: {file_path}")
 
@@ -169,6 +168,7 @@ def get_suggestions(request):
     field = request.GET.get("field")  # 'account', 'service', 'bucode'or 'segment'
 
     filename = request.session.get("csv_base_filename")
+    logger.info(f"DEBUG Request Session csv_base_filename : {filename}")
     if not filename:
         print("❌ No file found in session — likely no upload in this session.")
         # Try to get the most recently uploaded file (as fallback)

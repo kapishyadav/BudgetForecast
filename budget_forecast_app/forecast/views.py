@@ -15,6 +15,7 @@ import plotly.io as pio
 import json
 import os
 import io
+import uuid
 import pandas as pd
 import traceback
 from pathlib import Path
@@ -36,8 +37,11 @@ def upload_file(request):
 
         file = request.FILES["dataset"]
         # forecast_type = request.POST.get("forecast_type", "monthly")  # default to monthly
+        extension = os.path.splitext(file.name)[1]
+        # Create a short, unique name: e.g. "7a3b4c.csv"
+        short_filename = f"{uuid.uuid4().hex[:12]}{extension}"
         fs = FileSystemStorage()
-        filename = fs.save(file.name, file)
+        filename = fs.save(short_filename, file)
         file_path = fs.path(filename)
         logger.info(f"DEBUG select filename from POST: {filename}")
         logger.info(f"DEBUG select filename from POST: {file_path}")

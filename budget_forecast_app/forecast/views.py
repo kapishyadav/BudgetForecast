@@ -14,6 +14,7 @@ from .ml.prophet_model import get_mapped_columns
 import plotly.io as pio
 import json
 import os
+import io
 import pandas as pd
 import traceback
 from pathlib import Path
@@ -167,6 +168,7 @@ def get_suggestions(request):
     field = request.GET.get("field")  # 'account', 'service', 'bucode'or 'segment'
 
     filename = request.session.get("csv_base_filename")
+    logger.info(f"DEBUG Request Session csv_base_filename : {filename}")
     if not filename:
         print("❌ No file found in session — likely no upload in this session.")
         # Try to get the most recently uploaded file (as fallback)
@@ -175,6 +177,7 @@ def get_suggestions(request):
                        reverse=True)
         if files:
             filename = files[0]
+            filename = filename[:10]
             print(f"⚠️ Using fallback file: {filename}")
             request.session["csv_base_filename"] = filename
         else:
@@ -236,31 +239,36 @@ def get_suggestions(request):
 
 def download_forecast_csv(request):
     """Return the forecast CSV stored in session as a downloadable file."""
+    logger.info("DEBUG Downloading forecast csv!")
+
     csv_data = request.session.get("forecast_csv_json")
-    forecast_df = pd.read_json(csv_data, orient="records")
 
-    # Convert DataFrame to CSV string
-    csv_string = forecast_df.to_csv(index=False)
-
+    # 1. ALWAYS check if data exists before trying to parse it
     if not csv_data:
         return HttpResponse("No forecast data available. Please generate a forecast first.", status=404)
 
+    # 2. Parse the JSON and build the DataFrame
+    parsed_data = json.loads(csv_data)
+    forecast_df = pd.DataFrame(parsed_data)
+
+    # 3. Convert DataFrame directly to a CSV string (in memory)
+    csv_string = forecast_df.to_csv(index=False)
+
+    # 4. Handle Filename Generation
     base_filename = request.session.get("csv_base_filename", "forecast")
     account_name = request.session.get("account_name", "")
     service_name = request.session.get("service_name", "")
     forecast_type = request.session.get("forecast_type", "monthly")
 
-    # Strip the .csv extension if present
     base_filename = os.path.splitext(base_filename)[0]
+    logger.info(f"DEBUG Base_Filename is : {base_filename}")
 
-    # Clean up names (remove spaces, lower-case)
     def clean(name):
         return name.strip().replace(" ", "_").lower() if name else ""
 
     account_name = clean(account_name)
     service_name = clean(service_name)
 
-    # Construct filename based on conditions
     if account_name and service_name:
         filename = f"{base_filename}-forecasts-{account_name}-{service_name}.csv"
     elif account_name:
@@ -268,10 +276,10 @@ def download_forecast_csv(request):
     else:
         filename = f"{base_filename}-forecasts-{forecast_type}-aggregate.csv"
 
-    forecast_df.to_csv(filename, index=False)
-
+    # 5. Return the file as a downloadable response
     response = HttpResponse(csv_string, content_type="text/csv")
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
     return response
 
 

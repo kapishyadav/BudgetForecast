@@ -10,13 +10,9 @@
     <link rel="stylesheet" href="{% static 'forecast/css/dashboard.css' %}">
 
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -35,47 +31,42 @@
             {% csrf_token %}
             <input type="file" name="dataset" accept=".csv" required>
 
-            <label> Select Time Granularity</label><br>
-            <div style="display: flex; gap: 15px; margin-bottom: 1.5rem; margin-top: 0.5rem;">
+            <label style="font-weight: 600; color: var(--accent); margin-top: 1rem;">Select Time Granularity</label>
+            <div style="display: flex; gap: 15px; justify-content: center; width: 100%;">
                 <label><input type="radio" name="granularity" value="monthly" checked> Monthly</label>
                 <label><input type="radio" name="granularity" value="daily"> Daily</label>
             </div>
 
-            <label for="forecast_type">📊 Select Forecast Type</label><br><br>
-            <select name="forecast_type" id="forecast_type" required>
+            <label for="forecast_type" style="font-weight: 600; color: var(--accent); margin-top: 1rem;"> Select Forecast Type</label>
+            <select name="forecast_type" id="forecast_type" required style="width: 100%; padding: 0.5rem; border-radius: var(--radius); border: 5px solid var(--light-accent);">
                 <option value="overall_aggregate">Overall Aggregate (No Filter)</option>
                 <option value="account">Forecast by Account</option>
                 <option value="service">Forecast by Service</option>
                 <option value="bu_code">Forecast by BU Code</option>
                 <option value="segment">Forecast by Segment</option>
-            </select><br><br>
+            </select>
 
-            <div id="account_name_wrapper" style="display: none; margin-top: 1rem;">
-                <label for="account_name">Select Account Name</label>
-                <select id="account_name" name="account_name" style="width: 100%;">
-                    </select>
+            <div id="account_name_wrapper" class="custom-select-wrapper" style="display: none; width: 100%; text-align: left; margin-top: 1rem; cursor: pointer;">
+                <label for="account_name" style="cursor: pointer; font-weight: 600; color: var(--accent);">Select Account Name</label>
+                <select id="account_name" name="account_name" style="width: 100%;"></select>
             </div>
 
-            <div id="service_name_wrapper" style="display: none; margin-top: 1rem;">
-                <label for="service_name">Select Service Name</label>
-                <select id="service_name" name="service_name" style="width: 100%;">
-                    </select>
+            <div id="service_name_wrapper" class="custom-select-wrapper" style="display: none; width: 100%; text-align: left; margin-top: 1rem; cursor: pointer;">
+                <label for="service_name" style="cursor: pointer; font-weight: 600; color: var(--accent);">Select Service Name</label>
+                <select id="service_name" name="service_name" style="width: 100%;"></select>
             </div>
 
-            <div id="bu_code_wrapper" style="display: none; margin-top: 1rem;">
-                <label for="bu_code">Select BU Code</label>
-                <select id="bu_code" name="bu_code" style="width: 100%;">
-                    </select>
+            <div id="bu_code_wrapper" class="custom-select-wrapper" style="display: none; width: 100%; text-align: left; margin-top: 1rem; cursor: pointer;">
+                <label for="bu_code" style="cursor: pointer; font-weight: 600; color: var(--accent);">Select BU Code</label>
+                <select id="bu_code" name="bu_code" style="width: 100%;"></select>
             </div>
 
-            <div id="segment_name_wrapper" style="display: none; margin-top: 1rem;">
-                <label for="segment_name">Select Segment Name</label>
-                <select id="segment_name" name="segment_name" style="width: 100%;">
-                    </select>
+            <div id="segment_name_wrapper" class="custom-select-wrapper" style="display: none; width: 100%; text-align: left; margin-top: 1rem; cursor: pointer;">
+                <label for="segment_name" style="cursor: pointer; font-weight: 600; color: var(--accent);">Select Segment Name</label>
+                <select id="segment_name" name="segment_name" style="width: 100%;"></select>
             </div>
 
             <button type="submit">🚀 Run Forecast</button>
-
         </form>
 
         {% if error %}

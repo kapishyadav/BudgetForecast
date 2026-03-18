@@ -1,18 +1,27 @@
-
 <div id="dashboard-container"
      hx-get="{% url 'check_task_status' task_id %}" 
      hx-trigger="every 2s" 
      hx-swap="outerHTML"
-     class="card">
-    
-    <h1>Running Forecast</h1>
-    <p>Prophet is crunching the numbers. This may take a moment...</p>
-    
-    <div class="loading" style="display: block; font-size: 1.2rem; margin: 2.5rem 0;">
-        ⏳ Generating Predictions...
+     style="width: 100%; max-width: 80rem; margin: 0 auto; transition: all 0.3s ease;">
+
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 3rem; margin-top: 1rem; gap: 1rem;">
+
+        <svg style="opacity: 0.05; width: 60px; height: 60px; color: #78350f;" class="animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+
+        <h2 style="font-size: 1.5rem; font-weight: 700; color: #1c1917; margin: 0;">Crunching the numbers...</h2>
+        <p style="font-size: 0.875rem; color: #78716c; margin: 0;">Prophet is running your time-series forecast. This usually takes a few seconds.</p>
     </div>
-    
-    <div class="footer">
-        Task ID: <span>{{ task_id }}</span>
+
+    <div class="animate-pulse" style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div style="height: 400px; width: 100%; background-color: rgba(120, 113, 108, 0.05); border-radius: 1rem; border: 1px solid rgba(120, 113, 108, 0.1);"></div>
     </div>
+
+    <div style="margin-top: 2rem; padding-top: 1.5rem; text-align: center; font-size: 0.75rem; color: #a8a29e; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+        <svg style="width: 16px; height: 16px; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+        Task ID: <span style="font-family: monospace; letter-spacing: 0.05em; color: #78716c;">{{ task_id }}</span>
+    </div>
+
 </div>

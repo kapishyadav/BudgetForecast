@@ -6,11 +6,9 @@ services:
     container_name: django-forecast-container
     ports:
       - "8001:8000"
-      - "5173:5173"
     volumes:
       - .:/app
     environment:
-      # Tell Django where the Redis broker is
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
@@ -19,12 +17,12 @@ services:
 
   vite:
     image: node:22-alpine
-    working_dir: /app
+    working_dir: /app/frontend
     command: ["npm", "run", "dev", "--", "--host"]
     volumes:
       - .:/app
     ports:
-      - "5174:5173"
+      - "5173:5173"
 
   redis:
     image: redis:7-alpine
@@ -36,12 +34,10 @@ services:
   celery:
     image: my-forecast-docker-image
     container_name: forecast-celery
-    # Overrides the default Django server command to start the Celery worker instead
     command: celery -A budget_forecast_app worker -l info
     volumes:
       - .:/app
     environment:
-      # Tell Celery where the Redis broker is
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:

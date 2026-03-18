@@ -26,7 +26,7 @@ export function ForecastDemo() {
             borderRadius: 'var(--radius)',
             boxShadow: '3px 3px 0 var(--primary)'
           }}>
-            📊 Live Demo
+            Live Demo
           </div>
           <h2 className="mb-6" style={{ color: 'var(--primary)' }}>
             See Your Future Spending

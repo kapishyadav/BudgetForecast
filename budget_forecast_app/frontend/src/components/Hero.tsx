@@ -66,7 +66,7 @@ export function Hero() {
                 e.currentTarget.style.transform = 'translate(0, 0)';
                 e.currentTarget.style.boxShadow = 'var(--shadow)';
               }}
-              onClick={() => window.location.href = '/forecast/upload/'}
+              onClick={() => window.location.href = '/'}
             >
               Get Started
               <TrendingUp className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

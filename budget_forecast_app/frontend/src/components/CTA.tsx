@@ -26,7 +26,7 @@ export function CTA() {
             borderRadius: 'var(--radius)',
             boxShadow: '3px 3px 0 rgba(255,255,255,0.2)'
           }}>
-            🚀 Get Started Today
+            Get Started Today
           </div>
           
           <h2 className="mb-6 text-white" style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)' }}>
@@ -86,15 +86,15 @@ export function CTA() {
           <div className="mt-16 pt-8" style={{ borderTop: '2px solid rgba(255,255,255,0.2)' }}>
             <div className="flex flex-wrap justify-center items-center gap-8 text-sm" style={{ color: 'var(--light-accent)' }}>
               <div className="flex items-center gap-2">
-                <span className="text-2xl">🔒</span>
+
                 <span>SOC 2 Certified</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-2xl">✓</span>
+
                 <span>No Credit Card Required</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-2xl">⚡</span>
+
                 <span>Setup in 5 Minutes</span>
               </div>
             </div>

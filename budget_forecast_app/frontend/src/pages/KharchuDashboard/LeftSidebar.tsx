@@ -16,9 +16,10 @@ export function LeftSidebar() {
   const location = useLocation();
   const isHome = location.pathname === '/';
   const isDashboard = location.pathname === '/kharchu';
+  const isUpload = location.pathname === '/upload';
 
   return (
-    <div className="w-14 bg-[#1D1B1B] h-[90vh] rounded-[40px] flex flex-col items-center py-6 mx-4 my-auto justify-between shadow-lg">
+    <div className="w-20 bg-[#1D1B1B] h-[92vh] rounded-[30px] flex flex-col items-center py-6 mx-4 my-auto justify-between shadow-lg">
       <div className="flex flex-col items-center space-y-6">
         {/* Logo */}
         <Link
@@ -37,6 +38,14 @@ export function LeftSidebar() {
           <Home size={20} />
         </Link>
 
+        <Link
+          to="/upload"
+          className={`transition-colors ${isUpload ? 'text-white bg-white/20 p-2 rounded-xl' : 'text-gray-400 hover:text-white'}`}
+          title="Upload File"
+        >
+          <UploadCloud size={20} /> {/* Adjust the icon component to whatever you are using */}
+        </Link>
+
         {/* Dashboard button now links to /kharchu and handles the active state */}
         <Link
           to="/kharchu"
@@ -46,13 +55,6 @@ export function LeftSidebar() {
           <LayoutDashboard size={20} />
         </Link>
 
-        {/* Upload button is now a blank/inactive button for now */}
-        <button
-          className="text-gray-400 hover:text-white transition-colors"
-          title="Upload File"
-        >
-          <UploadCloud size={20} />
-        </button>
         <button className="text-gray-400 hover:text-white transition-colors">
           <LinkIcon size={20} />
         </button>

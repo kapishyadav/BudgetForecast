@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { LayoutDashboard } from 'lucide-react';
 import {
   Home,
   Share2,
@@ -20,9 +21,13 @@ export function LeftSidebar() {
     <div className="w-14 bg-[#1D1B1B] h-[90vh] rounded-[40px] flex flex-col items-center py-6 mx-4 my-auto justify-between shadow-lg">
       <div className="flex flex-col items-center space-y-6">
         {/* Logo */}
-        <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center mb-4">
+        <Link
+          to="/"
+          className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center mb-4 hover:bg-white/20 transition-colors cursor-pointer"
+          title="Go to Home"
+        >
           <span className="text-white font-bold text-xl">K</span>
-        </div>
+        </Link>
 
         {/* Navigation Icons */}
         <Link
@@ -31,15 +36,23 @@ export function LeftSidebar() {
         >
           <Home size={20} />
         </Link>
-        <button className="text-gray-400 hover:text-white transition-colors">
-          <Share2 size={20} />
-        </button>
+
+        {/* Dashboard button now links to /kharchu and handles the active state */}
         <Link
           to="/kharchu"
           className={`transition-colors ${isDashboard ? 'text-white bg-white/20 p-2 rounded-xl' : 'text-gray-400 hover:text-white'}`}
+          title="Go to Dashboard"
+        >
+          <LayoutDashboard size={20} />
+        </Link>
+
+        {/* Upload button is now a blank/inactive button for now */}
+        <button
+          className="text-gray-400 hover:text-white transition-colors"
+          title="Upload File"
         >
           <UploadCloud size={20} />
-        </Link>
+        </button>
         <button className="text-gray-400 hover:text-white transition-colors">
           <LinkIcon size={20} />
         </button>

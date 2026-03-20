@@ -36,11 +36,34 @@ const features = [
 export function Features() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-      <div className="text-center mb-20">
-        <h2 className="max-w-2xl mx-auto text-lg" style={{ color: 'var(--primary)', opacity: 0.8 }}>
-          Features
+      {/* --- UPDATED HEADING SECTION --- */}
+      <div className="text-center mb-20 flex flex-col items-center">
+        {/* Eyebrow Badge */}
+        <div
+          className="inline-block px-5 py-2 mb-6 text-sm font-bold uppercase tracking-wider"
+          style={{
+            backgroundColor: 'var(--light-accent)',
+            color: 'var(--primary)',
+            borderRadius: '999px',
+            border: '2px solid var(--primary)',
+            boxShadow: '4px 4px 0 var(--primary)'
+          }}
+        >
+          Capabilities
+        </div>
+
+        {/* Main Headline */}
+        <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight" style={{ color: 'var(--primary)' }}>
+          Everything You Need To <br />
+          <span style={{ color: 'var(--accent)' }}>Master Your Spend</span>
         </h2>
+
+        {/* Supporting Subtitle */}
+        <p className="max-w-2xl mx-auto text-xl" style={{ color: 'var(--primary)', opacity: 0.8 }}>
+          Powerful tools designed to bring clarity and predictability to your cloud invoices.
+        </p>
       </div>
+      {/* ----------------------------- */}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {features.map((feature, index) => {
@@ -86,16 +109,16 @@ export function Features() {
               >
                 <Icon className="w-7 h-7" style={{ color: isHighlighted ? 'white' : 'var(--accent)' }} />
               </div>
-              <h3 className="mb-3" style={{ color: isHighlighted ? 'white' : 'var(--primary)' }}>
+              <h3 className="text-xl font-bold mb-3" style={{ color: isHighlighted ? 'white' : 'var(--primary)' }}>
                 {feature.title}
               </h3>
-              <p style={{ color: isHighlighted ? 'rgba(255,255,255,0.9)' : 'var(--primary)', opacity: isHighlighted ? 1 : 0.8 }}>
+              <p className="leading-relaxed" style={{ color: isHighlighted ? 'rgba(255,255,255,0.9)' : 'var(--primary)', opacity: isHighlighted ? 1 : 0.8 }}>
                 {feature.description}
               </p>
 
               {/* Corner accent */}
               <div
-                className="absolute top-3 right-3 w-2 h-2 rounded-full"
+                className="absolute top-4 right-4 w-3 h-3 rounded-full"
                 style={{ backgroundColor: isHighlighted ? 'white' : 'var(--accent)' }}
               ></div>
             </div>

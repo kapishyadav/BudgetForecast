@@ -1,20 +1,15 @@
-import { Hero } from './components/Hero';
-import { Features } from './components/Features';
-import { ForecastDemo } from './components/ForecastDemo';
-import { CTA } from './components/CTA';
-import { Header } from './components/Header';
+import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { LandingPage } from './pages/LandingPage';
+import { KharchuDashboard } from './pages/KharchuDashboard/KharchuDashboard';
 
 export default function App() {
   return (
     <ThemeProvider>
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-color)' }}>
-        <Header />
-        <Hero />
-        <Features />
-        <ForecastDemo />
-        <CTA />
-      </div>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/kharchu" element={<KharchuDashboard />} />
+      </Routes>
     </ThemeProvider>
   );
 }

@@ -20,9 +20,10 @@ RUN apt-get update && apt-get install -y curl && \
 # copy project AFTER node/python is installed
 COPY . /app/
 
-# Install node dependencies inside container
+# Install node dependencies inside container (root + frontend)
 RUN npm install
+RUN cd frontend && npm install
 
 EXPOSE 8000 5173
 
-CMD sh -c "npm run dev & python manage.py runserver 0.0.0.0:8000"
+CMD sh -c "cd frontend && npm run dev -- --host & python manage.py runserver 0.0.0.0:8000"

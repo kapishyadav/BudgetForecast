@@ -17,7 +17,7 @@ export function Hero() {
               }}
             >
               <BarChart3 className="w-7 h-7" />
-              <span>AWS Budget Forecasting</span>
+              <span>Kharchu</span>
               <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center animate-pulse" 
                 style={{ 
                   backgroundColor: 'var(--primary)',
@@ -32,20 +32,19 @@ export function Hero() {
             color: 'var(--primary)',
             fontSize: 'clamp(2rem, 5vw, 3.5rem)'
           }}>
-            Intelligent Time Series Forecasting for{' '}
+            Keep Your {' '}
             <span className="relative inline-block">
-              <span className="relative z-10">AWS Budget</span>
+              <span className="relative z-10">Cloud Kharchu</span>
               <span 
                 className="absolute bottom-2 left-0 w-full h-3 -z-0"
                 style={{ backgroundColor: 'var(--light-accent)', opacity: 0.5 }}
               ></span>
             </span>
-            {' '}Management
+            {' '}Under Control
           </h1>
           
           <p className="max-w-2xl mx-auto mb-12 text-lg" style={{ color: 'var(--primary)', opacity: 0.8 }}>
-            Leverage advanced machine learning algorithms to predict your AWS spending patterns, 
-            optimize resource allocation, and prevent budget overruns before they happen.
+            Stop guessing your next invoice
           </p>
           
           <div className="flex flex-wrap justify-center gap-6">

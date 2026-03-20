@@ -64,7 +64,7 @@ export function MetricCards() {
       </div>
 
       {/* Card 3 - Promotional */}
-      <div className="bg-[#1A1A1A] rounded-[24px] p-6 shadow-md text-white flex flex-col justify-between relative overflow-hidden group">
+      <div className="bg-[#EAFF52] rounded-[24px] p-6 shadow-md text-gray-500 justify-between relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-blue-500/30 transition-colors"></div>
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl -ml-10 -mb-10 group-hover:bg-purple-500/30 transition-colors"></div>
         

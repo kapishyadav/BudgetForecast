@@ -17,7 +17,7 @@ const historicalData = [
 
 export function ForecastDemo() {
   return (
-    <div className="py-24 relative overflow-hidden" style={{ backgroundColor: 'rgba(216, 195, 165, 0.15)' }}>
+    <div className="py-24 relative overflow-hidden" style={{ backgroundColor: 'var(-light--accent)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center mb-16">
           <div className="inline-block mb-4 px-6 py-2" style={{

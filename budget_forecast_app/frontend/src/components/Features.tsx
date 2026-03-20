@@ -37,31 +37,20 @@ export function Features() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
       <div className="text-center mb-20">
-        <div className="inline-block mb-4 px-6 py-2" style={{
-          backgroundColor: 'var(--light-accent)',
-          color: 'var(--accent)',
-          borderRadius: 'var(--radius)',
-          border: '2px solid var(--accent)'
-        }}>
-          ✨ Features
-        </div>
-        <h2 className="mb-6" style={{ color: 'var(--primary)' }}>
-          Powerful Features for Smarter Budget Management
+        <h2 className="max-w-2xl mx-auto text-lg" style={{ color: 'var(--primary)', opacity: 0.8 }}>
+          Features
         </h2>
-        <p className="max-w-2xl mx-auto text-lg" style={{ color: 'var(--primary)', opacity: 0.8 }}>
-          Everything you need to stay on top of your AWS spending and make data-driven decisions.
-        </p>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {features.map((feature, index) => {
           const Icon = feature.icon;
           const isHighlighted = index === 0 || index === 3;
           return (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className="p-8 group cursor-pointer relative"
-              style={{ 
+              style={{
                 backgroundColor: isHighlighted ? 'var(--accent)' : 'white',
                 borderRadius: 'var(--radius)',
                 border: isHighlighted ? '3px solid var(--primary)' : '3px solid var(--light-accent)',
@@ -87,9 +76,9 @@ export function Features() {
                 }
               }}
             >
-              <div 
+              <div
                 className="w-14 h-14 flex items-center justify-center mb-6 relative"
-                style={{ 
+                style={{
                   backgroundColor: isHighlighted ? 'rgba(255,255,255,0.2)' : 'var(--light-accent)',
                   borderRadius: 'calc(var(--radius) - 4px)',
                   boxShadow: '3px 3px 0 rgba(0,0,0,0.1)'
@@ -103,9 +92,9 @@ export function Features() {
               <p style={{ color: isHighlighted ? 'rgba(255,255,255,0.9)' : 'var(--primary)', opacity: isHighlighted ? 1 : 0.8 }}>
                 {feature.description}
               </p>
-              
+
               {/* Corner accent */}
-              <div 
+              <div
                 className="absolute top-3 right-3 w-2 h-2 rounded-full"
                 style={{ backgroundColor: isHighlighted ? 'white' : 'var(--accent)' }}
               ></div>

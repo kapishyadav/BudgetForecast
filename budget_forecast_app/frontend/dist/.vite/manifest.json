@@ -1,0 +1,11 @@
+{
+  "src/main.tsx": {
+    "file": "assets/main--uL-GDMD.js",
+    "name": "main",
+    "src": "src/main.tsx",
+    "isEntry": true,
+    "css": [
+      "assets/main-BOS3jFe_.css"
+    ]
+  }
+}

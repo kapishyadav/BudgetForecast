@@ -18,7 +18,7 @@ services:
   vite:
     image: node:22-alpine
     working_dir: /app/frontend
-    command: ["npm", "run", "dev", "--", "--host"]
+    command: ["sh", "-c", "npm install && npm run dev -- --host"]
     volumes:
       - .:/app
     ports:

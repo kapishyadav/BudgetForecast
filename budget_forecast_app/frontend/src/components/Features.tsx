@@ -38,24 +38,11 @@ export function Features() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
       {/* --- UPDATED HEADING SECTION --- */}
       <div className="text-center mb-20 flex flex-col items-center">
-        {/* Eyebrow Badge */}
-        <div
-          className="inline-block px-5 py-2 mb-6 text-sm font-bold uppercase tracking-wider"
-          style={{
-            backgroundColor: 'var(--light-accent)',
-            color: 'var(--primary)',
-            borderRadius: '999px',
-            border: '2px solid var(--primary)',
-            boxShadow: '4px 4px 0 var(--primary)'
-          }}
-        >
-          Capabilities
-        </div>
 
         {/* Main Headline */}
         <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight" style={{ color: 'var(--primary)' }}>
           Everything You Need To <br />
-          <span style={{ color: 'var(--accent)' }}>Master Your Spend</span>
+          <span style={{ color: 'var(--primary)' }}>Master Your Spend</span>
         </h2>
 
         {/* Supporting Subtitle */}
@@ -74,10 +61,10 @@ export function Features() {
               key={index}
               className="p-8 group cursor-pointer relative"
               style={{
-                backgroundColor: isHighlighted ? 'var(--accent)' : 'white',
+                backgroundColor: isHighlighted ? 'var(--primary)' : 'white',
                 borderRadius: 'var(--radius)',
-                border: isHighlighted ? '3px solid var(--primary)' : '3px solid var(--light-accent)',
-                boxShadow: isHighlighted ? '6px 6px 0 var(--primary)' : '6px 6px 0 var(--light-accent)',
+                border: isHighlighted ? '3px solid var(--primary)' : '3px solid var(--primary)',
+                boxShadow: isHighlighted ? '6px 6px 0 var(--primary)' : '6px 6px 0 var(--primary)',
                 transition: 'var(--transition)'
               }}
               onMouseEnter={(e) => {
@@ -85,29 +72,29 @@ export function Features() {
                 if (isHighlighted) {
                   e.currentTarget.style.boxShadow = '10px 10px 0 var(--primary)';
                 } else {
-                  e.currentTarget.style.boxShadow = '10px 10px 0 var(--accent)';
-                  e.currentTarget.style.borderColor = 'var(--accent)';
+                  e.currentTarget.style.boxShadow = '10px 10px 0 var(--primary)';
+                  e.currentTarget.style.borderColor = 'var(--primary)';
                 }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translate(0, 0)';
                 if (isHighlighted) {
-                  e.currentTarget.style.boxShadow = '6px 6px 0 var(--primary)';
+                  e.currentTarget.style.boxShadow = '6px 6px 0 var(--accent)';
                 } else {
-                  e.currentTarget.style.boxShadow = '6px 6px 0 var(--light-accent)';
-                  e.currentTarget.style.borderColor = 'var(--light-accent)';
+                  e.currentTarget.style.boxShadow = '6px 6px 0 var(--primary)';
+                  e.currentTarget.style.borderColor = 'var(--accent)';
                 }
               }}
             >
               <div
                 className="w-14 h-14 flex items-center justify-center mb-6 relative"
                 style={{
-                  backgroundColor: isHighlighted ? 'rgba(255,255,255,0.2)' : 'var(--light-accent)',
+                  backgroundColor: isHighlighted ? 'rgba(60, 60, 59, 0.2)' : 'var(--light-accent)',
                   borderRadius: 'calc(var(--radius) - 4px)',
                   boxShadow: '3px 3px 0 rgba(0,0,0,0.1)'
                 }}
               >
-                <Icon className="w-7 h-7" style={{ color: isHighlighted ? 'white' : 'var(--accent)' }} />
+                <Icon className="w-7 h-7" style={{ color: isHighlighted ? 'white' : 'var(--primary)' }} />
               </div>
               <h3 className="text-xl font-bold mb-3" style={{ color: isHighlighted ? 'white' : 'var(--primary)' }}>
                 {feature.title}

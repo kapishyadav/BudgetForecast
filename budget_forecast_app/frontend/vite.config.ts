@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import tailwindcss from '@tailwindcss/vite';
@@ -60,8 +59,28 @@ export default defineConfig(({ command }) => ({
     },
   },
   server: {
+    host: true, // Needed for Docker network access
     strictPort: true,
     port: 5173,
     hmr: { host: "localhost" },
+
+    proxy: {
+      '/get_suggestions': {
+        target: 'http://app:8000', // Points to Django container
+        changeOrigin: true,
+      },
+      '/status': {
+        target: 'http://app:8000',
+        changeOrigin: true,
+      },
+      '/upload': {
+        target: 'http://app:8000',
+        changeOrigin: true,
+      },
+      '/api/forecast': {
+        target: 'http://app:8000',
+        changeOrigin: true,
+      }
+    }
   }
 }));

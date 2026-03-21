@@ -1,4 +1,5 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { useState, useEffect, useRef } from 'react';
+import { XAxis, YAxis, CartesianGrid, Tooltip, Legend, Area, AreaChart } from 'recharts';
 
 const historicalData = [
   { month: 'Jan', actual: 4500, forecast: null },
@@ -16,8 +17,22 @@ const historicalData = [
 ];
 
 export function ForecastDemo() {
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const [chartWidth, setChartWidth] = useState(800);
+
+  useEffect(() => {
+    function updateWidth() {
+      if (chartContainerRef.current) {
+        setChartWidth(chartContainerRef.current.offsetWidth);
+      }
+    }
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
+
   return (
-    <div className="py-24 relative overflow-hidden" style={{ backgroundColor: 'var(-light--accent)' }}>
+    <div className="py-24 relative overflow-hidden" style={{ backgroundColor: 'var(--light-accent)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center mb-16">
           <div className="inline-block mb-4 px-6 py-2" style={{
@@ -35,10 +50,10 @@ export function ForecastDemo() {
             Visualize historical spending and predicted future costs with interactive forecasting charts.
           </p>
         </div>
-        
-        <div 
+
+        <div
           className="p-10 relative"
-          style={{ 
+          style={{
             backgroundColor: 'white',
             borderRadius: 'var(--radius)',
             border: '4px solid var(--accent)',
@@ -56,64 +71,62 @@ export function ForecastDemo() {
               </div>
             </div>
           </div>
-          
-          <div className="relative">
-            <ResponsiveContainer width="100%" height={400}>
-              <AreaChart data={historicalData}>
-                <defs>
-                  <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#a47148" stopOpacity={0.5}/>
-                    <stop offset="95%" stopColor="#a47148" stopOpacity={0.05}/>
-                  </linearGradient>
-                  <linearGradient id="colorForecast" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b2f2f" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3b2f2f" stopOpacity={0.05}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#d8c3a5" strokeWidth={1.5} />
-                <XAxis dataKey="month" stroke="#3b2f2f" strokeWidth={2} />
-                <YAxis stroke="#3b2f2f" strokeWidth={2} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    border: '3px solid #a47148',
-                    borderRadius: '14px',
-                    boxShadow: '4px 4px 0 #d8c3a5'
-                  }}
-                  formatter={(value) => `$${value}`}
-                />
-                <Legend 
-                  wrapperStyle={{ 
-                    paddingTop: '20px'
-                  }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="actual" 
-                  stroke="#a47148" 
-                  fill="url(#colorActual)"
-                  strokeWidth={4}
-                  name="Actual Spending"
-                  dot={{ fill: '#a47148', strokeWidth: 2, r: 5 }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="forecast" 
-                  stroke="#3b2f2f" 
-                  fill="url(#colorForecast)"
-                  strokeWidth={4}
-                  strokeDasharray="8 8"
-                  name="Forecasted Spending"
-                  dot={{ fill: '#3b2f2f', strokeWidth: 2, r: 5 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+
+          <div ref={chartContainerRef} style={{ width: '100%', minHeight: 400 }}>
+            <AreaChart width={chartWidth} height={400} data={historicalData}>
+              <defs>
+                <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#1A1A1A" stopOpacity={0.5} />
+                  <stop offset="95%" stopColor="#1A1A1A" stopOpacity={0.05} />
+                </linearGradient>
+                <linearGradient id="colorForecast" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#E5E0D8" stopOpacity={0.5} />
+                  <stop offset="95%" stopColor="#E5E0D8" stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E0D8" strokeWidth={1.5} />
+              <XAxis dataKey="month" stroke="#1A1A1A" strokeWidth={2} />
+              <YAxis stroke="#1A1A1A" strokeWidth={2} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#fff',
+                  border: '3px solid #1A1A1A',
+                  borderRadius: '14px',
+                  boxShadow: '4px 4px 0 #E5E0D8'
+                }}
+                formatter={(value) => `$${value}`}
+              />
+              <Legend
+                wrapperStyle={{
+                  paddingTop: '20px'
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="actual"
+                stroke="#1A1A1A"
+                fill="url(#colorActual)"
+                strokeWidth={4}
+                name="Actual Spending"
+                dot={{ fill: '#1A1A1A', strokeWidth: 2, r: 5 }}
+              />
+              <Area
+                type="monotone"
+                dataKey="forecast"
+                stroke="#E5E0D8"
+                fill="url(#colorForecast)"
+                strokeWidth={4}
+                strokeDasharray="8 8"
+                name="Forecasted Spending"
+                dot={{ fill: '#E5E0D8', strokeWidth: 2, r: 5 }}
+              />
+            </AreaChart>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
-            <div 
+            <div
               className="p-6 relative overflow-hidden"
-              style={{ 
+              style={{
                 backgroundColor: 'var(--light-accent)',
                 borderRadius: 'var(--radius)',
                 border: '3px solid var(--accent)',
@@ -127,9 +140,9 @@ export function ForecastDemo() {
                 <span className="text-green-600">↓ 5%</span> vs last month
               </div>
             </div>
-            <div 
+            <div
               className="p-6 relative overflow-hidden"
-              style={{ 
+              style={{
                 backgroundColor: 'var(--accent)',
                 borderRadius: 'var(--radius)',
                 border: '3px solid var(--primary)',
@@ -144,9 +157,9 @@ export function ForecastDemo() {
                 <span style={{ color: '#d8c3a5' }}>↑ 4.8%</span> predicted growth
               </div>
             </div>
-            <div 
+            <div
               className="p-6 relative overflow-hidden"
-              style={{ 
+              style={{
                 backgroundColor: 'transparent',
                 borderRadius: 'var(--radius)',
                 border: '3px solid var(--primary)',

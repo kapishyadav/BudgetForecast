@@ -6,6 +6,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'budget_forecast_app.settings')
 
 # Create the Celery app instance
 app = Celery('budget_forecast_app')
+app.conf.timezone = 'Asia/Kolkata'
 
 # Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.

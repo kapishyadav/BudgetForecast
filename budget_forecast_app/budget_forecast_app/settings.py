@@ -26,7 +26,13 @@ SECRET_KEY = 'django-insecure-kfhse2zlm=setbedwlujli_k%2t56-9#7r6o9@=y&*0h70sdcg
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'app']
+
+TIME_ZONE = 'Asia/Kolkata'
+USE_TZ = True  # Keeps DB in UTC, but localizes UI and logs
+
+# Ensure Celery reads this:
+CELERY_TIMEZONE = TIME_ZONE
 
 
 # Application definition
@@ -81,6 +87,22 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# 1. CORS Configuration (Requires django-cors-headers installed)
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+# CRITICAL: This allows cookies (sessions/CSRF) to be sent across ports
+CORS_ALLOW_CREDENTIALS = True
+
+# 2. Session and CSRF Cookie Settings
+# If you are developing locally on HTTP (not HTTPS), use these settings:
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 
 
 # Password validation

@@ -100,23 +100,43 @@ def upload_file(request):
             )
 
             # Store session data NOW so it is ready for the download step later
+            # request.session['csv_base_filename'] = filename
+            # request.session['uploaded_file_path'] = file_path
+            # request.session['forecast_type'] = forecast_type_str
+            # request.session['account_name'] = account_name
+            # request.session['service_name'] = service_name
+            # request.session['bu_code'] = bu_code
+            # request.session['segment_name'] = segment_name
+            # request.session.modified = True
+
+            # ==========================================
+            # 2. CRITICAL: SET THE SESSION VARIABLES
+            # ==========================================
             request.session['csv_base_filename'] = filename
             request.session['uploaded_file_path'] = file_path
-            request.session['forecast_type'] = forecast_type_str
-            request.session['account_name'] = account_name
-            request.session['service_name'] = service_name
-            request.session['bu_code'] = bu_code
-            request.session['segment_name'] = segment_name
+
+            # Force Django to save the session to the database/cache immediately
             request.session.modified = True
 
+            logger.info(f"✅ Session successfully set! csv_base_filename: {request.session['csv_base_filename']}")
+
+            # 3. Return JSON for React
+            return JsonResponse({
+                "status": "success",
+                "task_id": task.id,
+                "message": "Upload successful, processing started."
+            })
+
             # Return the loading template, passing the task_id to HTMX
-            return render(request, "forecast/partials/loading.html", {"task_id": task.id})
+            # return render(request, "forecast/partials/loading.html", {"task_id": task.id})
 
         except Exception as e:
             logger.error(f"Forecasting failed to start: {e}")
-            return render(request, "forecast/upload.html", {"error": str(e)})
+            #return render(request, "forecast/upload.html", {"error": str(e)})
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
-    return render(request, "forecast/upload.html")
+    #return render(request, "forecast/upload.html")
+    return JsonResponse({"status": "error", "message": "Invalid request or missing file"}, status=400)
 
 def get_suggestions(request):
     logger.info(f"DEBUG in get_suggestions views")

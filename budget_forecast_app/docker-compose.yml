@@ -9,6 +9,7 @@ services:
     volumes:
       - .:/app
     environment:
+      - TZ=Asia/Kolkata
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
@@ -38,6 +39,7 @@ services:
     volumes:
       - .:/app
     environment:
+      - TZ=Asia/Kolkata
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:

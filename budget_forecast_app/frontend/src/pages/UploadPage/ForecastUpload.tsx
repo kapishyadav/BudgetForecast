@@ -1,8 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { UploadCloud, FileSpreadsheet, Settings2, Rocket, BarChart3, Loader2 } from 'lucide-react';
 import AsyncSelect from 'react-select/async';
 
+function getCsrfToken() {
+  const name = 'csrftoken';
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
+  return '';
+}
+
 export function ForecastUpload() {
+  const navigate = useNavigate();
   const [forecastType, setForecastType] = useState('overall_aggregate');
   const [granularity, setGranularity] = useState('monthly');
   const [file, setFile] = useState<File | null>(null);
@@ -34,49 +44,75 @@ export function ForecastUpload() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file) return alert("Please upload a dataset first.");
+      e.preventDefault();
+      if (!file) return alert("Please upload a dataset first.");
 
-    setIsLoading(true);
-    const formData = new FormData();
-    formData.append('dataset', file);
-    formData.append('forecast_type', forecastType);
-    formData.append('granularity', granularity);
+      setIsLoading(true);
+      const formData = new FormData();
+      formData.append('dataset', file);
+      formData.append('forecast_type', forecastType);
+      formData.append('granularity', granularity);
 
-    // Append conditional fields if they exist
-    if (accountName) formData.append('account_name', accountName.value);
-    if (serviceName) formData.append('service_name', serviceName.value);
-    if (buCode) formData.append('bu_code', buCode.value);
-    if (segmentName) formData.append('segment_name', segmentName.value);
+      // Append conditional fields if they exist
+      if (accountName) formData.append('account_name', accountName.value);
+      if (serviceName) formData.append('service_name', serviceName.value);
+      if (buCode) formData.append('bu_code', buCode.value);
+      if (segmentName) formData.append('segment_name', segmentName.value);
 
-    try {
-      // 1. Submit the Forecast request
-      const response = await fetch('/upload/', { method: 'POST', body: formData });
+      try {
+        // 1. Submit the Forecast request via the Vite proxy to Django
+        const response = await fetch('/upload/', {
+          method: 'POST',
+          body: formData,
+          headers: {
+              'X-CSRFToken' : getCsrfToken(),
+              }
+        });
 
-      // Since your Django view currently returns an HTML snippet for HTMX,
-      // we need to extract the task_id from that HTML or update the view to return JSON.
-      const htmlText = await response.text();
-      const taskIdMatch = htmlText.match(/task_id="([^"]+)"/);
-      const taskId = taskIdMatch ? taskIdMatch[1] : null;
+        // 2. Parse the JSON response returned by your updated Django view
+        const data = await response.json();
 
-      if (taskId) {
-          pollTaskStatus(taskId);
+        // 3. Extract task_id and start polling
+        if (data.task_id) {
+            pollTaskStatus(data.task_id);
+        } else {
+            // Handle cases where the backend returns an error message instead of a task_id
+            console.error("Backend error:", data.message || "Unknown error");
+            alert(data.message || "Upload failed. Please try again.");
+            setIsLoading(false);
+        }
+      } catch (err) {
+        console.error("Upload failed:", err);
+        alert("Network error occurred during upload.");
+        setIsLoading(false);
       }
-    } catch (err) {
-      console.error("Upload failed", err);
-      setIsLoading(false);
-    }
   };
 
   const pollTaskStatus = (taskId: string) => {
+    // Check the status every 2000 milliseconds (2 seconds)
     const interval = setInterval(async () => {
-      const res = await fetch(`/status/${taskId}/`);
-      const statusHtml = await res.text();
-
-      // Check if the task is finished by looking for dashboard results in the response
-      if (statusHtml.includes('id="dashboard-results"')) {
+      try {
+        const response = await fetch(`/status/${taskId}/`);
+        // We must parse the response as JSON, not text
+        const data = await response.json()
+        // 2. Check the JSON's standard "state" or "status" key
+        if (data.status === 'SUCCESS' || data.state === 'SUCCESS') {
+          clearInterval(interval);
+          setIsLoading(false);
+          navigate('/kharchu'); // BOOM! Redirect!
+        }
+        else if (data.status === 'FAILURE' || data.state === 'FAILURE' || data.status === 'error') {
+          // Handle backend errors gracefully
+          clearInterval(interval);
+          setIsLoading(false);
+          alert("The forecast generation failed: " + (data.message || "Unknown error"));
+        }
+        // If status is PENDING or PROCESSING, do nothing and let it loop again
+        } catch (err) {
+        // If the fetch fails (or the JSON parse fails because Django returned HTML)
+        console.error("Polling error. Is Django returning JSON?", err);
         clearInterval(interval);
-        window.location.href = "/kharchu"; // Redirect to your dashboard page
+        setIsLoading(false);
       }
     }, 2000);
   };

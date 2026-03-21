@@ -28,6 +28,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'app']
 
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
 TIME_ZONE = 'Asia/Kolkata'
 USE_TZ = True  # Keeps DB in UTC, but localizes UI and logs
 

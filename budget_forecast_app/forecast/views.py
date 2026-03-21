@@ -28,7 +28,7 @@ logger = setup_logging()
 def hello_vite(request):
     return render(request, "hello_vite.html")
 
-
+@csrf_exempt
 def upload_file(request):
     """Renders the upload form and delegates forecasting to Celery."""
     if request.method == "POST" and request.FILES.get("dataset"):
@@ -332,12 +332,12 @@ def delete_old_files(max_files=5):
 
 
 def check_task_status(request, task_id):
-    """HTMX endpoint to poll Celery task status."""
+    """JSON endpoint for React to poll Celery task status."""
     task = AsyncResult(task_id)
 
     if task.state == 'PENDING' or task.state == 'STARTED':
         # Still working! Return the loading spinner snippet again.
-        return render(request, "forecast/partials/loading.html", {"task_id": task_id})
+        return JsonResponse({"status": "PENDING", "message": "Forecasting in progress..."})
 
     elif task.state == 'SUCCESS':
         # Task is done! Grab the dictionary returned by tasks.py
@@ -345,24 +345,25 @@ def check_task_status(request, task_id):
 
         # Check if our task caught an error gracefully
         if result.get("status") == "error":
-            return render(request, "forecast/partials/error.html", {"error": result.get("message")})
+            return JsonResponse({"status": "FAILURE", "message": result.get("message")})
 
-        # Success! Save the big JSON string for the CSV download feature
+        # Success! Save the big JSON strings in the session for the dashboard to use later
         request.session['forecast_csv_json'] = result["forecast_json"]
+        request.session['historical_csv_json'] = result.get("historical_json", "[]")  # Save historical too
+        request.session.modified = True
 
-        # Render the final dashboard HTML snippet containing the charts
-        return render(request, "forecast/partials/dashboard_results.html", {
-            "forecast_data": result["forecast_json"],
-            "historical_data": result["historical_json"],
-            "forecast_type": request.session.get('forecast_type'),
-            "account_name": request.session.get('account_name'),
-            "service_name": request.session.get('service_name'),
-            "bu_code": request.session.get('bu_code'),
-            "segment_name": request.session.get('segment_name'),
+        logger.info(f"DEBUG: Task {task_id} SUCCESS. Returning JSON to React.")
+
+        # Return a pure JSON success message so React knows to redirect
+        return JsonResponse({
+            "status": "SUCCESS",
+            "message": "Forecast complete!"
         })
 
     elif task.state == 'FAILURE':
         # Something crashed hard inside the Celery worker
-        return render(request, "forecast/partials/error.html",
-                      {"error": "A critical error occurred during background processing."})
+        return JsonResponse({
+            "status": "FAILURE",
+            "message": str(task.info)  # This passes the actual Python error back to React
+        })
 

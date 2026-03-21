@@ -3,9 +3,9 @@ import { ArrowRight } from 'lucide-react';
 export function CTA() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
-      <div 
+      <div
         className="p-16 text-center text-white relative overflow-hidden"
-        style={{ 
+        style={{
           backgroundColor: 'var(--primary)',
           borderRadius: 'var(--radius)',
           boxShadow: '16px 16px 0 var(--accent)'
@@ -21,14 +21,14 @@ export function CTA() {
 
         <div className="relative z-10">
           <div className="inline-block mb-6 px-6 py-2" style={{
-            backgroundColor: 'var(--accent)',
+            backgroundColor: 'var(--primary)',
             color: 'white',
             borderRadius: 'var(--radius)',
             boxShadow: '3px 3px 0 rgba(255,255,255,0.2)'
           }}>
             Get Started Today
           </div>
-          
+
           <h2 className="mb-6 text-white" style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)' }}>
             Ready to Optimize Your AWS Budget?
           </h2>
@@ -36,30 +36,9 @@ export function CTA() {
             Start forecasting your AWS spending today and gain the insights you need to make smarter financial decisions.
           </p>
           <div className="flex flex-wrap justify-center gap-6">
-            <button 
+            <button
               className="px-12 py-5 flex items-center gap-3 group"
-              style={{ 
-                backgroundColor: 'var(--accent)',
-                color: 'white',
-                borderRadius: 'var(--radius)',
-                boxShadow: '6px 6px 0 rgba(255,255,255,0.3)',
-                transition: 'var(--transition)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translate(6px, 6px)';
-                e.currentTarget.style.boxShadow = '0px 0px 0 rgba(255,255,255,0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translate(0, 0)';
-                e.currentTarget.style.boxShadow = '6px 6px 0 rgba(255,255,255,0.3)';
-              }}
-            >
-              Start Free Trial
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
-            <button 
-              className="px-12 py-5"
-              style={{ 
+              style={{
                 backgroundColor: 'transparent',
                 color: 'white',
                 borderRadius: 'var(--radius)',
@@ -75,6 +54,29 @@ export function CTA() {
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translate(0, 0)';
                 e.currentTarget.style.boxShadow = '6px 6px 0 var(--light-accent)';
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              Start Free Trial
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+            <button
+              className="px-12 py-5"
+              style={{
+                backgroundColor: 'var(--primary)',
+                color: 'white',
+                borderRadius: 'var(--radius)',
+                boxShadow: '6px 6px 0 rgba(255,255,255,0.3)',
+                transition: 'var(--transition)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translate(6px, 6px)';
+                e.currentTarget.style.boxShadow = '0px 0px 0 var(--accent)';
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translate(0, 0)';
+                e.currentTarget.style.boxShadow = '6px 6px 0 var(--accent)';
                 e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >

@@ -3,8 +3,8 @@
 :root {
   --bg-color: #F5F1EB;
   --primary: #1A1A1A;
-  --accent: #1A1A1A;
-  --light-accent: #E5E0D8;
+  --accent: #E5E0D8;
+  --light-accent: #EAFF52;
   --radius: 12px;
   --shadow: 4px 4px 0 var(--primary);
   --transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);

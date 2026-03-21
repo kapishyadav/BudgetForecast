@@ -9,4 +9,5 @@ urlpatterns = [
     path("download_csv/", views.download_forecast_csv, name="download_csv"),
     path("get_suggestions/", views.get_suggestions, name="get_suggestions"),
     path('status/<str:task_id>/', views.check_task_status, name='check_task_status'),
+    path('api/dashboard-data/', views.get_dashboard_data, name='get_dashboard_data'),
 ]

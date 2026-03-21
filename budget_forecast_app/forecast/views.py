@@ -367,3 +367,24 @@ def check_task_status(request, task_id):
             "message": str(task.info)  # This passes the actual Python error back to React
         })
 
+def get_dashboard_data(request):
+    """Retrieves forecast JSON directly from Celery via task_id."""
+    task_id = request.GET.get('task_id')
+
+    if not task_id:
+        return JsonResponse({"error": "No task ID provided in URL."}, status=400)
+
+    task = AsyncResult(task_id)
+
+    if task.state != 'SUCCESS':
+        return JsonResponse({"error": "Forecast not ready or invalid task ID."}, status=400)
+
+    # Grab the result dictionary directly from Redis/Celery
+    result = task.result
+
+    return JsonResponse({
+        # We parse the stringified JSON from Celery back into Python lists
+        "forecast": json.loads(result.get("forecast_json", "[]")),
+        "historical": json.loads(result.get("historical_json", "[]"))
+    })
+

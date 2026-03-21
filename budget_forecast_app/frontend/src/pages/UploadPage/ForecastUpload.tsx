@@ -64,6 +64,7 @@ export function ForecastUpload() {
         const response = await fetch('/upload/', {
           method: 'POST',
           body: formData,
+          credentials: 'same-origin',
           headers: {
               'X-CSRFToken' : getCsrfToken(),
               }
@@ -92,14 +93,16 @@ export function ForecastUpload() {
     // Check the status every 2000 milliseconds (2 seconds)
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`/status/${taskId}/`);
+        const response = await fetch(`/status/${taskId}/`, {
+            credentials: 'same-origin'
+            });
         // We must parse the response as JSON, not text
         const data = await response.json()
         // 2. Check the JSON's standard "state" or "status" key
         if (data.status === 'SUCCESS' || data.state === 'SUCCESS') {
           clearInterval(interval);
           setIsLoading(false);
-          navigate('/kharchu'); // BOOM! Redirect!
+          navigate(`/kharchu?taskId=${taskId}`); // Include the Task ID to retrieve directly from Celery
         }
         else if (data.status === 'FAILURE' || data.state === 'FAILURE' || data.status === 'error') {
           // Handle backend errors gracefully

@@ -77,6 +77,10 @@ export default defineConfig(({ command }) => ({
         target: 'http://app:8000',
         changeOrigin: true,
       },
+      '/api/dashboard-data': {
+        target: 'http://app:8000',
+        changeOrigin: true,
+      },
       '/api/forecast': {
         target: 'http://app:8000',
         changeOrigin: true,

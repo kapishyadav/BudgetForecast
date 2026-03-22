@@ -12,9 +12,22 @@ services:
       - TZ=Asia/Kolkata
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DATABASE_URL=postgres://postgres:supersecretpassword@db:5432/kharchu_db
     depends_on:
       - vite
       - redis
+      - db
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: kharchu_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: supersecretpassword
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
 
   vite:
     image: node:22-alpine
@@ -40,8 +53,13 @@ services:
       - .:/app
     environment:
       - TZ=Asia/Kolkata
+      - DATABASE_URL=postgres://postgres:supersecretpassword@db:5432/kharchu_db
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
+      - db
       - redis
     restart: always
+
+volumes:
+  postgres_data:

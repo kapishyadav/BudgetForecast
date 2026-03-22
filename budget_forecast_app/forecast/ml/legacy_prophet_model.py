@@ -231,18 +231,15 @@ def get_accounts_dict(data, logger, account_name):
     return df_accounts_dict
 
 
-def save_overall_aggregate_forecasts(data, file, logger, granularity):
+def save_overall_aggregate_forecasts(data, logger, granularity):
     """
     Arguments:
-    csv file -> data
-    csv path -> file
+    Historical Data  -> data
     logger setup -> logger
 
     Returns: (forecast_df, historical_df)
     forecasts formatted with: forecast ds with only yhat, yhat_upper, yhat_lower
     """
-
-    file = os.path.splitext(os.path.basename(file))[0]
 
     if granularity == Granularity.MONTHLY:
         logger.info(f"DEBUG Running overall aggregate MONTHLY")
@@ -254,32 +251,16 @@ def save_overall_aggregate_forecasts(data, file, logger, granularity):
         raise ValueError(f"Granularity field must be MONTHLY OR DAILY. Currently: {granularity} with type {type(granularity)}")
     logger.info(f"DEBUG data columns : {list(data.columns)}")
 
-    # Shorten file name to avoid path length issues
-    short_name = hashlib.md5(file.encode()).hexdigest()[:8]
-
-    # Make sure output directory exists
-    output_dir = os.path.join("forecasts", short_name, "monthly_total")
-    os.makedirs(output_dir, exist_ok=True)
-    csv_dir = os.path.join(output_dir, "csv")
-
-    os.makedirs(csv_dir, exist_ok=True)
-
-    csv_path = os.path.join(csv_dir, "monthly_forecast.csv")
-
-    # Save forecast
-    forecast.to_csv(csv_path, index=False)
-
     logger.info(f"Forecasts formatted column names: {forecast.columns}")
     logger.info(f"History formatted column names: {history.columns}")
     logger.info("Successfully saved forecasts by monthly total!")
     return forecast, history, metrics
 
 
-def save_forecast_by_accounts(data, file, logger, account_name, granularity):
+def save_forecast_by_accounts(data, logger, account_name, granularity):
     """
     Arguments:
-    csv file -> data
-    csv path -> file
+    Historical Data -> data
     logger setup -> logger
     account_name -> account name to filter
 
@@ -302,26 +283,19 @@ def save_forecast_by_accounts(data, file, logger, account_name, granularity):
     else:
         raise ValueError("Granularity field must be MONTHLY OR DAILY.")
 
-    file = os.path.splitext(os.path.basename(file))[0]
-    # Make sure output directory exists
-    output_dir = os.path.join("forecasts", file, "account_level")
-    os.makedirs(output_dir, exist_ok=True)
-
     rows, columns = forecast.shape
 
     if logger:
         logger.info(f" no of months in forecast account rows: {rows}")
 
     logger.info("Successfully saved forecasts by account!")
-    # return forecast, metrics
     return forecast, history, metrics
 
 
-def save_forecasts_by_service(data, file, logger, account_name, service_name, granularity):
+def save_forecasts_by_service(data, logger, account_name, service_name, granularity):
     """
     Arguments:
-    csv file -> data
-    csv path -> file
+    Historical Data -> data
     logger setup -> logger
     service_name -> service name to filter
 
@@ -353,11 +327,10 @@ def save_forecasts_by_service(data, file, logger, account_name, service_name, gr
 
     return forecast, history, metrics
 
-def save_forecasts_by_bucode(data, file, logger, bu_code, granularity):
+def save_forecasts_by_bucode(data, logger, bu_code, granularity):
     """
     Arguments:
-    csv file -> data
-    csv path -> file
+    Historical Data -> data
     logger setup -> logger
     bu_code -> bu_code to filter
 
@@ -382,11 +355,10 @@ def save_forecasts_by_bucode(data, file, logger, bu_code, granularity):
 
     return forecast, history, metrics
 
-def save_forecasts_by_segment(data, file, logger, account_name, service_name, segment_name, granularity):
+def save_forecasts_by_segment(data, logger, account_name, service_name, segment_name, granularity):
     """
     Arguments:
-    csv file -> data
-    csv path -> file
+    Historical Data -> data
     logger setup -> logger
     account_name -> account name to filter
     service_name -> service name to filter

@@ -11,6 +11,8 @@ returns standardized outputs (metrics + Plotly figures).
 
 import os
 
+import pandas as pd
+
 from .prophet_model import run_prophet_forecast
 from .utils.setup_logging import setup_logging
 from .enums import ForecastType, Granularity
@@ -18,7 +20,7 @@ from .legacy_prophet_model import *
 
 logger = setup_logging()
 
-def run_forecast(csv_path: str,
+def run_forecast(df: pd.DataFrame,
                  forecast_type: ForecastType = ForecastType.OVERALL_AGGREGATE,
                  granularity: Granularity = Granularity.MONTHLY,
                  account_name = None,
@@ -42,8 +44,8 @@ def run_forecast(csv_path: str,
 
     logger.info(f"Running forecast with type: {forecast_type.value}")
 
-    if not os.path.exists(csv_path):
-        raise FileNotFoundError(f"Dataset not found: {csv_path}")
+    if df is None or df.empty:
+        raise ValueError("The provided dataset is empty and contains no historical spend data.")
 
     try:
 
@@ -51,20 +53,20 @@ def run_forecast(csv_path: str,
         if forecast_type == ForecastType.ACCOUNT:
             if not account_name:
                 raise ValueError("Account name must be provided for account-level forecast.")
-            forecast_df, historical_df, metrics_dict = run_prophet_forecast(csv_path,
+            forecast_df, historical_df, metrics_dict = run_prophet_forecast(df,
                                                 forecast_type,
                                                 granularity,
                                                 logger,
                                                 account_name)
 
         elif forecast_type == ForecastType.OVERALL_AGGREGATE:
-            forecast_df, historical_df, metrics_dict = run_prophet_forecast(csv_path, forecast_type, granularity, logger)
+            forecast_df, historical_df, metrics_dict = run_prophet_forecast(df, forecast_type, granularity, logger)
             logger.info(f"DEBUG run_prophet_forecast complete!")
 
         elif forecast_type == ForecastType.SERVICE:
             if not service_name and not account_name:
                 raise ValueError("Service name and Account name must be provided for service-level forecast.")
-            forecast_df, historical_df, metrics_dict = run_prophet_forecast(csv_path,
+            forecast_df, historical_df, metrics_dict = run_prophet_forecast(df,
                                                         forecast_type,
                                                         granularity,
                                                         logger,
@@ -76,7 +78,7 @@ def run_forecast(csv_path: str,
                 raise ValueError("BU Code must be provided for bu-code-level forecast.")
             logger.info(f"Value of bu Code in main.py : {bu_code}, type: {type(bu_code)}")
             forecast_df, historical_df, metrics_dict = run_prophet_forecast(
-                csv_path=csv_path,
+                df=df,
                 forecast_type=forecast_type,
                 granularity=granularity,
                 logger=logger,
@@ -88,7 +90,7 @@ def run_forecast(csv_path: str,
                 raise ValueError("Segment Name, Service name and Account name must be provided for "
                                  "segment-level forecast.")
             forecast_df, historical_df, metrics_dict = run_prophet_forecast(
-                csv_path=csv_path,
+                df=df,
                 forecast_type=forecast_type,
                 granularity=granularity,
                 logger=logger,

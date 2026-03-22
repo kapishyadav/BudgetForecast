@@ -33,6 +33,7 @@ def generate_forecast_task(self, file_path, forecast_type_str, granularity_str, 
         # 3. Extract the Pandas DataFrames
         forecast_df = result["forecast"]
         historical_df = result["history"]
+        metrics_dict = result["metrics"]
 
         # 4. Convert DataFrames to JSON strings
         # (This makes them safe to store in the Redis result backend)
@@ -47,6 +48,7 @@ def generate_forecast_task(self, file_path, forecast_type_str, granularity_str, 
             "status": "success",
             "forecast_json": forecast_json,
             "historical_json": historical_json,
+            "metrics" : metrics_dict,
         }
 
     except Exception as e:

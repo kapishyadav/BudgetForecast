@@ -23,7 +23,6 @@ export function Header() {
             <button className="p-3 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow">
               <Settings size={20} className="text-gray-600" />
             </button>
-            {/* Make sure to import { Link } from 'react-router-dom' at the top of your file if it isn't already there! */}
 
             <Link
               to="/upload"

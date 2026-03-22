@@ -35,82 +35,48 @@ const features = [
 
 export function Features() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-      {/* --- UPDATED HEADING SECTION --- */}
-      <div className="text-center mb-20 flex flex-col items-center">
+    <div className="max-w-5xl mx-auto px-4 py-20">
 
-        {/* Main Headline */}
-        <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight" style={{ color: 'var(--primary)' }}>
-          Everything You Need To <br />
-          <span style={{ color: 'var(--primary)' }}>Master Your Spend</span>
+      {/* Header Section (matches UploadPage tone) */}
+      <div className="mb-12 text-center">
+        <h2 className="text-3xl font-bold text-[#1A1A1A] tracking-tight mb-3">
+          Powerful Forecasting Features
         </h2>
-
-        {/* Supporting Subtitle */}
-        <p className="max-w-2xl mx-auto text-xl" style={{ color: 'var(--primary)', opacity: 0.8 }}>
-          Powerful tools designed to bring clarity and predictability to your cloud invoices.
+        <p className="text-gray-500 text-sm max-w-xl mx-auto">
+          Everything you need to understand, predict, and optimize your cloud spending.
         </p>
       </div>
-      {/* ----------------------------- */}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {/* Features Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
         {features.map((feature, index) => {
           const Icon = feature.icon;
-          const isHighlighted = index === 0 || index === 3;
+
           return (
             <div
               key={index}
-              className="p-8 group cursor-pointer relative"
-              style={{
-                backgroundColor: isHighlighted ? 'var(--primary)' : 'white',
-                borderRadius: 'var(--radius)',
-                border: isHighlighted ? '3px solid var(--primary)' : '3px solid var(--primary)',
-                boxShadow: isHighlighted ? '6px 6px 0 var(--primary)' : '6px 6px 0 var(--primary)',
-                transition: 'var(--transition)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translate(-4px, -4px)';
-                if (isHighlighted) {
-                  e.currentTarget.style.boxShadow = '10px 10px 0 var(--primary)';
-                } else {
-                  e.currentTarget.style.boxShadow = '10px 10px 0 var(--primary)';
-                  e.currentTarget.style.borderColor = 'var(--primary)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translate(0, 0)';
-                if (isHighlighted) {
-                  e.currentTarget.style.boxShadow = '6px 6px 0 var(--accent)';
-                } else {
-                  e.currentTarget.style.boxShadow = '6px 6px 0 var(--primary)';
-                  e.currentTarget.style.borderColor = 'var(--accent)';
-                }
-              }}
+              className="bg-white rounded-[24px] p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all"
             >
-              <div
-                className="w-14 h-14 flex items-center justify-center mb-6 relative"
-                style={{
-                  backgroundColor: isHighlighted ? 'rgba(60, 60, 59, 0.2)' : 'var(--light-accent)',
-                  borderRadius: 'calc(var(--radius) - 4px)',
-                  boxShadow: '3px 3px 0 rgba(0,0,0,0.1)'
-                }}
-              >
-                <Icon className="w-7 h-7" style={{ color: isHighlighted ? 'white' : 'var(--primary)' }} />
+              {/* Icon */}
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="bg-gray-50 p-3 rounded-full text-gray-500">
+                  <Icon size={20} />
+                </div>
+
+                <h3 className="text-lg font-semibold text-[#1A1A1A]">
+                  {feature.title}
+                </h3>
               </div>
-              <h3 className="text-xl font-bold mb-3" style={{ color: isHighlighted ? 'white' : 'var(--primary)' }}>
-                {feature.title}
-              </h3>
-              <p className="leading-relaxed" style={{ color: isHighlighted ? 'rgba(255,255,255,0.9)' : 'var(--primary)', opacity: isHighlighted ? 1 : 0.8 }}>
+
+              {/* Description */}
+              <p className="text-gray-500 text-sm leading-relaxed pl-12">
                 {feature.description}
               </p>
-
-              {/* Corner accent */}
-              <div
-                className="absolute top-4 right-4 w-3 h-3 rounded-full"
-                style={{ backgroundColor: isHighlighted ? 'white' : 'var(--accent)' }}
-              ></div>
             </div>
           );
         })}
+
       </div>
     </div>
   );

@@ -385,6 +385,7 @@ def get_dashboard_data(request):
     return JsonResponse({
         # We parse the stringified JSON from Celery back into Python lists
         "forecast": json.loads(result.get("forecast_json", "[]")),
-        "historical": json.loads(result.get("historical_json", "[]"))
+        "historical": json.loads(result.get("historical_json", "[]")),
+        "metrics": result.get("metrics", {})
     })
 

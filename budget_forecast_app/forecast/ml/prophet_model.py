@@ -68,26 +68,26 @@ def run_prophet_forecast(
             raise ValueError("CSV must contain 'date' and 'spend' columns for DAILY granularity.")
 
     if forecast_type == ForecastType.OVERALL_AGGREGATE:
-        forecast_df, historical_df = save_overall_aggregate_forecasts(data, csv_path, logger, granularity)
+        forecast_df, historical_df, metrics_dict = save_overall_aggregate_forecasts(data, csv_path, logger, granularity)
         logger.info(f"DEBUG save_monthly_aggregate_forecasts complete!")
     elif forecast_type == ForecastType.ACCOUNT:
         logger.info(f"DEBUG starting save_forecast_by_accounts now!")
-        forecast_df, historical_df = save_forecast_by_accounts(data, csv_path, logger, account_name, granularity)
+        forecast_df, historical_df, metrics_dict = save_forecast_by_accounts(data, csv_path, logger, account_name, granularity)
         logger.info(f"DEBUG save_forecast_by_accounts complete!")
     elif forecast_type == ForecastType.SERVICE:
-        forecast_df, historical_df = save_forecasts_by_service(data, csv_path, logger, account_name, service_name, granularity)
+        forecast_df, historical_df, metrics_dict = save_forecasts_by_service(data, csv_path, logger, account_name, service_name, granularity)
     elif forecast_type == ForecastType.BUCODE:
         logger.info(f"Value of bu Code in prophet_model.py : {bu_code}, type: {type(bu_code)}")
-        forecast_df, historical_df = save_forecasts_by_bucode(data, csv_path, logger, bu_code, granularity)
+        forecast_df, historical_df, metrics_dict = save_forecasts_by_bucode(data, csv_path, logger, bu_code, granularity)
     elif forecast_type == ForecastType.SEGMENT:
         logger.info(f"Value of segment in prophet_model.py : {segment_name}, type: {type(segment_name)}")
-        forecast_df, historical_df = save_forecasts_by_segment(data, csv_path, logger, account_name, service_name,
+        forecast_df, historical_df, metrics_dict = save_forecasts_by_segment(data, csv_path, logger, account_name, service_name,
                                                                segment_name, granularity)
     else:
         raise ValueError(f"Invalid forecast type: {forecast_type}")
 
 
-    return forecast_df, historical_df
+    return forecast_df, historical_df, metrics_dict
 
 
 def get_mapped_columns(available_columns, COLUMN_MAPPINGS: Dict[str, str]) -> Dict[str, str]:

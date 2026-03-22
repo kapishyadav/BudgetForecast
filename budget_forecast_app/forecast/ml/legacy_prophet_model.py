@@ -1,6 +1,7 @@
 import pandas as pd
 from prophet.plot import add_changepoints_to_plot
 from prophet import Prophet
+from prophet.diagnostics import cross_validation, performance_metrics
 # import matplotlib.pyplot as plt
 from prophet.plot import plot_plotly, plot_components_plotly
 import argparse
@@ -50,6 +51,38 @@ def forecast_monthly_spend(data, logger, forecast_type):
     logger.info(f" DEBUG Fitting Prophet model in forecast_monthly_spend!")
     m.fit(prophet_df)
 
+    # ==========================================
+    # Calculate Accuracy Metrics
+    # ==========================================
+    metrics_dict = {}
+    try:
+        logger.info("Starting historical cross-validation for metrics...")
+
+        # 1. Run Cross Validation
+        # 'initial': How much training data to start with (e.g., 1 year)
+        # 'period': How often to make a cutoff for testing (e.g., 3 months)
+        # 'horizon': How far ahead to predict for testing (e.g., 6 months)
+        # Adjust these strings ('365 days', '90 days', etc.) based on your dataset size!
+        df_cv = cross_validation(m, initial='180 days', period='30 days', horizon='90 days')
+
+        # 2. Calculate Performance Metrics
+        df_p = performance_metrics(df_cv)
+
+        # 3. Extract the average (mean) of the metrics we care about
+        # Prophet calculates these for different horizons; taking the mean gives a solid overall score
+        metrics_dict = {
+            "rmse": float(df_p['rmse'].mean()),
+            "mse": float(df_p['mse'].mean()),
+            "mae": float(df_p['mae'].mean()),
+            "mape": float(df_p['mape'].mean()),  # Mean Absolute Percentage Error (Great for the UI!)
+            "total_forecasted_spend": 0  # We will calculate this below
+        }
+        logger.info(f"Metrics calculated successfully: RMSE={metrics_dict['rmse']:.2f}")
+    except Exception as e:
+        logger.warning(f"Could not calculate metrics (dataset might be too small): {e}")
+        # Return zeros if cross-validation fails so the UI doesn't crash
+        metrics_dict = {"rmse": 0, "mse": 0, "mae": 0, "mape": 0, "total_forecasted_spend": 0}
+
     future = m.make_future_dataframe(periods=12 * 2,
                                      freq='ME')
 
@@ -67,7 +100,10 @@ def forecast_monthly_spend(data, logger, forecast_type):
     # --- Step 5: Trim forecast to required fields only ---
     forecast = forecast_future[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
 
-    return forecast, prophet_df
+    # Calculate the total predicted spend for your UI Metric Card
+    metrics_dict["total_forecasted_spend"] = float(forecast['yhat'].sum())
+
+    return forecast, prophet_df, metrics_dict
 
 def forecast_daily_spend(data, logger, forecast_type):
     """_summary_
@@ -112,6 +148,39 @@ def forecast_daily_spend(data, logger, forecast_type):
     logger.info(f" DEBUG Fitting Prophet model in forecast_daily_spend!")
     m.fit(prophet_df)
 
+
+    # ==========================================
+    # Calculate Accuracy Metrics
+    # ==========================================
+    metrics_dict = {}
+    try:
+        logger.info("Starting historical cross-validation for metrics...")
+
+        # 1. Run Cross Validation
+        # 'initial': How much training data to start with (e.g., 1 year)
+        # 'period': How often to make a cutoff for testing (e.g., 3 months)
+        # 'horizon': How far ahead to predict for testing (e.g., 6 months)
+        # Adjust these strings ('365 days', '90 days', etc.) based on your dataset size!
+        df_cv = cross_validation(m, initial='180 days', period='30 days', horizon='90 days')
+
+        # 2. Calculate Performance Metrics
+        df_p = performance_metrics(df_cv)
+
+        # 3. Extract the average (mean) of the metrics we care about
+        # Prophet calculates these for different horizons; taking the mean gives a solid overall score
+        metrics_dict = {
+            "rmse": float(df_p['rmse'].mean()),
+            "mse": float(df_p['mse'].mean()),
+            "mae": float(df_p['mae'].mean()),
+            "mape": float(df_p['mape'].mean()),  # Mean Absolute Percentage Error (Great for the UI!)
+            "total_forecasted_spend": 0  # We will calculate this below
+        }
+        logger.info(f"Metrics calculated successfully: RMSE={metrics_dict['rmse']:.2f}")
+    except Exception as e:
+        logger.warning(f"Could not calculate metrics (dataset might be too small): {e}")
+        # Return zeros if cross-validation fails so the UI doesn't crash
+        metrics_dict = {"rmse": 0, "mse": 0, "mae": 0, "mape": 0, "total_forecasted_spend": 0}
+
     future = m.make_future_dataframe(periods=90,
                                      freq='D')
 
@@ -129,7 +198,11 @@ def forecast_daily_spend(data, logger, forecast_type):
     # --- Step 5: Trim forecast to required fields only ---
     forecast = forecast_future[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
 
-    return forecast, prophet_df
+    # Calculate the total predicted spend for your UI Metric Card
+    metrics_dict["total_forecasted_spend"] = float(forecast['yhat'].sum())
+    logger.info(f"DEBUG Metric dict in legacy prophet model: {metrics_dict}")
+
+    return forecast, prophet_df, metrics_dict
 
 
 def get_accounts_dict(data, logger, account_name):
@@ -173,10 +246,10 @@ def save_overall_aggregate_forecasts(data, file, logger, granularity):
 
     if granularity == Granularity.MONTHLY:
         logger.info(f"DEBUG Running overall aggregate MONTHLY")
-        forecast, history = forecast_monthly_spend(data, logger, ForecastType.OVERALL_AGGREGATE)
+        forecast, history, metrics = forecast_monthly_spend(data, logger, ForecastType.OVERALL_AGGREGATE)
     elif granularity == Granularity.DAILY:
         logger.info(f"DEBUG Running overall aggregate DAILY")
-        forecast, history = forecast_daily_spend(data, logger, ForecastType.OVERALL_AGGREGATE)
+        forecast, history, metrics = forecast_daily_spend(data, logger, ForecastType.OVERALL_AGGREGATE)
     else:
         raise ValueError(f"Granularity field must be MONTHLY OR DAILY. Currently: {granularity} with type {type(granularity)}")
     logger.info(f"DEBUG data columns : {list(data.columns)}")
@@ -199,7 +272,7 @@ def save_overall_aggregate_forecasts(data, file, logger, granularity):
     logger.info(f"Forecasts formatted column names: {forecast.columns}")
     logger.info(f"History formatted column names: {history.columns}")
     logger.info("Successfully saved forecasts by monthly total!")
-    return forecast, history
+    return forecast, history, metrics
 
 
 def save_forecast_by_accounts(data, file, logger, account_name, granularity):
@@ -222,10 +295,10 @@ def save_forecast_by_accounts(data, file, logger, account_name, granularity):
 
     if granularity == Granularity.MONTHLY:
         logger.info(f"DEBUG Running account forecasts MONTHLY")
-        forecast, history = forecast_monthly_spend(account_data, logger, ForecastType.ACCOUNT)
+        forecast, history, metrics = forecast_monthly_spend(account_data, logger, ForecastType.ACCOUNT)
     elif granularity == Granularity.DAILY:
         logger.info(f"DEBUG Running account forecasts DAILY")
-        forecast, history = forecast_daily_spend(account_data, logger, ForecastType.ACCOUNT)
+        forecast, history, metrics = forecast_daily_spend(account_data, logger, ForecastType.ACCOUNT)
     else:
         raise ValueError("Granularity field must be MONTHLY OR DAILY.")
 
@@ -241,7 +314,7 @@ def save_forecast_by_accounts(data, file, logger, account_name, granularity):
 
     logger.info("Successfully saved forecasts by account!")
     # return forecast, metrics
-    return forecast, history
+    return forecast, history, metrics
 
 
 def save_forecasts_by_service(data, file, logger, account_name, service_name, granularity):
@@ -269,16 +342,16 @@ def save_forecasts_by_service(data, file, logger, account_name, service_name, gr
 
     if granularity == Granularity.MONTHLY:
         logger.info(f"DEBUG Running service forecasts MONTHLY")
-        forecast, history = forecast_monthly_spend(service_data, logger, ForecastType.SERVICE)
+        forecast, history, metrics = forecast_monthly_spend(service_data, logger, ForecastType.SERVICE)
     elif granularity == Granularity.DAILY:
         logger.info(f"DEBUG Running service forecasts DAILY")
-        forecast, history = forecast_daily_spend(service_data, logger, ForecastType.SERVICE)
+        forecast, history, metrics = forecast_daily_spend(service_data, logger, ForecastType.SERVICE)
     else:
         raise ValueError("Granularity field must be MONTHLY OR DAILY.")
 
     logger.info(f"DEBUG service_data columns : {list(service_data.columns)}")
 
-    return forecast, history
+    return forecast, history, metrics
 
 def save_forecasts_by_bucode(data, file, logger, bu_code, granularity):
     """
@@ -298,16 +371,16 @@ def save_forecasts_by_bucode(data, file, logger, bu_code, granularity):
 
     if granularity == Granularity.MONTHLY:
         logger.info(f"DEBUG Running bu code forecasts MONTHLY")
-        forecast, history = forecast_monthly_spend(bu_data, logger, ForecastType.BUCODE)
+        forecast, history, metrics = forecast_monthly_spend(bu_data, logger, ForecastType.BUCODE)
     elif granularity == Granularity.DAILY:
         logger.info(f"DEBUG Running bu code forecasts DAILY")
-        forecast, history = forecast_daily_spend(bu_data, logger, ForecastType.BUCODE)
+        forecast, history, metrics = forecast_daily_spend(bu_data, logger, ForecastType.BUCODE)
     else:
         raise ValueError("Granularity field must be MONTHLY OR DAILY.")
 
     logger.info(f"DEBUG bu_data columns : {list(bu_data.columns)}")
 
-    return forecast, history
+    return forecast, history, metrics
 
 def save_forecasts_by_segment(data, file, logger, account_name, service_name, segment_name, granularity):
     """
@@ -343,14 +416,14 @@ def save_forecasts_by_segment(data, file, logger, account_name, service_name, se
 
     if granularity == Granularity.MONTHLY:
         logger.info(f"DEBUG Running segment forecasts MONTHLY")
-        forecast, history = forecast_monthly_spend(service_data, logger, ForecastType.SEGMENT)
+        forecast, history, metrics = forecast_monthly_spend(service_data, logger, ForecastType.SEGMENT)
     elif granularity == Granularity.DAILY:
         logger.info(f"DEBUG Running segment forecasts DAILY")
-        forecast, history = forecast_daily_spend(service_data, logger, ForecastType.SEGMENT)
+        forecast, history, metrics = forecast_daily_spend(service_data, logger, ForecastType.SEGMENT)
     else:
         raise ValueError("Granularity field must be MONTHLY OR DAILY.")
 
     logger.info(f"DEBUG segment columns : {list(service_data.columns)}")
 
-    return forecast, history
+    return forecast, history, metrics
 

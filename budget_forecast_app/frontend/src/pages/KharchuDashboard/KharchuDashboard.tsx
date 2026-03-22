@@ -12,6 +12,7 @@ import { StatisticsChart } from './StatisticsChart';
 export function KharchuDashboard() {
   const [forecastData, setForecastData] = useState([]);
   const [historicalData, setHistoricalData] = useState([]);
+  const [metricsData, setMetricsData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Extract the Celery task ID from the URL (e.g., /kharchu?taskId=123-abc)
@@ -40,6 +41,7 @@ export function KharchuDashboard() {
         });
         setForecastData(response.data.forecast);
         setHistoricalData(response.data.historical);
+        setMetricsData(response.data.metrics);
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
       } finally {
@@ -61,7 +63,7 @@ export function KharchuDashboard() {
           <TabNavigation />
 
           <div className="flex-1 overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-gray-300">
-            <MetricCards />
+            <MetricCards metrics={metricsData} isLoading={isLoading} />
 
             {/* Pass the data and loading state to the Chart */}
             {isLoading ? (

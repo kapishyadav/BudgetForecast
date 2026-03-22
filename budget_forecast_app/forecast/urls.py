@@ -10,4 +10,5 @@ urlpatterns = [
     path("get_suggestions/", views.get_suggestions, name="get_suggestions"),
     path('status/<str:task_id>/', views.check_task_status, name='check_task_status'),
     path('api/dashboard-data/', views.get_dashboard_data, name='get_dashboard_data'),
+    path('api/run-scenario/', views.run_custom_scenario, name='run_custom_scenario'),
 ]

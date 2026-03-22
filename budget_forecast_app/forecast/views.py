@@ -85,6 +85,10 @@ def upload_file(request):
             # DATABASE INSERTION
             # ==========================================
             dataset = ForecastDataset.objects.create(name=dataset_name)
+            # Save to session so the get_suggestions view can use it immediately
+            request.session['current_dataset_id'] = str(dataset.id)
+            request.session.modified = True
+
             spend_records = []
 
             # Check for optional columns (using the canonical names now!)
@@ -113,10 +117,31 @@ def upload_file(request):
 
             logger.info(f"Successfully saved {len(spend_records)} rows to Postgres.")
 
-            # --- PREPARE CELERY KWARGS ---
-            selected_type = request.POST.get("forecast_type", "overall_aggregate")
-            granularity = request.POST.get("granularity", "monthly")
+            return JsonResponse({
+                "status": "success",
+                # "task_id": task.id,
+                "dataset_id": str(dataset.id),
+                "message": "Upload successful, processing started."
+            })
 
+        except Exception as e:
+            logger.error(f"Upload failed: {e}")
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    return JsonResponse({"status": "error", "message": "Invalid request or missing file"}, status=400)
+
+@csrf_exempt
+def trigger_forecast(request):
+    """Takes a dataset_id and UI parameters, then triggers the Celery worker."""
+    if request.method == "POST":
+        dataset_id = request.POST.get("dataset_id")
+        if not dataset_id:
+            return JsonResponse({"error": "Missing dataset_id. Please upload a file first."}, status=400)
+
+        selected_type = request.POST.get("forecast_type", "overall_aggregate")
+        granularity = request.POST.get("granularity", "monthly")
+        try:
+            # --- PREPARE CELERY ENUMS ---
             try:
                 forecast_type = ForecastType(selected_type)
                 granularity_val = Granularity(granularity).value if hasattr(Granularity(granularity), "value") else str(
@@ -127,6 +152,7 @@ def upload_file(request):
 
             forecast_type_str = forecast_type.value if hasattr(forecast_type, "value") else str(forecast_type)
 
+            # --- GATHER KWARGS ---
             account_name = request.POST.get("account_name", "").strip()
             service_name = request.POST.get("service_name", "").strip()
             bu_code_raw = request.POST.get("bu_code", "").strip()
@@ -146,30 +172,30 @@ def upload_file(request):
                 if service_name: kwargs["service_name"] = service_name
                 if account_name: kwargs["account_name"] = account_name
 
-            # Trigger Celery Task
+            # --- TRIGGER CELERY TASK ---
             logger.info("Sending ML pipeline to Celery worker...")
             task = generate_forecast_task.delay(
-                dataset_id=str(dataset.id),
+                dataset_id=dataset_id,
                 forecast_type_str=forecast_type_str,
                 granularity_str=granularity_val,
                 **kwargs
             )
 
+            # Log the run
+            dataset = ForecastDataset.objects.get(id=dataset_id)
             ForecastRun.objects.create(dataset=dataset, task_id=task.id)
 
             return JsonResponse({
                 "status": "success",
                 "task_id": task.id,
-                "dataset_id": str(dataset.id),
-                "message": "Upload successful, processing started."
+                "message": "Processing started."
             })
 
         except Exception as e:
-            logger.error(f"Upload failed: {e}")
+            logger.error(f"Trigger failed: {e}")
             return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
-    return JsonResponse({"status": "error", "message": "Invalid request or missing file"}, status=400)
-
+    return JsonResponse({"status": "error", "message": "Invalid request"}, status=400)
 
 @csrf_exempt
 def run_custom_scenario(request):
@@ -224,74 +250,61 @@ def run_custom_scenario(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-def get_suggestions(request):
-    logger.info(f"DEBUG in get_suggestions views")
-    logger.info(f"DEBUG request in get_suggestions views- {request}")
-    logger.info(f"DEBUG REQUEST SESSION in get_suggestions views- {request.session}")
-    query = request.GET.get("q", "").strip().lower()
-    field = request.GET.get("field")  # 'account', 'service', 'bucode'or 'segment'
 
-    filename = request.session.get("csv_base_filename")
-    logger.info(f"DEBUG Request Session csv_base_filename : {filename}")
-    if not filename:
-        print("❌ No file found in session — likely no upload in this session.")
-        # Try to get the most recently uploaded file (as fallback)
-        fs = FileSystemStorage()
-        files = sorted(fs.listdir(fs.location)[1], key=lambda f: os.path.getctime(os.path.join(fs.location, f)),
-                       reverse=True)
-        if files:
-            filename = files[0]
-            filename = filename[:10]
-            print(f"⚠️ Using fallback file: {filename}")
-            request.session["csv_base_filename"] = filename
+def get_suggestions(request):
+    """
+    Fetches unique suggestions directly from PostgreSQL.
+    No more slow CSV reading!
+    """
+    query = request.GET.get("q", "").strip().lower()
+    field = request.GET.get("field")  # 'account', 'service', 'bu_code', or 'segment'
+    dataset_id = request.GET.get("dataset_id", "").strip()
+    # 1. Get the dataset ID from the session (set during upload)
+    dataset_id = request.session.get("current_dataset_id")
+
+    if not dataset_id:
+        # Fallback: Get the most recent dataset uploaded to the DB
+        latest_spend = HistoricalSpend.objects.order_by('-id').first()
+        if latest_spend:
+            dataset_id = latest_spend.dataset_id
         else:
             return JsonResponse({"suggestions": []})
 
-    fs = FileSystemStorage()
-    file_path = fs.path(filename)
+    # 2. Map the frontend field name to our PostgreSQL model field name
+    field_map = {
+        "account": "account_name",
+        "service": "service_name",
+        "bu_code": "bu_code",
+        "segment": "segment"
+    }
 
-    if not os.path.exists(file_path):
-        print(f"❌ File not found: {file_path}")
-        return JsonResponse({"suggestions": []})
+    model_field = field_map.get(field)
+    if not model_field:
+        return JsonResponse({"error": "Invalid field"}, status=400)
 
     try:
-        df = pd.read_csv(file_path)
-        print(f"✅ Loaded file with columns: {list(df.columns)}")
-        logger.info(f"Dataset loaded successfully for get_suggestions. Shape: {df.shape}")
+        # 3. Use optimized SQL to find distinct matches
+        # This is MUCH faster than Pandas for 160k rows
+        filter_kwargs = {"dataset_id": dataset_id}
+        # Only apply the ILIKE (icontains) search if the user typed something
+        if query:
+            filter_kwargs[f"{model_field}__icontains"] = query
 
-        mapped_columns = get_mapped_columns(df.columns.tolist(), COLUMN_MAPPINGS)
-        logger.info(f"DEBUG for get_suggestions mapped columns after get_mapped_columns method in prophet_model.py - {mapped_columns}")
-        rename_dict = {actual_col: canonical_col for canonical_col, actual_col in mapped_columns.items()}
-        logger.info(f"DEBUG for get_suggestions Renamed Dict Column Names: {rename_dict}")
-        # Apply the mapping to the DataFrame
-        df = df.rename(columns=rename_dict)
-        logger.info(f"DEBUG for get_suggestions DF Column Names after renaming post remap: {df.columns}")
+        suggestions = (
+            HistoricalSpend.objects
+            .filter(**filter_kwargs)
+            .values_list(model_field, flat=True)
+            .distinct()[:10]  # Limit to 10 for the UI dropdown
+        )
 
-        if field == "account":
-            col_name = "accountName"
-        elif field == "service":
-            col_name = "serviceName"
-        elif field == "bu_code":
-            col_name = "buCode"
-        elif field == "segment":
-            col_name = "segment"
-        else:
-            return JsonResponse({"error": "Invalid field"}, status=400)
+        # Convert to list and filter out None values
+        suggestion_list = [str(val) for val in suggestions if val is not None]
 
-        if col_name not in df.columns:
-            print(f"❌ Column {col_name} not found in CSV.")
-            return JsonResponse({"suggestions": []})
-
-        unique_vals = df[col_name].dropna().unique().tolist()
-        matches = [v for v in unique_vals if query in str(v).lower()]
-        print(f"🔍 Query='{query}' found {len(matches)} matches: {matches[:5]}")
-        print(f"🧪 First 5 accountName values: {df['accountName'].dropna().unique()[:5]}")
-
-        return JsonResponse({"suggestions": matches[:10]})
+        return JsonResponse({"suggestions": suggestion_list})
 
     except Exception as e:
-        print(f"ERROR in get_suggestions: {e}")
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.error(f"ERROR in get_suggestions: {e}")
+        return JsonResponse({"suggestions": []})
 
 
 def download_forecast_csv(request):

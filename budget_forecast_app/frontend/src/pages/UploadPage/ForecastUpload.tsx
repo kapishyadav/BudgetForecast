@@ -19,6 +19,11 @@ export function ForecastUpload() {
   const [isStaging, setIsStaging] = useState(false); // For Step 1 loading
   const [isLoading, setIsLoading] = useState(false); // For Step 2 loading
 
+  // Progress tracking states
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [forecastProgress, setForecastProgress] = useState(0);
+  const [forecastMessage, setForecastMessage] = useState("Initializing model...");
+
   const [forecastType, setForecastType] = useState('overall_aggregate');
   const [granularity, setGranularity] = useState('monthly');
 
@@ -42,14 +47,26 @@ export function ForecastUpload() {
   // UPLOAD FILE & GET DATASET ID
   // ==========================================
   const handleNext = async () => {
-    if (!file) return alert("Please select a file first.");
+    if (!file) {
+      alert("Please select a file first.");
+      return;
+    }
 
     setIsStaging(true);
+    setUploadProgress(0);
+
+    // 1. Declare at the very top of the function scope
+    const progressInterval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 90) return prev;
+        return prev + Math.floor(Math.random() * 10) + 5;
+      });
+    }, 500);
+
     const formData = new FormData();
     formData.append('dataset', file);
 
     try {
-      //  Send file to the staging endpoint
       const response = await fetch('/upload/', {
         method: 'POST',
         body: formData,
@@ -59,14 +76,23 @@ export function ForecastUpload() {
       const data = await response.json();
 
       if (response.ok && data.dataset_id) {
-        setDatasetId(data.dataset_id);
-        setStep(2); // Move to configuration step
+        // 2. Clear using the exact same variable name
+        clearInterval(progressInterval);
+        setUploadProgress(100);
+
+        setTimeout(() => {
+          setDatasetId(data.dataset_id);
+          setStep(2);
+        }, 500);
       } else {
-        alert(data.message || "Upload failed. Please try again.");
+        throw new Error(data.message || "Upload failed");
       }
     } catch (err) {
-      console.error("Upload failed:", err);
-      alert("Network error occurred during upload.");
+      // 3. Clear here as well to prevent memory leaks if the server crashes
+      clearInterval(progressInterval);
+      setUploadProgress(0);
+      console.error("Upload error details:", err);
+      alert("An error occurred during upload. Check the console.");
     } finally {
       setIsStaging(false);
     }
@@ -143,11 +169,22 @@ export function ForecastUpload() {
             });
         // We must parse the response as JSON, not text
         const data = await response.json()
-        // 2. Check the JSON's standard "state" or "status" key
-        if (data.status === 'SUCCESS' || data.state === 'SUCCESS') {
+        // Update the progress bar based on Celery's reported progress
+        if (data.status === 'PROGRESS') {
+            const current = data.current || 0;
+            const total = data.total || 100;
+            setForecastProgress(Math.round((current / total) * 100));
+            if (data.message) setForecastMessage(data.message);
+        }
+        // Check the JSON's standard "state" or "status" key
+        else if (data.status === 'SUCCESS' || data.state === 'SUCCESS') {
           clearInterval(interval);
-          setIsLoading(false);
-          navigate(`/kharchu?taskId=${taskId}`); // Include the Task ID to retrieve directly from Celery
+          setForecastProgress(100);
+          setForecastMessage("Complete!");
+          setTimeout(() => {
+            setIsLoading(false);
+            navigate(`/kharchu?taskId=${taskId}`); // Include the Task ID to retrieve directly from Celery
+          }, 500);
         }
         else if (data.status === 'FAILURE' || data.state === 'FAILURE' || data.status === 'error') {
           // Handle backend errors gracefully
@@ -155,14 +192,13 @@ export function ForecastUpload() {
           setIsLoading(false);
           alert("The forecast generation failed: " + (data.message || "Unknown error"));
         }
-        // If status is PENDING or PROCESSING, do nothing and let it loop again
         } catch (err) {
         // If the fetch fails (or the JSON parse fails because Django returned HTML)
         console.error("Polling error. Is Django returning JSON?", err);
         clearInterval(interval);
         setIsLoading(false);
       }
-    }, 2000);
+    }, 1000); // Poll slightly faster (1.0s) for smoother progress updates
   };
 
   return (
@@ -205,14 +241,30 @@ export function ForecastUpload() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={isStaging || !file}
-              className="w-full bg-[#1A1A1A] text-white hover:bg-black rounded-xl px-6 py-4 font-semibold text-lg flex items-center justify-center space-x-2 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isStaging ? <Loader2 className="animate-spin" size={20} /> : <><span>Next Step</span><ArrowRight size={20} /></>}
-            </button>
+            {/* ---> PROGRESS BAR & BUTTON LOGIC <--- */}
+            {isStaging ? (
+              <div className="w-full bg-gray-50 p-6 rounded-xl border border-gray-100">
+                <div className="flex justify-between text-sm font-semibold text-gray-700 mb-2">
+                  <span>Parsing and saving to database...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                  <div
+                    className="bg-black h-2.5 rounded-full transition-all duration-300 ease-out"
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={!file}
+                className="w-full bg-[#1A1A1A] text-white hover:bg-black rounded-xl px-6 py-4 font-semibold text-lg flex items-center justify-center space-x-2 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span>Next Step</span><ArrowRight size={20} />
+              </button>
+            )}
           </div>
         )}
 
@@ -279,26 +331,46 @@ export function ForecastUpload() {
               )}
             </div>
 
-            {/* Form Actions */}
-            <div className="flex gap-4 pt-4">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                disabled={isLoading}
-                className="w-1/3 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl px-6 py-4 font-semibold text-lg flex items-center justify-center space-x-2 transition-all shadow-sm"
-              >
-                <ArrowLeft size={20} />
-                <span>Back</span>
-              </button>
+            {/* ---> PROGRESS BAR & BUTTON LOGIC <--- */}
+            {isLoading ? (
+              <div className="w-full col-span-2 bg-[#EAFF52]/20 p-6 rounded-xl border border-[#EAFF52]">
+                <div className="flex justify-between text-sm font-semibold text-gray-800 mb-2">
+                  <span className="flex items-center gap-2">
+                    <Loader2 size={16} className="animate-spin" />
+                    {forecastMessage}
+                  </span>
+                  <span>{forecastProgress}%</span>
+                </div>
+                <div className="w-full bg-white rounded-full h-3 overflow-hidden shadow-inner">
+                  <div
+                    className="bg-[#c2d62e] h-3 rounded-full transition-all duration-500 ease-out relative"
+                    style={{ width: `${forecastProgress}%` }}
+                  >
+                    <div className="absolute top-0 left-0 right-0 bottom-0 bg-white/20 animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  disabled={isLoading}
+                  className="w-1/3 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl px-6 py-4 font-semibold text-lg flex items-center justify-center space-x-2 transition-all shadow-sm"
+                >
+                  <ArrowLeft size={20} />
+                  <span>Back</span>
+                </button>
 
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-2/3 bg-[#EAFF52] text-[#1A1A1A] hover:bg-[#d9ed42] rounded-xl px-6 py-4 font-semibold text-lg flex items-center justify-center space-x-2 transition-all shadow-sm disabled:opacity-50"
-              >
-                {isLoading ? <Loader2 className="animate-spin" size={20} /> : <><span>Run Forecast</span><Rocket size={20} /></>}
-              </button>
-            </div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-2/3 bg-[#EAFF52] text-[#1A1A1A] hover:bg-[#d9ed42] rounded-xl px-6 py-4 font-semibold text-lg flex items-center justify-center space-x-2 transition-all shadow-sm disabled:opacity-50"
+                >
+                  <span>Run Forecast</span><Rocket size={20} />
+                </button>
+              </div>
+            )}
           </form>
         )}
 

@@ -10,7 +10,7 @@ export function LandingPage() {
     <div className="min-h-screen bg-[#E5E0D8] p-4 flex justify-center items-center">
       <div className="bg-[#F5F1EB] rounded-[40px] shadow-2xl w-full max-w-[1600px] h-[95vh] flex overflow-hidden border border-white/40">
         <LeftSidebar />
-        
+
         <div className="flex-[3] flex flex-col overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300">
           <Header />
           <Hero />

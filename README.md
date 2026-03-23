@@ -26,10 +26,6 @@ KHARCHU: Interactive Budget & Spend Forecasting Dashboard
     
 10.  [Frontend Architecture](https://www.google.com/search?q=#10-frontend-architecture)
     
-11.  [Environment Variables](https://www.google.com/search?q=#11-environment-variables)
-    
-12.  [Future Roadmap](https://www.google.com/search?q=#12-future-roadmap)
-    
 
 1\. Project Overview
 --------------------
@@ -284,14 +280,6 @@ Axios Interceptors (Recommended Pattern)
 
 To avoid attaching the JWT manually to every API call, configure an Axios interceptor in App.tsx:
 
-11\. Environment Variables
---------------------------
-
-Create a .env file in the budget\_forecast\_app root directory:
-
-Code snippet
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   # Database  DATABASE_URL=postgres://postgres:supersecretpassword@db:5432/kharchu_db  # Celery / Redis  CELERY_BROKER_URL=redis://redis:6379/0  CELERY_RESULT_BACKEND=redis://redis:6379/0  # Django   SECRET_KEY=your_secure_django_secret_key  DEBUG=True  ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0  # CORS Setting (Vite Frontend)  CORS_ALLOWED_ORIGINS=http://localhost:5173   `
 
 🤝 Contributing
 ---------------

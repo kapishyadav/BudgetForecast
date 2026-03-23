@@ -25,3 +25,7 @@ redis>=5.0.0
 
 psycopg2-binary>=2.9.0
 dj-database-url>=2.0.0
+
+djangorestframework
+django-cors-headers
+djangorestframework-simplejwt

@@ -1,5 +1,4 @@
 # Create your views here.
-from datetime import datetime
 from typing import Dict
 
 from django.shortcuts import render
@@ -14,19 +13,25 @@ from .ml.main import run_forecast
 from .ml.utils.setup_logging import setup_logging
 from .ml.enums import ForecastType, Granularity
 
+from rest_framework import generics
+from rest_framework.permissions import AllowAny
+from django.contrib.auth.models import User
+from .serializers import RegisterSerializer
+
 from .tasks import generate_forecast_task
 from celery.result import AsyncResult
 
-import plotly.io as pio
 import json
 import os
-import io
-import uuid
 import pandas as pd
-import traceback
-from pathlib import Path
 
 logger = setup_logging()
+
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    # AllowAny means anyone can access this URL (necessary for signing up!)
+    permission_classes = (AllowAny,)
+    serializer_class = RegisterSerializer
 
 COLUMN_MAPPINGS = {
     "accountName": ["accountName", "vendor_name", "vendor_account_name", "account"],

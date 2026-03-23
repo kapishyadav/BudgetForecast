@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Loader2 } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { Loader2, LogOut } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { LeftSidebar } from './LeftSidebar';
 import { TopHeader } from './TopHeader';
 import { RightSidebar } from './RightSidebar';
@@ -18,6 +18,19 @@ export function KharchuDashboard() {
   // Extract the Celery task ID from the URL (e.g., /kharchu?taskId=123-abc)
   const [searchParams] = useSearchParams();
   const taskId = searchParams.get('taskId');
+
+  // Initialize navigate for the sign-out redirect
+  const navigate = useNavigate();
+
+  // Sign out logic
+  const handleSignOut = () => {
+    //  Clear the tokens from the browser
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+
+    //  Redirect to the home page
+    navigate('/');
+  };
 
   useEffect(() => {
     // If someone visits the dashboard directly without a task ID, stop loading
@@ -65,7 +78,6 @@ export function KharchuDashboard() {
           <div className="flex-1 overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-gray-300">
             <MetricCards metrics={metricsData} isLoading={isLoading} />
 
-            {/* Pass the data and loading state to the Chart */}
             {isLoading ? (
               <div className="h-[400px] flex flex-col items-center justify-center bg-white rounded-[24px] shadow-sm border border-gray-100 mt-6">
                 <Loader2 className="animate-spin text-gray-400 mb-4" size={32} />

@@ -1,137 +1,81 @@
-import { TrendingUp, BarChart3 } from 'lucide-react';
+import { TrendingUp, BarChart3, ArrowRight } from 'lucide-react';
 
 export function Hero() {
   return (
-    <div className="relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
-        <div className="text-center relative z-10">
+    <div className="relative overflow-hidden py-20 sm:py-32 shrink-0">
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="text-center max-w-4xl mx-auto">
+
+          {/* Top Badge */}
           <div className="flex justify-center mb-8">
-            <div
-              className="inline-flex items-center gap-3 px-8 py-4 relative group"
-              style={{
-                backgroundColor: 'var(--accent)',
-                color: 'white',
-                borderRadius: 'var(--radius)',
-                boxShadow: '6px 6px 0 var(--primary)',
-                transition: 'var(--transition)'
-              }}
-            >
-              <BarChart3 className="w-7 h-7" />
-              <span>Kharchu</span>
-              <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center animate-pulse"
-                style={{
-                  backgroundColor: 'var(--primary)',
-                  boxShadow: '2px 2px 0 var(--accent)'
-                }}>
-                <TrendingUp className="w-3 h-3 text-white" />
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-100 shadow-sm">
+              <div className="bg-gray-50 p-1.5 rounded-full text-gray-500">
+                <BarChart3 className="w-4 h-4" />
               </div>
+              <span className="text-sm font-medium text-[#1A1A1A]">Introducing Kharchu Forecasting</span>
             </div>
           </div>
 
-          <h1 className="max-w-4xl mx-auto mb-8 leading-tight" style={{
-            color: 'var(--primary)',
-            fontSize: 'clamp(2rem, 5vw, 3.5rem)'
-          }}>
-            Keep Your {' '}
-            <span className="relative inline-block">
-              <span className="relative z-10">Cloud Kharchu</span>
-              <span
-                className="absolute bottom-2 left-0 w-full h-3 -z-0"
-                style={{ backgroundColor: 'var(--light-accent)', opacity: 0.5 }}
-              ></span>
-            </span>
-            {' '}Under Control
+          {/* Main Heading */}
+          <h1 className="text-5xl md:text-7xl font-bold text-[#1A1A1A] tracking-tight mb-6 leading-[1.1]">
+            Keep Your Cloud <span className="text-[#7E6363]">Kharchu</span> <br className="hidden md:block" />
+            Under Control
           </h1>
 
-          <p className="max-w-2xl mx-auto mb-12 text-lg" style={{ color: 'var(--primary)', opacity: 0.8 }}>
-            Stop guessing your next invoice
+          {/* Subtitle */}
+          <p className="text-lg md:text-xl text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed">
+            Stop guessing your next AWS invoice. Use advanced machine learning models to predict, track, and optimize your cloud costs accurately.
           </p>
 
-          <div className="flex flex-wrap justify-center gap-6">
+          {/* Call to Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
-              className="px-10 py-4 flex items-center gap-3 group"
-              style={{
-                backgroundColor: 'var(--accent)',
-                color: 'white',
-                borderRadius: 'var(--radius)',
-                boxShadow: 'var(--shadow)',
-                transition: 'var(--transition)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translate(8px, 8px)';
-                e.currentTarget.style.boxShadow = '0px 0px 0 var(--accent)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translate(0, 0)';
-                e.currentTarget.style.boxShadow = 'var(--shadow)';
-              }}
+              className="w-full sm:w-auto px-8 py-4 rounded-[16px] bg-[#1A1A1A] text-white font-medium flex items-center justify-center gap-2 hover:bg-black transition-all shadow-sm group"
               onClick={() => window.location.href = '/'}
             >
               Get Started
-              <TrendingUp className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
             <button
-              className="px-10 py-4 group"
-              style={{
-                backgroundColor: 'transparent',
-                color: 'var(--primary)',
-                borderRadius: 'var(--radius)',
-                border: '3px solid var(--primary)',
-                boxShadow: '6px 6px 0 var(--light-accent)',
-                transition: 'var(--transition)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translate(6px, 6px)';
-                e.currentTarget.style.boxShadow = '0px 0px 0 var(--light-accent)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translate(0, 0)';
-                e.currentTarget.style.boxShadow = '6px 6px 0 var(--light-accent)';
-              }}
+              className="w-full sm:w-auto px-8 py-4 rounded-[16px] bg-white text-[#1A1A1A] border border-gray-200 font-medium hover:bg-gray-50 transition-all shadow-sm"
             >
               View Documentation
             </button>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 max-w-3xl mx-auto">
+          {/* Stats (Matched perfectly to your Features cards) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 max-w-4xl mx-auto">
             {[
-              { value: '99.9%', label: 'Accuracy Rate' },
-              { value: '50K+', label: 'Forecasts Generated' },
-              { value: '$2M+', label: 'Saved in Costs' }
-            ].map((stat, index) => (
-              <div
-                key={index}
-                className="p-6 text-center"
-                style={{
-                  backgroundColor: 'white',
-                  borderRadius: 'var(--radius)',
-                  border: '2px solid var(--accent)',
-                  boxShadow: '4px 4px 0 var(--accent)'
-                }}
-              >
-                <div style={{
-                  color: 'var(--accent)',
-                  fontSize: '2rem',
-                  marginBottom: '0.5rem'
-                }}>{stat.value}</div>
-                <div style={{ color: 'var(--primary)', opacity: 0.7 }}>{stat.label}</div>
-              </div>
-            ))}
+              { value: '99.9%', label: 'Accuracy Rate', icon: TrendingUp },
+              { value: '50K+', label: 'Forecasts Generated', icon: BarChart3 },
+              { value: '$2M+', label: 'Saved in Costs', icon: TrendingUp }
+            ].map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={index}
+                  className="bg-white rounded-[24px] p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col items-center text-center"
+                >
+                  <div className="bg-gray-50 p-3 rounded-full text-gray-500 mb-4">
+                    <Icon size={24} />
+                  </div>
+                  <div className="text-3xl font-bold text-[#1A1A1A] mb-1">{stat.value}</div>
+                  <div className="text-sm text-gray-500">{stat.label}</div>
+                </div>
+              );
+            })}
           </div>
+
         </div>
       </div>
 
-      {/* Background decoration */}
-      <div className="absolute top-0 left-0 w-full h-full -z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-32 h-32 rounded-full filter blur-2xl opacity-20" style={{ backgroundColor: 'var(--accent)' }}></div>
-        <div className="absolute top-40 right-10 w-64 h-64 rounded-full filter blur-3xl opacity-15" style={{ backgroundColor: 'var(--light-accent)' }}></div>
-        <div className="absolute bottom-20 left-1/3 w-48 h-48 rounded-full filter blur-3xl opacity-15" style={{ backgroundColor: 'var(--accent)' }}></div>
-
-        {/* Coffee beans decoration */}
-        <div className="absolute top-1/4 right-1/4 opacity-5 text-9xl rotate-12">☕</div>
-        <div className="absolute bottom-1/3 left-1/4 opacity-5 text-7xl -rotate-12">☕</div>
+      {/* Subtle Background Glows (Replacing the heavy coffee beans/shapes) */}
+      <div className="absolute top-0 left-0 w-full h-full -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-gray-200/50 blur-[120px]"></div>
+        <div className="absolute top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-gray-200/50 blur-[120px]"></div>
       </div>
+
     </div>
   );
 }

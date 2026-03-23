@@ -1,378 +1,313 @@
-# Budget Forecasting Model
+KHARCHU: Interactive Budget & Spend Forecasting Dashboard
+=========================================================
 
+**Kharchu** is a full-stack, AI-powered financial application designed to ingest historical spend data and generate highly accurate future budget forecasts. By leveraging advanced Machine Learning algorithms (Facebook Prophet and CatBoost) running asynchronously via Celery, Kharchu provides organizations with a pristine, interactive dashboard to visualize and optimize their cloud and operational spend.
 
-A full-stack **time series forecasting platform** for predicting cloud infrastructure expenses using **Prophet**.  
-It provides an interactive **Django + Chart.js dashboard** to visualize forecasts, manage uploaded data, and analyze metrics intuitively.
+📑 Table of Contents
+--------------------
 
-### Running the Main Script
-```bash
+1.  [Project Overview](https://www.google.com/search?q=#1-project-overview)
+    
+2.  [Core Features](https://www.google.com/search?q=#2-core-features)
+    
+3.  [System Architecture](https://www.google.com/search?q=#3-system-architecture)
+    
+4.  [Technology Stack](https://www.google.com/search?q=#4-technology-stack)
+    
+5.  [Repository Structure](https://www.google.com/search?q=#5-repository-structure)
+    
+6.  [Machine Learning Pipeline](https://www.google.com/search?q=#6-machine-learning-pipeline)
+    
+7.  [Local Development (Docker Recommended)](https://www.google.com/search?q=#7-local-development-docker)
+    
+8.  [Local Development (Manual Setup)](https://www.google.com/search?q=#8-local-development-manual)
+    
+9.  [API Documentation](https://www.google.com/search?q=#9-api-documentation)
+    
+10.  [Frontend Architecture](https://www.google.com/search?q=#10-frontend-architecture)
+    
+11.  [Environment Variables](https://www.google.com/search?q=#11-environment-variables)
+    
+12.  [Future Roadmap](https://www.google.com/search?q=#12-future-roadmap)
+    
 
-# Build Docker image
-docker build -t my-forecast-docker-image .
+1\. Project Overview
+--------------------
 
-# Run Docker image
-docker run -d --name django-forecast-container -p 8001:8000 my-forecast-docker-image
+Managing and predicting enterprise spend—often referred to colloquially as "Kharchu" (expenses)—is notoriously difficult due to seasonal spikes, hidden costs, and changing business units.
 
-# Run application in Docker detached mode
-docker compose up -d  
+This application solves that by allowing users to upload historical CSV spend reports. The backend instantly delegates the heavy lifting to a background Celery worker, which trains machine learning models to identify trends, seasonality, and outliers. Once complete, the user is presented with a beautiful, React-based dashboard featuring interactive charts and metrics.
 
-```
+2\. Core Features
+-----------------
 
-### Test Docker start up
-```bash
-bash tests/test_docker_start.sh 
-```
+*   **🔐 Secure Authentication:** Full JWT-based authentication (Login/Signup) utilizing Django REST Framework SimpleJWT.
+    
+*   **📂 Asynchronous File Processing:** Upload large CSV files without blocking the UI. Background processing is handled gracefully by Celery and Redis.
+    
+*   **🧠 Ensemble ML Forecasting:** Combines Facebook Prophet (for time-series seasonality) and CatBoost (for complex categorical and gradient-boosted forecasting) to deliver enterprise-grade accuracy.
+    
+*   **📊 Interactive Analytics:** A premium, modern React UI built with TailwindCSS and Recharts, offering deep insights into historical vs. predicted spend.
+    
+*   **🐳 Fully Dockerized:** Seamless one-click local development and deployment environment.
+    
 
-## 🎯 Overview
-This application enables users to:
-- Upload cloud cost data (e.g., AWS, GCP, Azure).
-- Run forecasting pipelines using Prophet model.
-- Visualize budget forecasts using **interactive Chart.js** plots.
-- Filter forecasts by **Account Name** or **Service Name** dynamically.
-- View key metrics and download forecast results as CSV files.
+3\. System Architecture
+-----------------------
 
+The application follows a decoupled client-server architecture, communicating via a RESTful API.
 
-## ️ Detailed Flow Explanation
+**System Flow Explanation**
 
-### User Uploads a File
+Client-Server Communication: The user interacts with the React Frontend (Vite). Whenever they upload a CSV or request data, the frontend communicates with the Django DRF Backend securely using JSON and JWTs via Axios.
 
-- The user navigates to the **Upload Page** (`upload.html`).
-- They select the **Account Name** and **Service Name** from dynamic dropdowns.
-- Upon clicking **Upload**, the CSV file is sent via an HTTP **POST** request.
+Synchronous Data Storage: Standard relational data (like user accounts and metadata) is instantly read from or written to the PostgreSQL Database by Django.
 
----
+Asynchronous Task Delegation: When a heavy Machine Learning job is triggered (like forecasting a new uploaded CSV), Django doesn't make the user wait. It instantly sends a message to the Redis Message Broker.
 
-###  Django Handles the Request
+Background ML Processing: The Celery Worker continuously listens to Redis. It picks up the task and runs the complex Machine Learning Pipeline, passing the data through both the Prophet Model and the CatBoost Model to generate the ensemble forecast.
 
-- The request is routed through `forecast/urls.py` → handled by the `upload_forecast` view in `forecast/views.py`.
-- The uploaded file is saved under the `/data/` directory for persistence.
+Real-time UI Updates: While Celery is crunching the numbers in the background, the React UI continuously polls the backend/task-status endpoint to check if the job is done, giving the user a smooth loading experience without freezing the browser.
 
----
+4\. Technology Stack
+--------------------
 
-###  Machine Learning Pipeline Invoked
+**Frontend (Client)**
+---------------------
 
-- The backend invokes the core forecasting logic in `forecast/ml/main.py`.
+*   **Framework:** React 18 (Bootstrapped with Vite for instant HMR)
+    
+*   **Routing:** React Router DOM v6
+    
+*   **Styling:** Tailwind CSS
+    
+*   **Icons:** Lucide React
+    
+*   **Data Visualization:** Recharts
+    
+*   **HTTP Client:** Axios (with Interceptors for JWT attachment)
+    
 
-#### The pipeline performs the following steps:
-1. Reads the uploaded CSV.
-2. Cleans and transforms data using `data_transformations.py`.
-3. Loads the selected forecasting model (`prophet_model.py`, `legacy_models.py`, etc.).
-4. Generates **future predictions**.
+**Backend (API & Core Logic)**
+------------------------------
 
----
+*   **Framework:** Django 5.x & Django REST Framework (DRF)
+    
+*   **Authentication:** SimpleJWT (Access/Refresh Token strategy)
+    
+*   **Database:** PostgreSQL 15
+    
+*   **Task Queue:** Celery
+    
+*   **Broker / Cache:** Redis 7
+    
 
-###  Result Visualization
+**Machine Learning**
+--------------------
 
-- Predictions and metrics (**MAE**, **RMSE**, etc.) are prepared and serialized.
-- The backend sends the results as **JSON** data to the frontend.
-- The **Dashboard Page** (`dashboard.html`) dynamically renders charts via **Chart.js**.
+*   **Time Series:** prophet (Facebook Prophet)
+    
+*   **Gradient Boosting:** catboost
+    
+*   **Data Manipulation:** pandas, numpy, scikit-learn
+    
 
----
+5\. Repository Structure
+------------------------
 
-### Interactive Updates
-
-Users can:
-- Switch between **Account** or **Service** forecasts dynamically.
-- Upload new CSVs to refresh predictions.
-
-Each new upload automatically triggers the entire forecasting pipeline.
-
-
-## Features
-
-### Core Functionality
-- **Prophet Support**
-- **Automated Model Management**: Version control and cleanup
-- **Comprehensive Evaluation**: Multiple performance metrics
-- **Rich Visualizations**: Interactive plots and comparisons
-- **Future Predictions**: 24-month forecasting capabilities
-
-### Technical Features
-- **Reproducible Results**: Fixed random seeds for consistency
-- **Model Persistence**: Automatic saving and loading of trained models
-- **Cross-Validation**: Time series aware validation strategies
-- **Feature Engineering**: Automatic lag feature creation
-- **Data Preprocessing**: Categorical encoding and scaling
-- **Error Handling**: Robust error management and recovery
-
-## 📁 Project Structure
-
-```
-BudgetForecast/
-├── README.md                            # Project documentation
-├── requirements.txt                     # Python dependencies
+Bash
+```chatinput
+budget_forecast_app/
 │
-├── data/                                # Data directory for input CSV files
-│   ├── Forecast Data July 2022.csv
-│   └── actual_detail_2025-08-14.csv
+├── budget_forecast_app/        # Core Django Project Settings
+│   ├── settings.py             # DRF, CORS, Celery, and DB config
+│   ├── urls.py                 # Main URL router (Auth endpoints live here)
+│   └── celery.py               # Celery app initialization
 │
-│
-├── plots/                               # Generated visualizations and reports
-│   ├── future_predictions.html           # ChartJS future forecast output
-│   ├── monthly_comparison_bar.html       # Monthly comparison (bar chart)
-│   ├── monthly_comparison_line.html      # Monthly comparison (line chart)
-│   └── spend/html/                       # Detailed spend analysis reports
-│       ├── 01_monthly_total_spend_trend.html
-│       ├── 02_monthly_average_spend_trend.html
-│       ├── 03_monthly_record_count.html
-│       ├── ...
-│       └── 18_monthly_spend_trend_by_region.html
-│
-│
-├── budget_forecast_app/                 # Django application root
-│   ├── db.sqlite3                       # SQLite database for development
-│   ├── actual_detail_2025-08-14.csv     # Example input dataset
-│   ├── manage.py                        # Django management script
-│
-│   ├── budget_forecast_app/             # Django project configuration
-│   │   ├── __init__.py
-│   │   ├── settings.py                  # Django settings (integrates ML & frontend)
-│   │   ├── urls.py                      # Project-level URL routing
-│   │   ├── asgi.py                      # ASGI entry point
-│   │   └── wsgi.py                      # WSGI entry point
-│
-│   ├── forecast/                        # Main forecasting app
-│   │   ├── admin.py                     # Django admin integration
-│   │   ├── apps.py                      # App configuration
-│   │   ├── models.py                    # (Optional) ORM models if used
-│   │   ├── urls.py                      # URL routing for app views
-│   │   ├── views.py                     # Handles dashboard, upload, and forecasting logic
-│   │   ├── tests.py                     # Unit tests for the forecasting module
+├── forecast/                   # Main Django App
+│   ├── views.py                # API endpoints (Register, Upload, Dashboard Data)
+│   ├── urls.py                 # App-specific routing
+│   ├── models.py               # PostgreSQL Schemas
+│   ├── serializers.py          # DRF Serializers (User auth handling)
+│   ├── tasks.py                # Asynchronous Celery Tasks (trigger_forecast)
 │   │
-│   │   ├── ml/                          # Machine Learning pipeline modules
-│   │   │   ├── main.py                  # Entry point for training & forecasting logic
-│   │   │   ├── legacy_models.py         # Older ML implementations (CatBoost, LR)
-│   │   │   ├── legacy_prophet_model.py  # Legacy Prophet-based model for time series
-│   │   │   ├── prophet_model.py         # Updated Prophet-based forecasting module
-│   │   │   ├── data_exploration.py      # Exploratory data analysis utilities
-│   │   │   ├── enums.py                 # Enum definitions for forecast types
-│   │   │   ├── utils/                   # Utility scripts
-│   │   │   │   ├── data_transformations.py  # Data preprocessing and feature engineering
-│   │   │   │   └── setup_logging.py         # Logging configuration
-│   │   │   ├── models/                  # Trained models for CatBoost, Linear Regression
-│   │   │   │   ├── catboost/
-│   │   │   │   └── linear_regression/
-│   │   │   └── catboost_info/           # Local CatBoost logs within app context
-│   │
-│   │   ├── templates/forecast/          # Frontend templates
-│   │   │   ├── dashboard.html           # Main dashboard (ChartJS plots + metrics)
-│   │   │   └── upload.html              # File upload interface for new datasets
-│   │
-│   │   └── migrations/                  # Django migrations for the app
-│   │       └── __init__.py
+│   └── ml/                     # Machine Learning Pipeline
+│       ├── main.py             # Pipeline orchestrator
+│       ├── prophet_model.py    # Prophet training and prediction logic
+│       ├── utils/              # Data scaling, cleaning, and date transformations
+│       └── models/             # Saved/Pickled ML models (.pkl, .cbm)
 │
-└── __pycache__/                         # Cached Python files (auto-generated)
+├── frontend/                   # React SPA
+│   ├── src/
+│   │   ├── components/         # Reusable UI (Hero, TopHeader, LeftSidebar)
+│   │   ├── contexts/           # React Context (Theme, Auth)
+│   │   ├── pages/              # Main Views (LandingPage, KharchuDashboard, AuthPage)
+│   │   └── App.tsx             # React Router config & ProtectedRoutes
+│   ├── package.json
+│   └── tailwind.config.js      # Custom SaaS color palette configurations
+│
+├── docker-compose.yml          # Multi-container orchestration
+├── Dockerfile                  # Django Backend image instructions
+├── requirements.txt            # Python dependencies
+└── manage.py                   # Django CLI
+
+
 
 ```
 
-## 🚀 Installation
 
-### Prerequisites
-- Python 3.8 or higher
-- Django 4.2.25
-- pip package manager
-- Sufficient disk space for model storage
+6\. Machine Learning Pipeline
+-----------------------------
 
-### Dependencies
-The project requires the following Python packages:
-- pandas: Data manipulation and analysis
-- numpy: Numerical computing
-- scikit-learn: Machine learning algorithms
-- Django : Web framework
-- optuna: Hyperparameter optimization
-- matplotlib: Data visualization
-- joblib: Model serialization
+The ML pipeline resides in forecast/ml/ and is triggered via Celery to prevent HTTP timeouts during heavy training jobs.
 
-### Setup Instructions
-1. Clone the repository to your local machine
-2. Navigate to the project directory
-3. Install required dependencies using pip
-4. Ensure your dataset is placed in the root directory
-5. Verify the project structure matches the expected layout
+1.  **Data Ingestion (data\_transformations.py):** Normalizes user-uploaded CSVs, handling missing values, standardizing date formats, and encoding categorical variables like "Business Unit" or "Region".
+    
+2.  **Prophet Execution (prophet\_model.py):** Best suited for identifying weekly, monthly, and yearly seasonal patterns in historical spend.
+    
+3.  **CatBoost Execution:** Used to capture complex, non-linear relationships between categorical features that Prophet might miss.
+    
+4.  **Ensemble Aggregation:** The results from both models are weighted and combined to produce a final, highly confident predicted\_spend array, which is then serialized and saved for the frontend dashboard to consume.
+    
 
-## 📊 Data Requirements
+7\. Local Development (Docker Recommended)
+------------------------------------------
 
-### Input Format
-The system expects a CSV file with the following structure:
-- **month**: Date column in YYYY-MM format
-- **spend**: Target variable (numerical spending amounts)
-- **serviceName**: Categorical service identifier
-- **usageFamily**: Categorical usage category
-- **accountName**: Categorical account identifier
-- **accountID**: Categorical account ID
-- **countryCode**: Categorical country code
-- **buCode**: Categorical business unit code
-- **region**: Categorical region identifier
-- **segment**: Categorical segment identifier
-- **costString**: Categorical cost string
+The easiest way to run the entire stack (Postgres, Redis, Celery, Django, React) is via Docker Compose.
 
-### Data Preprocessing
-The system automatically performs the following preprocessing steps:
-- Converts date columns to datetime format
-- Extracts year and month components
-- Handles missing values appropriately
+Prerequisites
+-------------
 
+*   [Docker Desktop](https://www.google.com/search?q=https://www.docker.com/products/docker-desktop/) installed and running.
+    
 
+Quick Start
+-----------
 
-## 📈 Visualization Features
+1.  ```git clone https://github.com/your-org/budgetforecast.gitcd budgetforecast/budget\_forecast\_app```
+    
+2.  ```docker compose up --build```
+    
+3.  ```docker exec -it django-forecast-container python manage.py migrate```
+    
+    
 
-### Model Comparison Plots
-**Monthly Bar Charts**:
-- Actual vs predicted spending comparison
-- Side-by-side model performance visualization
-- Monthly aggregation for trend analysis
-- Color-coded legend for easy interpretation
+Accessing the Services
+----------------------
 
-**Time Series Line Graphs**:
-- Continuous spending trends over time
-- Model prediction accuracy visualization
-- Seasonal pattern identification
-- Anomaly detection capabilities
+*   **React Frontend:** http://localhost:5173
+    
+*   **Django API Backend:** http://localhost:8000
+    
+*   **Postgres Database:** localhost:5433 (Mapped externally)
+    
 
-### Future Predictions Visualization
-**24-Month Forecasts**:
-- Line graph comparison of model predictions
-- Bar chart representation of future spending
-- Confidence interval visualization
-- Trend analysis and pattern recognition
+_Note: If you encounter CORS or Connection Refused errors on login, ensure your docker-compose.yml maps the Django container as - "8000:8000" and runs with the command python manage.py runserver 0.0.0.0:8000._
 
-**Statistical Summaries**:
-- Average prediction comparisons
-- Prediction range analysis
-- Percentage difference calculations
-- Model agreement assessment
+8\. Local Development (Manual Setup)
+------------------------------------
 
-### Performance Metrics Visualization
-**Evaluation Dashboard**:
-- RMSE comparison charts
-- MAE performance analysis
-- R-squared coefficient plots
-- Model ranking visualizations
+If you prefer to run the application natively without Docker:
 
-## 📊 Model Evaluation
+Backend Setup
+-------------
 
-### Performance Metrics
-**Root Mean Square Error (RMSE)**:
-- Measures prediction accuracy
-- Penalizes large errors heavily
-- Standard regression metric
-- Scale-dependent measurement
+1.  ```python -m venv venvsource venv/bin/activate # Windows: venv\\Scripts\\activatepip install -r requirements.txt```
+    
+2.  ```redis-server```
+    
+3.  ```python manage.py migratepython manage.py runserver```
+    
+4.  ```celery -A budget\_forecast\_app worker -l info```
+    
 
-**Mean Absolute Error (MAE)**:
-- Average absolute prediction error
-- Robust to outliers
-- Easy to interpret
-- Scale-dependent measurement
+Frontend Setup
+--------------
 
-**R-squared Coefficient**:
-- Proportion of variance explained
-- Range: 0 to 1 (higher is better)
-- Model fit assessment
-- Scale-independent metric
+1.  Bash`cd frontend`
+    
+2.  Bash`npm installnpm run dev`
+    
 
-### Cross-Validation Strategy
-**Time Series Split**:
-- Respects temporal order
-- Prevents data leakage
-- Realistic performance estimation
-- Multiple fold validation
+9\. API Documentation
+---------------------
 
-**Validation Process**:
-- 3-fold time series cross-validation
-- Sequential data splitting
-- Consistent evaluation methodology
-- Robust performance assessment
+Kharchu utilizes Django REST Framework. Authentication is required for all endpoints except register and token.
 
-## 🔮 Future Predictions
+Include the following header in authenticated requests:Authorization: Bearer
 
-### Forecasting Capabilities
-**24-Month Horizon**:
-- Extended prediction timeline
-- Long-term trend analysis
-- Strategic planning support
-- Risk assessment capabilities
+Auth Endpoints
+--------------
 
-**Prediction Generation**:
-- Automated future data preparation
-- Lag feature extrapolation
-- Rolling statistics projection
-- Categorical feature handling
+*   **POST /api/register/**: Create a new user account.
+    
+    *   _Body:_ {"email": "user@example.com", "password": "strongpassword", "name": "Jane Doe"}
+        
+*   **POST /api/token/**: Login to receive JWT tokens.
+    
+    *   _Body:_ {"username": "user@example.com", "password": "strongpassword"} (Note: simpleJWT requires the key "username" even if using an email).
+        
+*   **POST /api/token/refresh/**: Refresh an expired access token using the refresh token.
+    
 
-### Output Analysis
-**Detailed Comparisons**:
-- Month-by-month predictions
-- Model agreement assessment
-- Statistical significance testing
-- Confidence interval estimation
+Forecast Endpoints
+------------------
 
-**Summary Statistics**:
-- Average prediction values
-- Prediction range analysis
-- Percentage differences
-- Trend direction identification
+*   **POST /upload/**: Upload a historical spend CSV file. Returns a task\_id for background processing.
+    
+*   **GET /status//**: Poll the status of the Celery ML training job.
+    
+    *   _Returns:_ {"state": "PENDING" | "SUCCESS" | "FAILURE"}
+        
+*   **GET /api/dashboard-data/?task\_id=**: Fetches the processed historical data, Prophet confidence intervals, and future predictions for rendering in the React Dashboard.
+    
 
-## ⚙️ Configuration Options
+10\. Frontend Architecture
+--------------------------
 
-### Training Parameters
-**Model Selection**:
-- CatBoost vs Linear Regression
-- Single model or comparison mode
-- Custom hyperparameter ranges
-- Optimization strategy selection
+The React frontend is designed with a strict "SaaS Dashboard" aesthetic.
 
-**Data Processing**:
-- Train/test split ratio (default: 80/20)
-- Lag feature periods (1, 2, 3, 6, 12 months)
-- Rolling window sizes (3, 6 months)
-- Categorical encoding strategies
+Authentication Flow
+-------------------
 
-### Model Management
-**Version Control**:
-- Timestamped model files
-- Automatic cleanup of old models
-- Configurable retention policy
-- Model history tracking
+1.  User logs in via AuthPage.tsx.
+    
+2.  access\_token and refresh\_token are saved to localStorage.
+    
+3.  The App.tsx router wraps private pages (KharchuDashboard, UploadPage) in a component. Unauthenticated users are instantly bounced to /login.
+    
+4.  TopHeader.tsx and Header.tsx dynamically check localStorage to display either a "Login/Signup" button or a "Sign Out" button.
+    
 
-**Storage Options**:
-- Local file system storage
-- Compressed model formats
-- Metadata preservation
-- Backup and recovery
+Axios Interceptors (Recommended Pattern)
+----------------------------------------
 
-## 🛠️ Troubleshooting
+To avoid attaching the JWT manually to every API call, configure an Axios interceptor in App.tsx:
 
-### Common Issues
-**Data Loading Errors**:
-- Verify file path and format
-- Check column names and types
-- Ensure sufficient memory
-- Validate data quality
+11\. Environment Variables
+--------------------------
 
-**Model Training Issues**:
-- Monitor memory usage
-- Check hyperparameter ranges
-- Verify optimization settings
-- Review error messages
+Create a .env file in the budget\_forecast\_app root directory:
 
-**Visualization Problems**:
-- Ensure matplotlib backend
-- Check display settings
-- Verify plot data availability
-- Monitor system resources
+Code snippet
 
-### Performance Optimization
-**Memory Management**:
-- Reduce batch sizes if needed
-- Optimize data types
-- Use efficient algorithms
-- Monitor resource usage
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   # Database  DATABASE_URL=postgres://postgres:supersecretpassword@db:5432/kharchu_db  # Celery / Redis  CELERY_BROKER_URL=redis://redis:6379/0  CELERY_RESULT_BACKEND=redis://redis:6379/0  # Django   SECRET_KEY=your_secure_django_secret_key  DEBUG=True  ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0  # CORS Setting (Vite Frontend)  CORS_ALLOWED_ORIGINS=http://localhost:5173   `
 
-**Speed Improvements**:
-- Parallel processing options
-- Reduced optimization trials
-- Simplified model configurations
-- Hardware acceleration
+🤝 Contributing
+---------------
 
----
+1.  Fork the Project
+    
+2.  Create your Feature Branch (git checkout -b feature/AmazingFeature)
+    
+3.  Commit your Changes (git commit -m 'Add some AmazingFeature')
+    
+4.  Push to the Branch (git push origin feature/AmazingFeature)
+    
+5.  Open a Pull Request
+    
 
-**Note**: This documentation is comprehensive and designed to help users understand and effectively use the Budget Forecasting Model. For specific implementation details, refer to the source code and inline documentation. 
+📝 License
+----------
+
+Distributed under the MIT License. See LICENSE for more information.

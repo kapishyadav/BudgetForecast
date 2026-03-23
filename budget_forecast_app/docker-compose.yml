@@ -2,6 +2,7 @@ name: django-forecast-project
 
 services:
   app:
+    build: .
     image: my-forecast-docker-image
     container_name: django-forecast-container
     ports:
@@ -46,6 +47,7 @@ services:
     restart: always
 
   celery:
+    build: .
     image: my-forecast-docker-image
     container_name: forecast-celery
     command: celery -A budget_forecast_app worker -l info

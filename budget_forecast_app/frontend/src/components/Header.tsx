@@ -36,7 +36,7 @@ export function Header() {
               KHARCHU
             </h1>
             <p className="text-lg text-gray-600">
-              Keep Your Cloud Kharchu Under Control
+              Interactive Budget Forecasting Dashboard
             </p>
           </div>
 

@@ -32,7 +32,7 @@ export function Hero() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               className="w-full sm:w-auto px-8 py-4 rounded-[16px] bg-[#1A1A1A] text-white font-medium flex items-center justify-center gap-2 hover:bg-black transition-all shadow-sm group"
-              onClick={() => window.location.href = '/'}
+              onClick={() => window.location.href = '/login'}
             >
               Get Started
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

@@ -50,6 +50,7 @@ This application solves that by allowing users to upload historical CSV spend re
 
 3\. System Architecture
 -----------------------
+                                
 
 The application follows a decoupled client-server architecture, communicating via a RESTful API.
 

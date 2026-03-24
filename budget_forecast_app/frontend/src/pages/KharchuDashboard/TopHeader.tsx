@@ -28,7 +28,7 @@ export function TopHeader() {
           KHARCHU
         </h1>
         <p className="text-lg text-gray-600">
-          Interactive Budget & Spend Forecasting Dashboard
+          Interactive Budget Forecasting Dashboard
         </p>
       </div>
 

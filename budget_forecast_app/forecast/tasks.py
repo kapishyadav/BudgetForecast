@@ -11,6 +11,7 @@ from .models import ForecastDataset, HistoricalSpend
 
 logger = logging.getLogger(__name__)
 
+
 @shared_task(bind=True)
 def generate_forecast_task(self, dataset_id, forecast_type_str, granularity_str, **kwargs):
     """
@@ -20,7 +21,6 @@ def generate_forecast_task(self, dataset_id, forecast_type_str, granularity_str,
     logger.info(f"Task {self.request.id}: Starting forecast generation for dataset id: {dataset_id}")
 
     try:
-
         historical_data = HistoricalSpend.objects.filter(dataset_id=dataset_id).values(
             'date', 'spend', 'account_name', 'service_name', 'bu_code', 'segment'
         )
@@ -29,15 +29,7 @@ def generate_forecast_task(self, dataset_id, forecast_type_str, granularity_str,
             raise ValueError(f"No historical data found for dataset {dataset_id}")
 
         df = pd.DataFrame(list(historical_data))
-        # Rename columns back to what your Prophet script expects internally
-        df.rename(columns={
-            'date': 'month',  # Or 'Date', depending on what run_forecast uses
-            'account_name': 'accountName',
-            'service_name': 'serviceName',
-            'bu_code': 'buCode'
-        }, inplace=True)
-        #  Convert strings back to Enums
-        # (Since Celery only accepts basic data types via the message broker)
+
         try:
             forecast_type = ForecastType(forecast_type_str)
             granularity = Granularity(granularity_str)
@@ -46,34 +38,41 @@ def generate_forecast_task(self, dataset_id, forecast_type_str, granularity_str,
             forecast_type = ForecastType.OVERALL_AGGREGATE
             granularity = Granularity.MONTHLY
 
-        #  Run the heavy ML pipeline
+        # 3. Handle the Date/Month column requirement safely
+        # forecast_monthly_spend expects 'month', forecast_daily_spend expects 'date'
+        if granularity == Granularity.MONTHLY:
+            df.rename(columns={'date': 'month'}, inplace=True)
+
+        # NOTICE: We completely removed the camelCase renaming for account_name, etc.
+        # They will remain snake_case, which matches the new run_prophet_forecast filters!
+
+        # 4. Run the heavy ML pipeline
+        # **kwargs safely passes account_name, service_name, etc. directly into the pipeline
+        logger.info(f"Task {self.request.id}: Passing kwargs to run_forecast: {kwargs}")
         result = run_forecast(df, forecast_type, granularity=granularity, **kwargs)
 
-        # Extract the Pandas DataFrames
+        # 5. Extract the Pandas DataFrames
         forecast_df = result["forecast"]
         historical_df = result["history"]
         metrics_dict = result["metrics"]
 
-        # Convert DataFrames to JSON strings
-        # (This makes them safe to store in the Redis result backend)
+        # 6. Convert DataFrames to JSON strings safely
         forecast_json = forecast_df.to_json(orient="records", date_format="iso")
         historical_json = historical_df.to_json(orient="records", date_format="iso")
 
         logger.info(f"Task {self.request.id}: Forecast complete. Saving results to Redis.")
 
-        # Return the payload.
-        # Redis will hold onto this dictionary until your Django view asks for it!
+        # 7. Return the payload.
         return {
             "status": "success",
             "forecast_json": forecast_json,
             "historical_json": historical_json,
-            "metrics" : metrics_dict,
-            "dataset_id" : dataset_id
+            "metrics": metrics_dict,
+            "dataset_id": dataset_id
         }
 
     except Exception as e:
         logger.error(f"Task {self.request.id}: Forecasting failed - {str(e)}")
-        # Return the error safely so the frontend can catch it and display a message
         return {
             "status": "error",
             "message": str(e)

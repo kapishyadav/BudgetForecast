@@ -9,9 +9,15 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ('email', 'password', 'name')
         extra_kwargs = {
-            'password': {'write_only': True}, # Ensures the password never gets sent back to the frontend
+            'password': {'write_only': True},
             'email': {'required': True}
         }
+
+    def validate_email(self, value):
+        # Check if a user already exists with this email (either in the email OR username column)
+        if User.objects.filter(email=value).exists() or User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("A user with this email address already exists.")
+        return value
 
     def create(self, validated_data):
         # We use create_user() because it automatically hashes the password safely!

@@ -94,9 +94,37 @@ export function KharchuDashboard() {
       "By BU Code": "bu_code"
     };
 
+    // Map for the backend parameter names
+    const paramMap: Record<string, string> = {
+      "By Account": "account_name",
+      "By Service": "service_name",
+      "By Segment": "segment_name",
+      "By BU Code": "bu_code"
+    };
+
     const field = fieldMap[filterName];
+
+    // Initialize URL parameters using the standard API
+    const queryParams = new URLSearchParams({
+      q: inputValue || "",
+      field: field,
+      dataset_id: datasetId
+    });
+
+    // Loop through the currently active filters and append them to the URL
+    // so the backend knows to restrict the suggestions
+    Object.keys(filterValues).forEach(key => {
+      // If a value is selected AND it's not the box we are currently typing in
+      if (filterValues[key] && key !== filterName) {
+         queryParams.append(paramMap[key], filterValues[key].value);
+      }
+    });
+
     try {
-      const response = await fetch(`/get_suggestions/?q=${inputValue}&field=${field}&dataset_id=${datasetId}`);
+      const response = await fetch(`/get_suggestions/?${queryParams.toString()}`);
+
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
       const data = await response.json();
       return (data.suggestions || []).map((item) => ({ value: item, label: item }));
     } catch (error) {

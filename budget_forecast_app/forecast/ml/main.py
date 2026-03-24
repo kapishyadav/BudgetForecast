@@ -10,36 +10,23 @@ returns standardized outputs (metrics + Plotly figures).
 """
 
 import os
-
 import pandas as pd
 
 from .prophet_model import run_prophet_forecast
 from .utils.setup_logging import setup_logging
 from .enums import ForecastType, Granularity
-from .legacy_prophet_model import *
 
 logger = setup_logging()
 
 def run_forecast(df: pd.DataFrame,
                  forecast_type: ForecastType = ForecastType.OVERALL_AGGREGATE,
                  granularity: Granularity = Granularity.MONTHLY,
-                 account_name = None,
-                 service_name = None,
-                 bu_code = None,
-                 segment_name = None):
+                 account_name=None,
+                 service_name=None,
+                 bu_code=None,
+                 segment_name=None):
     """
     Main entry point for the forecasting pipeline.
-
-    Args:
-        csv_path (str): Path to uploaded CSV file.
-        model_type (str): One of ["prophet", "catboost", "linear"].
-        train (bool): If True, retrains the model (for ML models only).
-
-    Returns:
-        tuple:
-            - predictions: list or DataFrame of forecasted values
-            - metrics: dict with RMSE, MAE, R²
-            - figures: list of Plotly figure JSONs
     """
 
     logger.info(f"Running forecast with type: {forecast_type.value}")
@@ -48,61 +35,49 @@ def run_forecast(df: pd.DataFrame,
         raise ValueError("The provided dataset is empty and contains no historical spend data.")
 
     try:
-
         logger.info("Prophet forecasting starting.")
-        if forecast_type == ForecastType.ACCOUNT:
-            if not account_name:
-                raise ValueError("Account name must be provided for account-level forecast.")
-            forecast_df, historical_df, metrics_dict = run_prophet_forecast(df,
-                                                forecast_type,
-                                                granularity,
-                                                logger,
-                                                account_name)
 
-        elif forecast_type == ForecastType.OVERALL_AGGREGATE:
-            forecast_df, historical_df, metrics_dict = run_prophet_forecast(df, forecast_type, granularity, logger)
-            logger.info(f"DEBUG run_prophet_forecast complete!")
+        # ==========================================
+        # 1. VALIDATE PRIMARY REQUIREMENTS
+        # ==========================================
+        # We only check that the primary field required for the specific forecast type exists.
+        if forecast_type == ForecastType.ACCOUNT and not account_name:
+            raise ValueError("Account name must be provided for account-level forecast.")
 
-        elif forecast_type == ForecastType.SERVICE:
-            if not service_name and not account_name:
-                raise ValueError("Service name and Account name must be provided for service-level forecast.")
-            forecast_df, historical_df, metrics_dict = run_prophet_forecast(df,
-                                                        forecast_type,
-                                                        granularity,
-                                                        logger,
-                                                        account_name,
-                                                        service_name)
+        elif forecast_type == ForecastType.SERVICE and not service_name:
+            raise ValueError("Service name must be provided for service-level forecast.")
 
-        elif forecast_type == ForecastType.BUCODE:
-            if not bu_code:
-                raise ValueError("BU Code must be provided for bu-code-level forecast.")
-            logger.info(f"Value of bu Code in main.py : {bu_code}, type: {type(bu_code)}")
-            forecast_df, historical_df, metrics_dict = run_prophet_forecast(
-                df=df,
-                forecast_type=forecast_type,
-                granularity=granularity,
-                logger=logger,
-                bu_code=bu_code
-            )
+        elif forecast_type == ForecastType.BUCODE and bu_code is None:
+            raise ValueError("BU Code must be provided for bu-code-level forecast.")
 
-        elif forecast_type == ForecastType.SEGMENT:
-            if not segment_name and not service_name and not account_name:
-                raise ValueError("Segment Name, Service name and Account name must be provided for "
-                                 "segment-level forecast.")
-            forecast_df, historical_df, metrics_dict = run_prophet_forecast(
-                df=df,
-                forecast_type=forecast_type,
-                granularity=granularity,
-                logger=logger,
-                account_name= account_name,
-                service_name= service_name,
-                segment_name=segment_name
-            )
+        elif forecast_type == ForecastType.SEGMENT and not segment_name:
+            raise ValueError("Segment name must be provided for segment-level forecast.")
 
-        else:
+        elif forecast_type not in [ForecastType.OVERALL_AGGREGATE, ForecastType.ACCOUNT, ForecastType.SERVICE, ForecastType.BUCODE, ForecastType.SEGMENT]:
             raise ValueError(f"Unsupported forecast type: {forecast_type}")
-        logger.info("Prophet forecasting complete.")
 
+        # ==========================================
+        # 2. TRIGGER THE PIPELINE
+        # ==========================================
+        # Because `run_prophet_forecast` now handles dynamic pre-filtering,
+        # we can safely pass EVERY argument. It will dynamically slice the DataFrame
+        # based on whatever combination the user selected in the UI.
+
+        if forecast_type == ForecastType.BUCODE:
+             logger.info(f"Value of bu Code in main.py : {bu_code}, type: {type(bu_code)}")
+
+        forecast_df, historical_df, metrics_dict = run_prophet_forecast(
+            df=df,
+            forecast_type=forecast_type,
+            granularity=granularity,
+            logger=logger,
+            account_name=account_name,
+            service_name=service_name,
+            bu_code=bu_code,
+            segment_name=segment_name
+        )
+
+        logger.info("Prophet forecasting complete.")
 
         return {
             "forecast": forecast_df,

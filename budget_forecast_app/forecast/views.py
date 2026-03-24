@@ -164,21 +164,20 @@ def trigger_forecast(request):
             bu_code = int(bu_code_raw) if bu_code_raw != "" else None
             segment_name = request.POST.get("segment_name", "").strip()
 
+            # Build kwargs dynamically based ONLY on what was actually sent from the UI.
+            # We no longer restrict these based on the forecast_type!
             kwargs = {}
-            if forecast_type == ForecastType.ACCOUNT and account_name:
+            if account_name:
                 kwargs["account_name"] = account_name
-            if forecast_type == ForecastType.SERVICE:
-                if service_name: kwargs["service_name"] = service_name
-                if account_name: kwargs["account_name"] = account_name
-            if forecast_type == ForecastType.BUCODE and bu_code is not None:
+            if service_name:
+                kwargs["service_name"] = service_name
+            if bu_code is not None:
                 kwargs["bu_code"] = bu_code
-            if forecast_type == ForecastType.SEGMENT:
-                if segment_name: kwargs["segment_name"] = segment_name
-                if service_name: kwargs["service_name"] = service_name
-                if account_name: kwargs["account_name"] = account_name
+            if segment_name:
+                kwargs["segment_name"] = segment_name
 
             # --- TRIGGER CELERY TASK ---
-            logger.info("Sending ML pipeline to Celery worker...")
+            logger.info(f"Sending ML pipeline to Celery worker with filters: {kwargs}")
             task = generate_forecast_task.delay(
                 dataset_id=dataset_id,
                 forecast_type_str=forecast_type_str,
@@ -260,6 +259,7 @@ def get_suggestions(request):
     """
     Fetches unique suggestions directly from PostgreSQL.
     No more slow CSV reading!
+    Now supports Cascading Filters!
     """
     query = request.GET.get("q", "").strip().lower()
     field = request.GET.get("field")  # 'account', 'service', 'bu_code', or 'segment'
@@ -292,6 +292,29 @@ def get_suggestions(request):
         # 3. Use optimized SQL to find distinct matches
         # This is MUCH faster than Pandas for 160k rows
         filter_kwargs = {"dataset_id": dataset_id}
+
+        # ==========================================
+        # CASCADING FILTER LOGIC
+        # Extract other active filters from the request
+        # ==========================================
+        account_name = request.GET.get("account_name")
+        service_name = request.GET.get("service_name")
+        bu_code = request.GET.get("bu_code")
+        segment = request.GET.get("segment_name")
+
+        # Add them to the DB query IF they exist AND the user isn't currently typing in that exact box
+        if account_name and model_field != "account_name":
+            filter_kwargs["account_name"] = account_name
+
+        if service_name and model_field != "service_name":
+            filter_kwargs["service_name"] = service_name
+
+        if bu_code and model_field != "bu_code":
+            filter_kwargs["bu_code"] = bu_code
+
+        if segment and model_field != "segment":
+            filter_kwargs["segment"] = segment
+
         # Only apply the ILIKE (icontains) search if the user typed something
         if query:
             filter_kwargs[f"{model_field}__icontains"] = query

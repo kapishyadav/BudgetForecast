@@ -2,14 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UploadCloud, FileSpreadsheet, Settings2, Rocket, BarChart3, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import AsyncSelect from 'react-select/async';
-
-function getCsrfToken() {
-  const name = 'csrftoken';
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
-  return '';
-}
+import { getCsrfToken } from '../../utils/csrf';
 
 export function ForecastUpload() {
   const navigate = useNavigate();
@@ -161,13 +154,11 @@ export function ForecastUpload() {
   };
 
   const pollTaskStatus = (taskId: string) => {
-    // Check the status every 2000 milliseconds (2 seconds)
     const interval = setInterval(async () => {
       try {
         const response = await fetch(`/status/${taskId}/`, {
             credentials: 'same-origin'
             });
-        // We must parse the response as JSON, not text
         const data = await response.json()
         // Update the progress bar based on Celery's reported progress
         if (data.status === 'PROGRESS') {

@@ -68,6 +68,7 @@ def generate_forecast_task(self, dataset_id, forecast_type_str, granularity_str,
             "forecast_json": forecast_json,
             "historical_json": historical_json,
             "metrics" : metrics_dict,
+            "dataset_id" : dataset_id
         }
 
     except Exception as e:

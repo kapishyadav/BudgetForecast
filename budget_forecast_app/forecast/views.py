@@ -264,11 +264,12 @@ def get_suggestions(request):
     query = request.GET.get("q", "").strip().lower()
     field = request.GET.get("field")  # 'account', 'service', 'bu_code', or 'segment'
     dataset_id = request.GET.get("dataset_id", "").strip()
-    # 1. Get the dataset ID from the session (set during upload)
-    dataset_id = request.session.get("current_dataset_id")
 
     if not dataset_id:
-        # Fallback: Get the most recent dataset uploaded to the DB
+        # Fallback 1: Get the session dataset id
+        dataset_id = request.session.get("current_dataset_id")
+    if not dataset_id:
+    # Fallback 2: Get the most recent dataset uploaded to the DB
         latest_spend = HistoricalSpend.objects.order_by('-id').first()
         if latest_spend:
             dataset_id = latest_spend.dataset_id
@@ -464,8 +465,9 @@ def check_task_status(request, task_id):
             "message": str(task.info)  # This passes the actual Python error back to React
         })
 
+
 def get_dashboard_data(request):
-    """Retrieves forecast JSON directly from Celery via task_id."""
+    """Retrieves forecast JSON directly from Celery and filters it via Pandas."""
     task_id = request.GET.get('task_id')
 
     if not task_id:
@@ -476,14 +478,66 @@ def get_dashboard_data(request):
     if task.state != 'SUCCESS':
         return JsonResponse({"error": "Forecast not ready or invalid task ID."}, status=400)
 
-    # Grab the result dictionary directly from Redis/Celery
     result = task.result
+    raw_forecast = json.loads(result.get("forecast_json", "[]"))
+    raw_historical = json.loads(result.get("historical_json", "[]"))
+    metrics = result.get("metrics", {})
+
+    # --- THE FIX: Robust Dataset ID Retrieval ---
+    # First, try to get it from the Celery result dictionary
+    dataset_id = result.get("dataset_id")
+
+    # If the Celery task didn't return it, look it up in the PostgreSQL database!
+    if not dataset_id:
+        try:
+            # Look up the run record using the task_id
+            run_record = ForecastRun.objects.filter(task_id=task_id).first()
+            if run_record:
+                dataset_id = str(run_record.dataset.id)
+                print(f"DEBUG: Found dataset_id {dataset_id} via database fallback.")
+            else:
+                print(f"DEBUG: No ForecastRun found for task_id {task_id}")
+        except Exception as e:
+            print(f"DEBUG: Database lookup failed for dataset_id: {e}")
+
+    # 2. Extract valid filters from the incoming request
+    allowed_filters = ['account_name', 'service_name', 'segment_name', 'bu_code']
+    active_filters = {
+        key: request.GET.get(key)
+        for key in allowed_filters
+        if request.GET.get(key)
+    }
+
+    # 3. If no filters are applied, return the global view
+    if not active_filters:
+        return JsonResponse({
+            "forecast": raw_forecast,
+            "historical": raw_historical,
+            "metrics": metrics,
+            "dataset_id": dataset_id  # This will now successfully pass to React!
+        })
+
+    # 4. Filter logic
+    def filter_data(data_list, filters):
+        if not data_list:
+            return []
+        df = pd.DataFrame(data_list)
+        for column, value in filters.items():
+            if column in df.columns:
+                df = df[df[column] == value]
+        if df.empty:
+            return []
+        df = df.replace({np.nan: None})
+        return df.to_dict(orient='records')
+
+    filtered_forecast = filter_data(raw_forecast, active_filters)
+    filtered_historical = filter_data(raw_historical, active_filters)
 
     return JsonResponse({
-        # We parse the stringified JSON from Celery back into Python lists
-        "forecast": json.loads(result.get("forecast_json", "[]")),
-        "historical": json.loads(result.get("historical_json", "[]")),
-        "metrics": result.get("metrics", {})
+        "forecast": filtered_forecast,
+        "historical": filtered_historical,
+        "metrics": metrics,
+        "dataset_id": dataset_id
     })
 
 def get_mapped_columns(available_columns: list, mappings: Dict[str, list]) -> Dict[str, str]:

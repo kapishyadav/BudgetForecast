@@ -431,7 +431,7 @@ export function KharchuDashboard() {
             loadOptions={loadOptions}
           />
 
-          <div className="flex-1 overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-gray-300">
+          <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar">
             <MetricCards metrics={metricsData} isLoading={isLoading} />
 
             {isLoading ? (

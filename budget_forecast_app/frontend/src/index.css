@@ -136,6 +136,46 @@
     --sidebar-border: #6b5d5d;
     --sidebar-ring: #a47148;
   }
+ /* --- Custom Disappearing Scrollbars --- */
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;  /* Slightly wider to make it easier to grab */
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 1. Default State: Completely Transparent */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 10px;
+  /* This creates a tiny invisible border so the scrollbar doesn't touch the very edge of the screen */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* 2. Container Hover State: Show the scrollbar */
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background-color: #D1D5DB; /* Tailwind gray-300 */
+}
+
+/* 3. Thumb Hover State: Darken when they actually grab it */
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #9CA3AF; /* Tailwind gray-400 */
+}
+
+/* For Firefox (Firefox doesn't support hover states on scrollbars, so we keep it thin and subtle) */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s ease;
+}
+
+.custom-scrollbar:hover {
+  scrollbar-color: #D1D5DB transparent;
+}
 
   html {
     /* Safe fallback in case --font-size isn't defined yet */

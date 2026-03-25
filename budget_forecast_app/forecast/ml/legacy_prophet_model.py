@@ -50,6 +50,8 @@ def forecast_monthly_spend(data, logger, forecast_type):
     # Trim forecast
     forecast = forecast_future[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
     metrics_dict["total_forecasted_spend"] = float(forecast['yhat'].sum())
+    metrics_dict["average_monthly_spend"] = float(forecast['yhat'].mean())
+    metrics_dict["forecast_period"] = "24 mo"
 
     return forecast, prophet_df, metrics_dict
 
@@ -93,6 +95,8 @@ def forecast_daily_spend(data, logger, forecast_type):
     # Trim forecast
     forecast = forecast_future[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
     metrics_dict["total_forecasted_spend"] = float(forecast['yhat'].sum())
+    metrics_dict["average_monthly_spend"] = float(forecast['yhat'].mean() * 30.44)
+    metrics_dict["forecast_period"] = "90 days"
 
     return forecast, prophet_df, metrics_dict
 

@@ -156,7 +156,7 @@ export function KharchuDashboard() {
     setFilterValues(prev => ({ ...prev, [filterName]: selectedOption }));
   };
 
-  const handleApplyFilters = async () => {
+  const handleApplyFilters = async (isGlobalReset = false) => {
     if (!datasetId) {
       alert("Dataset ID is missing. Cannot run localized forecast.");
       return;
@@ -184,16 +184,21 @@ export function KharchuDashboard() {
     // 3. Prepare the FormData payload for your existing Django view
     const formData = new FormData();
     formData.append('dataset_id', datasetId);
-    formData.append('forecast_type', forecastType);
-    formData.append('granularity', 'monthly');
-
-    // Append the selected filter values
-    Object.keys(filterValues).forEach(key => {
-      if (filterValues[key]) {
-         const backendKey = fieldMap[key];
-         formData.append(backendKey, filterValues[key].value);
-      }
-    });
+    if (isGlobalReset == true) {
+        formData.append('forecast_type', 'overall_aggregate');
+        formData.append('granularity', 'monthly');
+    }
+    else {
+        formData.append('forecast_type', forecastType);
+        formData.append('granularity', 'monthly');
+        // Append the selected filter values
+        Object.keys(filterValues).forEach(key => {
+          if (filterValues[key]) {
+             const backendKey = fieldMap[key];
+             formData.append(backendKey, filterValues[key].value);
+          }
+        });
+    }
 
     try {
       // 4. Hit your existing trigger_forecast endpoint

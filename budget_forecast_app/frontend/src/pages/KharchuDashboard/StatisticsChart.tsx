@@ -15,6 +15,7 @@ import {
 interface ChartProps {
   forecast: any[];
   historical: any[];
+  granularity?: string;
 }
 
 const formatYAxis = (value: number) => {
@@ -45,7 +46,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export function StatisticsChart({ forecast = [], historical = [] }: ChartProps) {
+export function StatisticsChart({ forecast = [], historical = [], granularity = 'monthly' }: ChartProps) {
 
   // Safely parse data
   const safeForecast = typeof forecast === 'string' ? JSON.parse(forecast) : forecast;
@@ -57,10 +58,25 @@ export function StatisticsChart({ forecast = [], historical = [] }: ChartProps) 
   const formattedData: any[] = [];
   let splitDateName = "";
 
+  // ---  Dynamic Date Formatter ---
+  const formatDateKey = (ds: string) => {
+    const date = new Date(ds);
+    if (granularity === 'daily') {
+      // Returns "Mar 25, 2026" so every day gets its own unique point on the graph
+      return date.toLocaleDateString('en-GB', {
+          month: 'short',
+          day: '2-digit',
+          year: 'numeric'
+      }).replace(/ /g, '-');
+    }
+    // Returns "Mar 2026" for monthly grouping
+    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  };
+
   // Format Historical
   historicalArray.forEach((item: any) => {
     if (!item.ds) return;
-    const dateString = new Date(item.ds).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const dateString = formatDateKey(item.ds);
 
     formattedData.push({
       name: dateString,
@@ -74,7 +90,7 @@ export function StatisticsChart({ forecast = [], historical = [] }: ChartProps) 
   // Format Forecast
   forecastArray.forEach((item: any) => {
     if (!item.ds || !item.yhat) return;
-    const dateString = new Date(item.ds).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const dateString = formatDateKey(item.ds);
 
     const existingPoint = formattedData.find(d => d.name === dateString);
 
@@ -137,7 +153,7 @@ export function StatisticsChart({ forecast = [], historical = [] }: ChartProps) 
 
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
 
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
+            <XAxis dataKey="name" minTickGap={40} axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
             <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} tickFormatter={formatYAxis} dx={-10} />
 
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#9CA3AF', strokeWidth: 1, strokeDasharray: '5 5' }} />

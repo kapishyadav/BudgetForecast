@@ -10,24 +10,55 @@ import { MetricCards } from './MetricCards';
 import { StatisticsChart } from './StatisticsChart';
 import { getCsrfToken } from '../../utils/csrf';
 
+const FILTER_FIELD_MAP = {
+  "By Account": "account_name",
+  "By Service": "service_name",
+  "By Segment": "segment_name",
+  "By BU Code": "bu_code"
+};
+
 export function KharchuDashboard() {
   const [forecastData, setForecastData] = useState([]);
   const [historicalData, setHistoricalData] = useState([]);
   const [metricsData, setMetricsData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [forecastMessage, setForecastMessage] = useState("Applying filters...");
+  const [datasetId, setDatasetId] = useState(null);
 
-  // --- Filter & Suggestion State ---
-  const [activeFilters, setActiveFilters] = useState(['Global View']);
-  const [filterValues, setFilterValues] = useState({});
-  const [datasetId, setDatasetId] = useState(null); // Required for suggestions
-
-  // Extract the Celery task ID from the URL (e.g., /kharchu?taskId=123-abc)
+  // Extract the URL parameters first
   const [searchParams, setSearchParams] = useSearchParams();
   const taskId = searchParams.get('taskId');
+  const initialGranularity = searchParams.get('granularity') || 'monthly';
+  const initialForecastType = searchParams.get('forecastType');
 
-  const [forecastMessage, setForecastMessage] = useState("Applying filters...");
+  // --- THE FIX: Rebuild Tabs AND Values from the URL ---
+  const getInitialFilters = () => {
+     const filters = [];
+     const values = {};
 
-  // Initialize navigate for the sign-out redirect
+     if (initialForecastType && initialForecastType !== 'overall_aggregate') {
+         Object.entries(FILTER_FIELD_MAP).forEach(([tabName, paramKey]) => {
+             const urlVal = searchParams.get(paramKey);
+             if (urlVal) {
+                 filters.push(tabName);
+                 // Reconstruct the react-select object so the UI looks perfect!
+                 values[tabName] = { label: urlVal, value: urlVal };
+             }
+         });
+     }
+     return {
+         filters: filters.length > 0 ? filters : ['Global View'],
+         values: values
+     };
+  };
+
+  const [granularity, setGranularity] = useState(initialGranularity);
+
+  // Initialize with the data parsed from the URL
+  const initialData = getInitialFilters();
+  const [activeFilters, setActiveFilters] = useState<string[]>(initialData.filters);
+  const [filterValues, setFilterValues] = useState(initialData.values);
+
   const navigate = useNavigate();
 
   // Sign out logic
@@ -41,7 +72,12 @@ export function KharchuDashboard() {
   };
 
   useEffect(() => {
-    // If someone visits the dashboard directly without a task ID, stop loading
+    const urlGranularity = searchParams.get('granularity');
+    if (urlGranularity) {
+      setGranularity(urlGranularity);
+    }
+
+    // Stop if no task ID is present
     if (!taskId) {
       console.log("No taskId found in the URL. Waiting...");
       setIsLoading(false);
@@ -49,20 +85,16 @@ export function KharchuDashboard() {
     }
 
     const fetchDashboardData = async () => {
+      setIsLoading(true);
+
       try {
-        // Build the URL strictly using string concatenation
-        const apiUrl = "/api/dashboard-data/?task_id=" + taskId;
+        const apiUrl = `/api/dashboard-data/?task_id=${taskId}`;
+        const response = await axios.get(apiUrl, { withCredentials: true });
 
-        // DEBUGGING: This will prove what React is actually sending
-        console.log("Requesting data from:", apiUrl);
+        setForecastData(response.data.forecast || []);
+        setHistoricalData(response.data.historical || []);
+        setMetricsData(response.data.metrics || null);
 
-        // Request the data using the specific task ID
-        const response = await axios.get(apiUrl, {
-          withCredentials: true
-        });
-        setForecastData(response.data.forecast);
-        setHistoricalData(response.data.historical);
-        setMetricsData(response.data.metrics);
         if (response.data.dataset_id) {
             setDatasetId(response.data.dataset_id);
         }
@@ -74,7 +106,7 @@ export function KharchuDashboard() {
     };
 
     fetchDashboardData();
-  }, [taskId]); // Add taskId as a dependency
+  }, [taskId, searchParams]); // Added searchParams so it listens for the URL update
 
   // --- Async Suggestions Logic ---
   const loadOptions = async (inputValue, filterName) => {
@@ -156,7 +188,7 @@ export function KharchuDashboard() {
     setFilterValues(prev => ({ ...prev, [filterName]: selectedOption }));
   };
 
-  const handleApplyFilters = async (isGlobalReset = false) => {
+  const handleApplyFilters = async (isGlobalReset = false, overrideGranularity = null) => {
     if (!datasetId) {
       alert("Dataset ID is missing. Cannot run localized forecast.");
       return;
@@ -178,19 +210,24 @@ export function KharchuDashboard() {
     let forecastType = "overall_aggregate";
     if (activeFilters.includes("By Segment")) forecastType = "segment";
     if (activeFilters.includes("By BU Code")) forecastType = "bu_code";
-    if (activeFilters.includes("By Service")) forecastType = "service";
     if (activeFilters.includes("By Account")) forecastType = "account";
+    if (activeFilters.includes("By Service")) forecastType = "service";
+
 
     // 3. Prepare the FormData payload for your existing Django view
     const formData = new FormData();
     formData.append('dataset_id', datasetId);
+
+    const currentGranularity = overrideGranularity || granularity;
+
+
     if (isGlobalReset == true) {
         formData.append('forecast_type', 'overall_aggregate');
-        formData.append('granularity', 'monthly');
+        formData.append('granularity', currentGranularity);
     }
     else {
         formData.append('forecast_type', forecastType);
-        formData.append('granularity', 'monthly');
+        formData.append('granularity', currentGranularity);
         // Append the selected filter values
         Object.keys(filterValues).forEach(key => {
           if (filterValues[key]) {
@@ -289,31 +326,71 @@ export function KharchuDashboard() {
 
   // --- REUSED POLLING LOGIC FROM UPLOAD PAGE ---
   const pollTaskStatus = (newTaskId: string) => {
-    const interval = setInterval(async () => {
+    const pollInterval = setInterval(async () => {
       try {
         const response = await fetch(`/status/${newTaskId}/`);
+
+        // 1. Catch HTTP errors before trying to parse JSON
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
 
+        // 2. Define clear status states
+        const isSuccess = data.status === 'SUCCESS' || data.state === 'SUCCESS';
+        const isFailure = data.status === 'FAILURE' || data.state === 'FAILURE' || data.status === 'error';
+
+        // 3. Handle Progress
         if (data.status === 'PROGRESS') {
           setForecastMessage(data.message || "Running ML models...");
+          return; // Early return to keep logic flat
         }
-        else if (data.status === 'SUCCESS' || data.state === 'SUCCESS') {
-          clearInterval(interval);
+
+        // 4. Handle Success
+        if (isSuccess) {
+          clearInterval(pollInterval);
           setForecastMessage("Complete!");
 
-          // Updating the search params changes the URL (e.g., ?taskId=NEW_ID)
-          // This automatically triggers your existing useEffect to fetch the new data!
-          setSearchParams({ taskId: newTaskId });
+          // --- Determine current active tab and preserve it in URL ---
+          let activeType = "overall_aggregate";
+          if (activeFilters.includes("By Segment")) activeType = "segment";
+          if (activeFilters.includes("By BU Code")) activeType = "bu_code";
+          if (activeFilters.includes("By Account")) activeType = "account";
+          if (activeFilters.includes("By Service")) activeType = "service";
+
+
+          // Updating search params changes the URL and triggers the fetch useEffect
+          setSearchParams({
+              taskId: newTaskId,
+              granularity,
+              forecastType: activeType});
+          return;
         }
-        else if (data.status === 'FAILURE' || data.state === 'FAILURE' || data.status === 'error') {
-          clearInterval(interval);
+
+        // 5. Handle Failure & Smart Error Interception
+        if (isFailure) {
+          clearInterval(pollInterval);
           setIsLoading(false);
-          alert("The filtered forecast failed: " + (data.message || "Unknown error"));
+
+          const errorMessage = (data.message || "").toLowerCase();
+
+          // Intercept missing date column errors for daily forecasts
+          if (errorMessage.includes("'date'") || errorMessage.includes("daily")) {
+            alert("Daily data unavailable in the uploaded file. Please upload a new file with daily data.");
+            setGranularity('monthly'); // Reset UI toggle to prevent a blocked state
+          } else {
+            alert(`The filtered forecast failed: ${data.message || "Unknown error"}`);
+          }
+          return;
         }
+
       } catch (err) {
+        // 6. Handle Network/Parsing Exceptions
         console.error("Polling error:", err);
-        clearInterval(interval);
+        clearInterval(pollInterval);
         setIsLoading(false);
+        alert("A network error occurred while checking the forecast status.");
       }
     }, 1000);
   };
@@ -345,13 +422,51 @@ export function KharchuDashboard() {
               </div>
             ) : (
               <div className="mt-6">
-                {/* Header Row with Download Button */}
+                {/* Header Row with Toggle and Download Button */}
                 {forecastData.length > 0 && (
                   <div className="flex justify-between items-end mb-4 px-2">
-                    <h3 className="text-lg font-bold text-[#1A1A1A]">Forecast Overview</h3>
+
+                    {/* Left Side: Title & Segmented Toggle */}
+                    <div className="flex items-center gap-6">
+                      <h3 className="text-lg font-bold text-[#1A1A1A]">Forecast Overview</h3>
+
+                      <div className="flex bg-[#E5E0D8] rounded-xl p-1 shadow-inner border border-black/5">
+                        <button
+                          onClick={() => {
+                              setGranularity('monthly');
+                              handleApplyFilters(activeFilters.includes('Global View'), 'monthly');
+                              }
+                          }
+
+                          className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                            granularity === 'monthly'
+                              ? 'bg-white text-black shadow-sm'
+                              : 'text-gray-500 hover:text-gray-800'
+                          }`}
+                        >
+                          Monthly
+                        </button>
+                        <button
+                          onClick={() => {
+                              setGranularity('daily');
+                              handleApplyFilters(activeFilters.includes('Global View'), 'daily');
+                              }
+                          }
+                          className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                            granularity === 'daily'
+                              ? 'bg-white text-black shadow-sm'
+                              : 'text-gray-500 hover:text-gray-800'
+                          }`}
+                        >
+                          Daily
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Right Side: Export Button */}
                     <button
                       onClick={handleDownloadCSV}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-[#EAFF52] text-black rounded-xl text-sm font-semibold hover:bg-[#bce600] transition-colors shadow-sm border border-transparent hover:border-black/10"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-[#D4FF00] text-black rounded-xl text-sm font-semibold hover:bg-[#bce600] transition-colors shadow-sm border border-transparent hover:border-black/10"
                     >
                       <Download size={16} />
                       Export to CSV
@@ -359,8 +474,38 @@ export function KharchuDashboard() {
                   </div>
                 )}
 
-                {/* The Chart */}
-                <StatisticsChart forecast={forecastData} historical={historicalData} />
+                {/* --- THE CHART --- */}
+                <StatisticsChart
+                  forecast={forecastData}
+                  historical={historicalData}
+                  granularity={granularity}
+                />
+                {/* --- ACTIVE FILTERS DISPLAY --- */}
+                <div className="mt-4 flex flex-wrap items-center gap-2 px-2 animate-in fade-in duration-300">
+                  <span className="text-sm font-semibold text-gray-400 mr-2">Currently Viewing:</span>
+
+                  {activeFilters.includes('Global View') ? (
+                    <span className="px-3 py-1 bg-gray-100 text-gray-500 text-xs font-bold rounded-full border border-gray-200">
+                      Global Aggregate
+                    </span>
+                  ) : (
+                    activeFilters.map(filter => {
+                      // Grab the selected dropdown object
+                      const valueObj = filterValues[filter];
+                      // If they opened the tab but haven't picked a specific item yet, default to "All"
+                      const displayValue = valueObj ? valueObj.label : 'All';
+                      // Strip out the "By " text (e.g., "By Account" -> "Account")
+                      const filterLabel = filter.replace('By ', '');
+
+                      return (
+                        <div key={filter} className="flex items-center bg-[#E5E0D8]/60 border border-[#E5E0D8] rounded-full px-3 py-1.5 shadow-sm">
+                          <span className="text-xs font-bold text-gray-500 mr-1.5 uppercase tracking-wider">{filterLabel}:</span>
+                          <span className="text-xs font-bold text-[#1A1A1A]">{displayValue}</span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             )}
           </div>

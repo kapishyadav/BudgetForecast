@@ -31,11 +31,15 @@ def run_prophet_forecast(
     if data is None or data.empty:
         raise ValueError("The provided dataset is empty and contains no historical spend data.")
 
-    # 2. Validate columns
-    # Note: Since the Celery task renames your DB 'date' column back to 'month',
-    # we just need to ensure 'month' and 'spend' are here.
-    if "month" not in data.columns or "spend" not in data.columns:
-        raise ValueError("DataFrame must contain 'month' and 'spend' columns.")
+    # --- DYNAMIC VALIDATION ---
+    if granularity == Granularity.MONTHLY:
+        if 'month' not in df.columns or 'spend' not in df.columns:
+            raise ValueError("DataFrame for monthly granularity must contain 'month' and 'spend' columns.")
+    elif granularity == Granularity.DAILY:
+        if 'date' not in df.columns or 'spend' not in df.columns:
+            raise ValueError("DataFrame for daily granularity must contain 'date' and 'spend' columns.")
+    else:
+        raise ValueError(f"Unsupported granularity: {granularity}")
 
     # We apply whichever filters were passed from the UI.
     # If a filter is None, it safely ignores it.

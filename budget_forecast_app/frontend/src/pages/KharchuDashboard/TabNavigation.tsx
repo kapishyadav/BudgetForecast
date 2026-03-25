@@ -55,7 +55,13 @@ export function TabNavigation({
           return (
             <button
               key={idx}
-              onClick={() => onToggleFilter(tab)}
+              onClick={() => {
+                  onToggleFilter(tab);
+                  if (tab == "Global View") {
+                      //Pass a 'true' flag to tell the parent this is a forced Global reset
+                      onApplyFilters(true)
+                  }
+              }}
               className={`whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-medium transition-colors border ${
                 isActive
                   ? "bg-[#1A1A1A] text-white border-[#1A1A1A]"

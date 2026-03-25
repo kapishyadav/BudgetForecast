@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Loader2, LogOut } from 'lucide-react';
+import { Loader2, LogOut, Download } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { LeftSidebar } from './LeftSidebar';
 import { TopHeader } from './TopHeader';
@@ -226,6 +226,67 @@ export function KharchuDashboard() {
     }
   };
 
+  // --- DOWNLOAD LOGIC ---
+  const handleDownloadCSV = () => {
+    if (!forecastData || forecastData.length === 0) {
+      alert("No forecast data available to download.");
+      return;
+    }
+
+    // Set up Base CSV headers
+    const headers = ['Date', 'Predicted Spend', 'Lower Bound', 'Upper Bound'];
+
+    // Identify which filters are actually active (ignore Global View)
+    const activeFilterKeys = activeFilters.filter(f => f !== 'Global View');
+
+    // Dynamically add the filter names to the headers
+    activeFilterKeys.forEach(filter => {
+      headers.push(filter.replace('By ', '')); // Converts "By Account" to "Account"
+    });
+
+    const csvRows = [headers.join(',')];
+
+    // Extract the exact values the user selected for those filters.
+    // We wrap them in quotes `""` so that if an account name has a comma in it
+    // (e.g., "Acme, Inc."), it doesn't accidentally break the CSV layout!
+    const filterRowValues = activeFilterKeys.map(filter => {
+       const val = filterValues[filter]?.value;
+       return val ? `"${val}"` : '"All"'; // Default to "All" if they opened the tab but left it blank
+    });
+
+    // Loop through data and format rows
+    forecastData.forEach(row => {
+      // Safely format the date (extract YYYY-MM-DD from the timestamp)
+      const date = row.ds ? new Date(row.ds).toISOString().split('T')[0] : '';
+      // Round financial numbers to 2 decimal places
+      const yhat = row.yhat ? row.yhat.toFixed(2) : '0.00';
+      const lower = row.yhat_lower ? row.yhat_lower.toFixed(2) : '0.00';
+      const upper = row.yhat_upper ? row.yhat_upper.toFixed(2) : '0.00';
+
+      // Build the base row, then append the dynamic filter values
+      const baseRow = [date, yhat, lower, upper];
+      const fullRow = [...baseRow, ...filterRowValues];
+
+      csvRows.push(fullRow.join(','));
+    });
+
+    // Create a Blob and trigger download
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+
+    // Generate a short 8-character UUID
+    const uniqueId = crypto.randomUUID().split('-')[0];
+
+    const link = document.createElement('a');
+    link.href = url;
+    // Inject the date and the unique UUID into the filename
+    link.download = `forecast_results_${new Date().toISOString().split('T')[0]}_${uniqueId}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // --- REUSED POLLING LOGIC FROM UPLOAD PAGE ---
   const pollTaskStatus = (newTaskId: string) => {
     const interval = setInterval(async () => {
@@ -283,7 +344,24 @@ export function KharchuDashboard() {
                 <p className="text-gray-500 font-medium">Loading your forecast...</p>
               </div>
             ) : (
-              <StatisticsChart forecast={forecastData} historical={historicalData} />
+              <div className="mt-6">
+                {/* Header Row with Download Button */}
+                {forecastData.length > 0 && (
+                  <div className="flex justify-between items-end mb-4 px-2">
+                    <h3 className="text-lg font-bold text-[#1A1A1A]">Forecast Overview</h3>
+                    <button
+                      onClick={handleDownloadCSV}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-[#EAFF52] text-black rounded-xl text-sm font-semibold hover:bg-[#bce600] transition-colors shadow-sm border border-transparent hover:border-black/10"
+                    >
+                      <Download size={16} />
+                      Export to CSV
+                    </button>
+                  </div>
+                )}
+
+                {/* The Chart */}
+                <StatisticsChart forecast={forecastData} historical={historicalData} />
+              </div>
             )}
           </div>
         </div>

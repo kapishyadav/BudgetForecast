@@ -17,6 +17,14 @@ const FILTER_FIELD_MAP = {
   "By BU Code": "bu_code"
 };
 
+// We need a reverse map to translate the URL 'forecastType' directly into a Tab Name
+const FORECAST_TYPE_TO_TAB: Record<string, string> = {
+  'account': 'By Account',
+  'service': 'By Service',
+  'bu_code': 'By BU Code',
+  'segment': 'By Segment'
+};
+
 export function KharchuDashboard() {
   const [forecastData, setForecastData] = useState([]);
   const [historicalData, setHistoricalData] = useState([]);
@@ -33,19 +41,30 @@ export function KharchuDashboard() {
 
   // --- THE FIX: Rebuild Tabs AND Values from the URL ---
   const getInitialFilters = () => {
-     const filters = [];
-     const values = {};
+     const filters: string[] = [];
+     const values: Record<string, any> = {};
 
      if (initialForecastType && initialForecastType !== 'overall_aggregate') {
+         // Unconditionally activate the correct tab based on the forecastType URL parameter!
+         const activeTab = FORECAST_TYPE_TO_TAB[initialForecastType];
+         if (activeTab) {
+             filters.push(activeTab);
+         }
+
+         // 2. Check if they ALSO passed specific dropdown text values
          Object.entries(FILTER_FIELD_MAP).forEach(([tabName, paramKey]) => {
              const urlVal = searchParams.get(paramKey);
              if (urlVal) {
-                 filters.push(tabName);
+                 // Ensure the tab is active if a value exists, just to be safe
+                 if (!filters.includes(tabName)) {
+                     filters.push(tabName);
+                 }
                  // Reconstruct the react-select object so the UI looks perfect!
                  values[tabName] = { label: urlVal, value: urlVal };
              }
          });
      }
+
      return {
          filters: filters.length > 0 ? filters : ['Global View'],
          values: values

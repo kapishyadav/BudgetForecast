@@ -1,8 +1,10 @@
-import { MoreVertical, Globe, RefreshCcw, Sparkles } from 'lucide-react';
+import { MoreVertical, Globe, Clock, TrendingUp, RefreshCcw, Sparkles } from 'lucide-react';
 
 interface MetricCardsProps {
   metrics: {
     total_forecasted_spend?: number;
+    average_monthly_spend?: number; // Added for TS
+    forecast_period?: string;       // Added for TS
     mape?: number;
     rmse?: number;
     mse?: number;
@@ -23,15 +25,15 @@ export function MetricCards({ metrics, isLoading }: MetricCardsProps) {
   // If loading, render the exact same structure but with pulse animations
   if (isLoading || !metrics) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-pulse">
+      <div className="flex flex-nowrap overflow-x-auto gap-6 pb-4 w-full custom-scrollbar mb-8 animate-pulse">
         {/* Placeholder Card 1 */}
-        <div className="bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 h-[220px]">
+        <div className="min-w-[320px] flex-1 bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 h-[220px] shrink-0">
           <div className="h-6 bg-gray-200 rounded-full w-1/3 mb-10"></div>
           <div className="h-10 bg-gray-200 rounded w-1/2 mb-4"></div>
           <div className="h-10 bg-gray-100 rounded w-full"></div>
         </div>
         {/* Placeholder Card 2 */}
-        <div className="bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 h-[220px]">
+        <div className="min-w-[320px] flex-1 bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 h-[220px] shrink-0">
           <div className="h-6 bg-gray-200 rounded-full w-1/3 mb-10"></div>
           <div className="h-10 bg-gray-200 rounded w-1/2 mb-4"></div>
           <div className="h-10 bg-gray-100 rounded w-full"></div>
@@ -61,25 +63,38 @@ export function MetricCards({ metrics, isLoading }: MetricCardsProps) {
   const accuracySegmentsFilled = Math.floor((accuracyPercentage / 100) * 8);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div className="flex flex-nowrap overflow-x-auto gap-6 pb-4 w-full custom-scrollbar mb-8">
 
       {/* Card 1: Total Forecasted Spend */}
-      <div className="bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 flex flex-col justify-between">
+      <div className="min-w-[320px] flex-1 bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 flex flex-col justify-between shrink-0">
         <div className="flex justify-between items-start mb-6">
-          <div className="flex items-center space-x-2 text-gray-500 font-medium text-sm bg-gray-50 px-3 py-1.5 rounded-full">
-            <Globe size={16} />
-            <span>Predicted Future Spend</span>
-          </div>
-          <button className="text-gray-400 hover:text-gray-800">
-            <MoreVertical size={20} />
-          </button>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-[#F5F1EB]/50 text-gray-600 rounded-full text-sm font-medium border border-gray-100">
+                <Globe size={16} />
+                <span>Predicted Future Spend</span>
+              </div>
+            </div>
         </div>
 
         <div>
-          <div className="flex justify-end mb-1">
+          <div className="flex justify-between items-center mb-1">
+
+            {/* Left Side: Period Pill */}
+            {metrics?.forecast_period ? (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-50 text-gray-400 rounded-full text-[10px] font-bold uppercase tracking-wider border border-gray-100">
+                <Clock size={10} />
+                <span>{metrics.forecast_period}</span>
+              </div>
+            ) : (
+              /* Add an empty div as a fallback so 'justify-between' doesn't push the percentage to the left if the period is missing */
+              <div></div>
+            )}
+
+            {/* Right Side: Percentage Pill */}
             <span className="text-sm font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
               {spendPercentage.toFixed(1)}%
             </span>
+
           </div>
           <div className="text-4xl font-bold text-[#1A1A1A] mb-1 tracking-tight">
             {formatCurrency(totalSpend)}
@@ -103,8 +118,55 @@ export function MetricCards({ metrics, isLoading }: MetricCardsProps) {
         </div>
       </div>
 
-      {/* Card 2: Model Accuracy */}
-      <div className="bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 flex flex-col justify-between">
+      {/* Card 2: Average Monthly Spend */}
+        <div className="min-w-[320px] flex-1 bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 flex flex-col justify-between shrink-0">
+          <div className="flex justify-between items-start mb-6">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 text-gray-500 rounded-full text-sm font-medium border border-gray-100">
+                  <TrendingUp size={16} />
+                  <span>Average Monthly Spend</span>
+                </div>
+              </div>
+          </div>
+
+          <div>
+            <div className="flex justify-end mb-1">
+              {/* Moved the percentage here to match Card 1 perfectly */}
+              <span className="text-sm font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
+                {spendPercentage.toFixed(1)}%
+              </span>
+            </div>
+
+            <div className="text-4xl font-bold text-[#1A1A1A] mb-1 tracking-tight">
+              {formatCurrency(metrics?.average_monthly_spend || 0)}
+            </div>
+
+            {/* Moved the Limit down here, mimicking the "/ Budget" placement of Card 1 */}
+            <div className="text-sm text-gray-500 mb-6">
+              / {formatCurrency((metrics?.average_monthly_spend || 0) * 1.2)} Limit
+            </div>
+
+            <div className="flex space-x-1.5 h-10">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`flex-1 rounded-full ${
+                    i < segmentsFilled
+                      ? 'bg-[#1A1A1A]'
+                      : i === segmentsFilled
+                        ? 'bg-[#1A1A1A] opacity-50'
+                        : 'bg-transparent border-2 border-dashed border-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+
+
+      {/* Card 3: Model Accuracy */}
+      <div className="min-w-[320px] flex-1 bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 flex flex-col justify-between shrink-0">
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center space-x-2 text-gray-500 font-medium text-sm bg-gray-50 px-3 py-1.5 rounded-full">
             <RefreshCcw size={16} />
@@ -142,7 +204,7 @@ export function MetricCards({ metrics, isLoading }: MetricCardsProps) {
         </div>
       </div>
 
-      {/* Card 3 - Promotional (Kept exactly as you designed it) */}
+      {/* Card 4 - Promotional */}
       <PromoCard />
 
     </div>
@@ -152,7 +214,8 @@ export function MetricCards({ metrics, isLoading }: MetricCardsProps) {
 // Extracted Promo card to keep the main component clean
 function PromoCard() {
   return (
-    <div className="bg-[#EAFF52] rounded-[24px] p-6 shadow-md text-gray-500 justify-between relative overflow-hidden group z-0">
+    // Added shrink-0 and min-w here so it behaves inside the horizontal scroller
+    <div className="min-w-[320px] flex-1 shrink-0 bg-[#EAFF52] rounded-[24px] p-6 shadow-md text-gray-500 justify-between relative overflow-hidden group z-0">
       <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-blue-500/30 transition-colors"></div>
       <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl -ml-10 -mb-10 group-hover:bg-purple-500/30 transition-colors"></div>
 

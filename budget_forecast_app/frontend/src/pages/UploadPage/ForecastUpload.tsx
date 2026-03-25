@@ -59,6 +59,16 @@ export function ForecastUpload() {
     }
   };
 
+  // --- Clear old selections when switching types ---
+  const handleForecastTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setForecastType(e.target.value);
+    // Reset all filter states so old data isn't accidentally sent to the backend
+    setAccountName(null);
+    setServiceName(null);
+    setBuCode(null);
+    setSegmentName(null);
+  };
+
   // ==========================================
   // UPLOAD FILE & GET DATASET ID
   // ==========================================
@@ -323,7 +333,7 @@ export function ForecastUpload() {
                 <Settings2 size={16} className="text-gray-400" />
                 <span>Local Forecast Type</span>
               </label>
-              <select value={forecastType} onChange={(e) => setForecastType(e.target.value)} className="w-full bg-gray-50 border border-gray-200 text-[#1A1A1A] text-sm rounded-xl p-4 appearance-none outline-none transition-all">
+              <select value={forecastType} onChange={handleForecastTypeChange} className="w-full bg-gray-50 border border-gray-200 text-[#1A1A1A] text-sm rounded-xl p-4 appearance-none outline-none transition-all">
                 <option value="overall_aggregate">Overall Aggregate (No Filter)</option>
                 <option value="account">Forecast by Account</option>
                 <option value="service">Forecast by Service</option>
@@ -334,14 +344,14 @@ export function ForecastUpload() {
 
             {/* DYNAMIC FILTERS */}
             <div className="space-y-4">
-              {(['account', 'service', 'segment'].includes(forecastType)) && (
+              {forecastType === 'account' && (
                 <div className="bg-[#E5E0D8]/40 p-5 rounded-xl border border-[#E5E0D8]">
                   <label className="text-xs font-bold text-gray-700 mb-2 block uppercase">Account Name</label>
                   <AsyncSelect cacheOptions loadOptions={(v) => loadOptions(v, 'account')} onChange={setAccountName} placeholder="Search account..." />
                 </div>
               )}
 
-              {(['service', 'segment'].includes(forecastType)) && (
+              {forecastType === 'service' && (
                 <div className="bg-[#E5E0D8]/40 p-5 rounded-xl border border-[#E5E0D8]">
                   <label className="text-xs font-bold text-gray-700 mb-2 block uppercase">Service Name</label>
                   <AsyncSelect cacheOptions loadOptions={(v) => loadOptions(v, 'service')} onChange={setServiceName} placeholder="Search service..." />

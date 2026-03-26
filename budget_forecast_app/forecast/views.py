@@ -259,33 +259,6 @@ def forecast_api(request):
     return JsonResponse({"status": "error", "message": "No dataset uploaded"}, status=400)
 
 
-def delete_old_files(max_files=5):
-    folder = settings.MEDIA_ROOT
-
-    # Ensure the directory exists to avoid errors
-    if not os.path.exists(folder):
-        return
-
-    # Get ONLY files (ignore directories) with their full paths
-    files = [
-        os.path.join(folder, f)
-        for f in os.listdir(folder)
-        if os.path.isfile(os.path.join(folder, f))
-    ]
-
-    # Sort files by modification time, newest first
-    files.sort(key=os.path.getmtime, reverse=True)
-
-    # Delete files older than the limit
-    if len(files) > max_files:
-        for file_path in files[max_files:]:
-            try:
-                os.remove(file_path)
-                logger.info(f"Deleted old file to maintain limit: {file_path}")
-            except OSError as e:
-                logger.error(f"Error deleting file {file_path}: {e}")
-
-
 def check_task_status(request, task_id):
     """JSON endpoint for React to poll Celery task status."""
     task = AsyncResult(task_id)

@@ -70,7 +70,7 @@ class ForecastOrchestrationService:
         }
 
     def execute_forecast_pipeline(self, task_id: str, dataset_id: str, forecast_type_str: str, granularity_str: str,
-                                  **kwargs) -> dict:
+                                  logger=logger, **kwargs) -> dict:
         """Executes the ML pipeline and manages DB state."""
         run = ForecastRun.objects.filter(task_id=task_id).first()
 

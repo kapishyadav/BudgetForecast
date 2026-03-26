@@ -49,14 +49,11 @@ class CustomScenarioSerializer(serializers.Serializer):
     """Validates incoming HTTP data for a custom hyperparameter scenario."""
     dataset_id = serializers.CharField(required=True)
 
-    # DRF will automatically block strings and cast to float
-    changepoint_prior_scale = serializers.FloatField(default=0.05, min_value=0.001)
-
-    # DRF will automatically reject any string that isn't one of these choices
-    seasonality_mode = serializers.ChoiceField(
-        choices=["additive", "multiplicative"],
-        default="additive"
+    # User selects which algorithm to use
+    model_name = serializers.ChoiceField(
+        choices=["prophet", "catboost", "linear_regression"],
+        default="prophet"
     )
 
-    # DRF handles converting strings like "true", "1", "False" to actual booleans
-    include_holidays = serializers.BooleanField(default=False)
+    # Accepts an arbitrary dictionary of settings!
+    hyperparameters = serializers.JSONField(default=dict)

@@ -74,10 +74,10 @@ class ForecastRun(models.Model):
     dataset = models.ForeignKey(ForecastDataset, on_delete=models.CASCADE, related_name='runs')
     task_id = models.CharField(max_length=255, unique=True)  # The Celery Task ID
 
-    # Hyperparameters
-    changepoint_prior_scale = models.FloatField(default=0.05)
-    seasonality_mode = models.CharField(max_length=50, default='additive')
-    include_holidays = models.BooleanField(default=False)
+    # Generic Model Tracking
+    model_name = models.CharField(max_length=50, default="prophet")
+    hyperparameters = models.JSONField(default=dict, blank=True,
+                                       help_text="Stores arbitrary hyperparameters for any ML model.")
 
     # Results
     status = models.CharField(max_length=50, default='PENDING')

@@ -31,17 +31,14 @@ class ForecastTriggerDTO:
 class CustomScenarioDTO:
     """Contract for running a forecast with custom hyperparameters."""
     dataset_id: str
-    changepoint_prior_scale: float
-    seasonality_mode: str
-    include_holidays: bool
+    model_name: str
+    hyperparameters: dict
 
     def __post_init__(self):
         if not self.dataset_id:
             raise ValueError("dataset_id is required.")
-        if self.changepoint_prior_scale <= 0:
-            raise ValueError("Changepoint prior scale must be greater than 0.")
-        if self.seasonality_mode not in ["additive", "multiplicative"]:
-            raise ValueError("Seasonality mode must be 'additive' or 'multiplicative'.")
+        if not isinstance(self.hyperparameters, dict):
+            raise ValueError("Hyperparameters must be a JSON dictionary.")
 
 @dataclass(frozen=True)
 class DatasetUploadDTO:

@@ -1,6 +1,11 @@
 # Create your views here.
 from typing import Dict
 
+from django.views.decorators.http import require_POST
+from .dto import ForecastTriggerDTO, CustomScenarioDTO
+from .services.services import ForecastOrchestrationService
+from .config import DEFAULT_FORECAST_TYPE, DEFAULT_GRANULARITY
+
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse, Http404, FileResponse, HttpResponse
@@ -136,123 +141,63 @@ def upload_file(request):
     return JsonResponse({"status": "error", "message": "Invalid request or missing file"}, status=400)
 
 @csrf_exempt
+@require_POST
 def trigger_forecast(request):
-    """Takes a dataset_id and UI parameters, then triggers the Celery worker."""
-    if request.method == "POST":
-        dataset_id = request.POST.get("dataset_id")
-        if not dataset_id:
-            return JsonResponse({"error": "Missing dataset_id. Please upload a file first."}, status=400)
+    """Standard forecast trigger - strictly HTTP boundary."""
+    try:
+        # 1. Map HTTP Request directly to Domain DTO
+        # The __post_init__ in the DTO will throw a ValueError if data is bad
+        dto = ForecastTriggerDTO(
+            dataset_id=request.POST.get("dataset_id"),
+            forecast_type=request.POST.get("forecast_type", "overall_aggregate"),
+            granularity=request.POST.get("granularity", "monthly"),
+            account_name=request.POST.get("account_name") or None,
+            service_name=request.POST.get("service_name") or None,
+            bu_code=request.POST.get("bu_code") or None,
+            segment_name=request.POST.get("segment_name") or None
+        )
 
-        selected_type = request.POST.get("forecast_type", "overall_aggregate")
-        granularity = request.POST.get("granularity", "monthly")
-        try:
-            # --- PREPARE CELERY ENUMS ---
-            try:
-                forecast_type = ForecastType(selected_type)
-                granularity_val = Granularity(granularity).value if hasattr(Granularity(granularity), "value") else str(
-                    Granularity(granularity))
-            except ValueError:
-                forecast_type = ForecastType.OVERALL_AGGREGATE
-                granularity_val = Granularity.MONTHLY.value
+        # 2. Delegate to Business Logic
+        service = ForecastOrchestrationService()
+        result = service.trigger_standard_forecast(dto)
 
-            forecast_type_str = forecast_type.value if hasattr(forecast_type, "value") else str(forecast_type)
+        # 3. Return Standardized HTTP Response
+        return JsonResponse(result, status=202)
 
-            # --- GATHER KWARGS ---
-            account_name = request.POST.get("account_name", "").strip()
-            service_name = request.POST.get("service_name", "").strip()
-            bu_code_raw = request.POST.get("bu_code", "").strip()
-            bu_code = int(bu_code_raw) if bu_code_raw != "" else None
-            segment_name = request.POST.get("segment_name", "").strip()
+    except ValueError as e:
+        logger.warning(f"Validation error in trigger_forecast: {e}")
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)
+    except Exception as e:
+        logger.error(f"Unexpected error in trigger_forecast: {e}")
+        return JsonResponse({"status": "error", "message": "Internal Server Error"}, status=500)
 
-            # Build kwargs dynamically based ONLY on what was actually sent from the UI.
-            # We no longer restrict these based on the forecast_type!
-            kwargs = {}
-            if account_name:
-                kwargs["account_name"] = account_name
-            if service_name:
-                kwargs["service_name"] = service_name
-            if bu_code is not None:
-                kwargs["bu_code"] = bu_code
-            if segment_name:
-                kwargs["segment_name"] = segment_name
-
-            # --- TRIGGER CELERY TASK ---
-            logger.info(f"Sending ML pipeline to Celery worker with filters: {kwargs}")
-            task = generate_forecast_task.delay(
-                dataset_id=dataset_id,
-                forecast_type_str=forecast_type_str,
-                granularity_str=granularity_val,
-                **kwargs
-            )
-
-            # Log the run
-            dataset = ForecastDataset.objects.get(id=dataset_id)
-            ForecastRun.objects.create(dataset=dataset, task_id=task.id)
-
-            return JsonResponse({
-                "status": "success",
-                "task_id": task.id,
-                "message": "Processing started."
-            })
-
-        except Exception as e:
-            logger.error(f"Trigger failed: {e}")
-            return JsonResponse({"status": "error", "message": str(e)}, status=500)
-
-    return JsonResponse({"status": "error", "message": "Invalid request"}, status=400)
 
 @csrf_exempt
+@require_POST
 def run_custom_scenario(request):
-    """Standard Django API endpoint for custom hyperparameter runs."""
-    if request.method != "POST":
-        return JsonResponse({"error": "POST required"}, status=405)
-
+    """Custom scenario trigger - strictly HTTP boundary."""
     try:
-        # Manually parse the JSON body
         body = json.loads(request.body)
-        dataset_id = body.get("dataset_id")
 
-        if not dataset_id:
-            return JsonResponse({"error": "dataset_id is required"}, status=400)
-
-        # Manually cast types and provide fallbacks
-        try:
-            cp_scale = float(body.get("changepoint_prior_scale", 0.05))
-            seasonality = str(body.get("seasonality_mode", "additive"))
-            holidays = bool(body.get("include_holidays", False))
-        except ValueError:
-            return JsonResponse({"error": "Invalid data types for hyperparameters"}, status=400)
-
-        # Retrieve the dataset
-        dataset = get_object_or_404(ForecastDataset, id=dataset_id)
-
-        # Trigger Celery Worker
-        task = generate_forecast_task.delay(
-            dataset_id=str(dataset.id),
-            changepoint_prior_scale=cp_scale,
-            seasonality_mode=seasonality,
-            include_holidays=holidays
+        # 1. Map to DTO (Fail-fast validation and type-casting happens here)
+        dto = CustomScenarioDTO(
+            dataset_id=body.get("dataset_id"),
+            changepoint_prior_scale=float(body.get("changepoint_prior_scale", 0.05)),
+            seasonality_mode=str(body.get("seasonality_mode", "additive")),
+            include_holidays=bool(body.get("include_holidays", False))
         )
 
-        # Log the run in Postgres
-        ForecastRun.objects.create(
-            dataset=dataset,
-            task_id=task.id,
-            changepoint_prior_scale=cp_scale,
-            seasonality_mode=seasonality,
-            include_holidays=holidays
-        )
+        # 2. Delegate to Service
+        service = ForecastOrchestrationService()
+        result = service.trigger_custom_scenario(dto)
 
-        return JsonResponse({
-            "status": "success",
-            "task_id": task.id,
-            "message": "Scenario triggered successfully."
-        })
+        return JsonResponse(result, status=202)
 
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON payload"}, status=400)
+    except (ValueError, TypeError, json.JSONDecodeError) as e:
+        return JsonResponse({"status": "error", "message": f"Invalid input: {str(e)}"}, status=400)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.error(f"Error in custom scenario: {e}")
+        return JsonResponse({"status": "error", "message": "Internal Server Error"}, status=500)
 
 
 def get_suggestions(request):

@@ -7,6 +7,7 @@ from .services.services import ForecastOrchestrationService
 from .dto import DatasetUploadDTO
 from .services.upload_service import DatasetUploadService
 from .serializers import ForecastTriggerSerializer, CustomScenarioSerializer
+from .utils.responses import api_response
 from .config import DEFAULT_FORECAST_TYPE, DEFAULT_GRANULARITY
 
 from django.shortcuts import render
@@ -89,41 +90,16 @@ def upload_file(request):
 @permission_classes([AllowAny])
 def trigger_forecast(request):
     """Standard forecast trigger - strictly HTTP boundary."""
-
-    # Pass request.data to the serializer (handles both JSON and Form-Data)
     serializer = ForecastTriggerSerializer(data=request.data)
 
-    # Validate and If bad data is sent, it stops right here.
-    if serializer.is_valid():
-        try:
-            # Map HTTP Request directly to Domain DTO
-            # The __post_init__ in the DTO will throw a ValueError if data is bad
-            dto = ForecastTriggerDTO(
-                dataset_id=request.POST.get("dataset_id"),
-                forecast_type=request.POST.get("forecast_type", "overall_aggregate"),
-                granularity=request.POST.get("granularity", "monthly"),
-                account_name=request.POST.get("account_name") or None,
-                service_name=request.POST.get("service_name") or None,
-                bu_code=request.POST.get("bu_code") or None,
-                segment_name=request.POST.get("segment_name") or None
-            )
+    # raise_exception=True instantly hands control to our custom_exception_handler if invalid!
+    serializer.is_valid(raise_exception=True)
 
-            # Delegate to Business Logic
-            service = ForecastOrchestrationService()
-            result = service.trigger_standard_forecast(dto)
+    dto = ForecastTriggerDTO(**serializer.validated_data)
+    service = ForecastOrchestrationService()
+    result = service.trigger_standard_forecast(dto)
 
-            # Return Standardized HTTP Response
-            return JsonResponse(result, status=202)
-
-        except ValueError as e:
-            logger.warning(f"Validation error in trigger_forecast: {e}")
-            return JsonResponse({"status": "error", "message": str(e)}, status=400)
-        except Exception as e:
-            logger.error(f"Unexpected error in trigger_forecast: {e}")
-            return JsonResponse({"status": "error", "message": "Internal Server Error"}, status=500)
-    # If serializer fails, it returns a precise dict of exactly what went wrong
-    # e.g., {"bu_code": ["A valid integer is required."]}
-    return Response({"status": "error", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    return api_response(data=result, message="Processing started.", status_code=202)
 
 
 @csrf_exempt
@@ -133,30 +109,13 @@ def run_custom_scenario(request):
     """Custom scenario trigger - strictly HTTP boundary."""
 
     serializer = CustomScenarioSerializer(data=request.data)
-    if serializer.is_valid():
-        try:
-            body = json.loads(request.body)
+    serializer.is_valid(raise_exception=True)
 
-            # 1. Map to DTO (Fail-fast validation and type-casting happens here)
-            dto = CustomScenarioDTO(
-                dataset_id=body.get("dataset_id"),
-                changepoint_prior_scale=float(body.get("changepoint_prior_scale", 0.05)),
-                seasonality_mode=str(body.get("seasonality_mode", "additive")),
-                include_holidays=bool(body.get("include_holidays", False))
-            )
+    dto = CustomScenarioDTO(**serializer.validated_data)
+    service = ForecastOrchestrationService()
+    result = service.trigger_custom_scenario(dto)
 
-            # 2. Delegate to Service
-            service = ForecastOrchestrationService()
-            result = service.trigger_custom_scenario(dto)
-
-            return JsonResponse(result, status=202)
-
-        except (ValueError, TypeError, json.JSONDecodeError) as e:
-            return JsonResponse({"status": "error", "message": f"Invalid input: {str(e)}"}, status=400)
-        except Exception as e:
-            logger.error(f"Error in custom scenario: {e}")
-            return JsonResponse({"status": "error", "message": "Internal Server Error"}, status=500)
-    return Response({"status": "error", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    return api_response(data=result, message="Scenario triggered successfully.", status_code=202)
 
 def get_suggestions(request):
     """

@@ -117,7 +117,8 @@ CSRF_COOKIE_SECURE = False
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'EXCEPTION_HANDLER': 'forecast.utils.exceptions.custom_exception_handler',
 }
 
 # Password validation

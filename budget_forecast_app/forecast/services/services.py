@@ -5,6 +5,9 @@ from django.shortcuts import get_object_or_404
 from ..dto import ForecastTriggerDTO, CustomScenarioDTO
 from ..models import ForecastDataset, ForecastRun
 from ..tasks import generate_forecast_task
+from ..ml.enums import ForecastType, Granularity
+from ..models import HistoricalSpend
+from ..ml.main import run_forecast
 
 logger = logging.getLogger(__name__)
 
@@ -65,4 +68,44 @@ class ForecastOrchestrationService:
             "status": "success",
             "task_id": task.id,
             "message": "Scenario triggered successfully."
+        }
+
+    def execute_forecast_pipeline(self, task_id: str, dataset_id: str, forecast_type_str: str, granularity_str: str,
+                                  **kwargs) -> dict:
+        """Executes the ML pipeline and manages DB state."""
+        run = ForecastRun.objects.filter(task_id=task_id).first()
+
+        # 1. Fetch Data using Data Access Layer
+        df = HistoricalSpend.objects.get_dataset_as_dataframe(dataset_id=dataset_id)
+
+        # 2. Map strings to Enums
+        try:
+            forecast_type = ForecastType(forecast_type_str)
+            granularity = Granularity(granularity_str)
+        except ValueError:
+            logger.warning("Invalid enums passed, falling back to defaults.")
+            forecast_type = ForecastType.OVERALL_AGGREGATE
+            granularity = Granularity.MONTHLY
+
+        if granularity == Granularity.MONTHLY:
+            df.rename(columns={'date': 'month'}, inplace=True)
+
+        # 3. Execute Strategy Pattern Engine
+        result = run_forecast(df, forecast_type, granularity=granularity, **kwargs)
+
+        # 4. Serialize
+        forecast_json = result["forecast"].to_json(orient="records", date_format="iso")
+        historical_json = result["history"].to_json(orient="records", date_format="iso")
+
+        # 5. Success! (The Celery worker will catch exceptions if this fails)
+        if run:
+            # Here you could save the forecast_json to the DB if needed in the future
+            run.status = 'completed'
+            run.save(update_fields=['status'])
+
+        return {
+            "forecast_json": forecast_json,
+            "historical_json": historical_json,
+            "metrics": result["metrics"],
+            "dataset_id": dataset_id
         }

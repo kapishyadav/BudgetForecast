@@ -1,5 +1,6 @@
 import os
 from celery import Celery
+from celery.schedules import crontab
 
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'budget_forecast_app.settings')
@@ -20,3 +21,11 @@ app.autodiscover_tasks()
 @app.task(bind=True, ignore_result=True)
 def debug_task(self):
     print(f'Request: {self.request!r}')
+
+app.conf.beat_schedule = {
+    'clean-old-uploads-every-midnight': {
+        'task': 'forecast.tasks.delete_old_files_task',
+        'schedule': crontab(minute=0, hour=0), # Runs at midnight
+        'args': (24,) # Deletes files older than 24 hours
+    },
+}

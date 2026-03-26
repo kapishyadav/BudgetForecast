@@ -1,14 +1,9 @@
 
 import logging
 
-import pandas as pd
 from celery import shared_task
 from .models import ForecastRun
-
-# Import your ML logic and Enums
-from .ml.main import run_forecast
-from .ml.enums import ForecastType, Granularity
-from .models import ForecastDataset, HistoricalSpend
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -41,3 +36,30 @@ def generate_forecast_task(self, dataset_id, forecast_type_str="overall_aggregat
             "status": "error",
             "message": str(e)
         }
+
+
+@shared_task
+def delete_old_files_task(max_age_hours=24):
+    """Periodic task to clean up old CSV uploads."""
+    logger.info("Starting background file cleanup...")
+
+    # Define your upload directory (ensure this matches your actual setup)
+    upload_dir = os.path.join(settings.BASE_DIR, 'uploads')
+
+    if not os.path.exists(upload_dir):
+        return "Upload directory does not exist."
+
+    current_time = time.time()
+    deleted_count = 0
+
+    for filename in os.listdir(upload_dir):
+        file_path = os.path.join(upload_dir, filename)
+        if os.path.isfile(file_path):
+            # Check file age
+            file_age_seconds = current_time - os.path.getctime(file_path)
+            if file_age_seconds > (max_age_hours * 3600):
+                os.remove(file_path)
+                logger.info(f"Deleted old file: {filename}")
+                deleted_count += 1
+
+    return f"Cleanup complete. Deleted {deleted_count} files."

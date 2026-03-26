@@ -1,6 +1,7 @@
 # forecast/dtos.py
 from dataclasses import dataclass
 from typing import Optional
+from django.core.files.uploadedfile import UploadedFile
 
 
 @dataclass(frozen=True)
@@ -41,3 +42,16 @@ class CustomScenarioDTO:
             raise ValueError("Changepoint prior scale must be greater than 0.")
         if self.seasonality_mode not in ["additive", "multiplicative"]:
             raise ValueError("Seasonality mode must be 'additive' or 'multiplicative'.")
+
+@dataclass(frozen=True)
+class DatasetUploadDTO:
+    """Contract for uploading and processing a new dataset."""
+    file: UploadedFile
+    dataset_name: str
+
+    def __post_init__(self):
+        # Fail-fast validation before the service even touches the file
+        if not self.file.name.lower().endswith('.csv'):
+            raise ValueError("Only CSV files are currently supported.")
+        if self.file.size == 0:
+            raise ValueError("The uploaded file is empty.")

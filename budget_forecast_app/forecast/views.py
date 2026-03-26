@@ -4,6 +4,9 @@ from typing import Dict
 from django.views.decorators.http import require_POST
 from .dto import ForecastTriggerDTO, CustomScenarioDTO
 from .services.services import ForecastOrchestrationService
+from .dto import DatasetUploadDTO
+from .services.upload_service import DatasetUploadService
+from .serializers import ForecastTriggerSerializer, CustomScenarioSerializer
 from .config import DEFAULT_FORECAST_TYPE, DEFAULT_GRANULARITY
 
 from django.shortcuts import render
@@ -19,7 +22,10 @@ from .ml.utils.setup_logging import setup_logging
 from .ml.enums import ForecastType, Granularity
 
 from rest_framework import generics
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework import status
 from django.contrib.auth.models import User
 from .serializers import RegisterSerializer
 
@@ -38,167 +44,119 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = (AllowAny,)
     serializer_class = RegisterSerializer
 
-COLUMN_MAPPINGS = {
-    "accountName": ["accountName", "vendor_name", "vendor_account_name", "account"],
-    "spend": ["spend", "cost", "public_on_demand", "public_on_demand_cost", "total_amortized_cost"],
-    "serviceName": ["serviceName", "enhanced_service_name", "service"],
-    "date": ["date", "month", "year_month", "Date", "Month"], # Consolidated date mappings
-    "buCode": ["buCode", "business_unit", "bu_code"],
-    "segment": ["segment", "segment_name"]
-}
-
 def hello_vite(request):
     return render(request, "hello_vite.html")
 
 
 @csrf_exempt
 def upload_file(request):
-    """Parses CSV, dynamically maps columns, and saves to PostgreSQL."""
+    """View for handling file uploads."""
     if request.method == "POST" and request.FILES.get("dataset"):
-
         file = request.FILES["dataset"]
         dataset_name = file.name.split('.')[0]
 
         try:
-            # 1. Read CSV directly into memory
-            df = pd.read_csv(file)
-            df.columns = df.columns.str.strip()  # Clean column headers
+            # Map to DRO
+            dto = DatasetUploadDTO(file = file, dataset_name= dataset_name)
 
-            # ==========================================
-            # APPLY DYNAMIC COLUMN MAPPING
-            # ==========================================
-            available_cols = df.columns.tolist()
-            mapped_columns = get_mapped_columns(available_cols, COLUMN_MAPPINGS)
+            # Delegate to Service
+            service = DatasetUploadService()
+            dataset_id = service.process_csv_upload(dto)
 
-            logger.info(f"Available columns: {available_cols}")
-            logger.info(f"Mapped columns: {mapped_columns}")
-
-            # Create the rename dictionary: {actual_csv_col: canonical_model_col}
-            # Note: We reverse dict comprehension so df.rename works correctly
-            rename_dict = {actual_col: canonical_col for canonical_col, actual_col in mapped_columns.items()}
-
-            # Rename the dataframe columns
-            df = df.rename(columns=rename_dict)
-            logger.info(f"DF Column Names post-mapping: {df.columns.tolist()}")
-
-            # ==========================================
-            # VERIFY CRITICAL COLUMNS
-            # ==========================================
-            # After mapping, we absolutely must have 'date' and 'spend'
-            if 'date' not in df.columns:
-                return JsonResponse({"error": "CSV must contain a recognized date column (e.g., date, month, Date)."},
-                                    status=400)
-            if 'spend' not in df.columns:
-                return JsonResponse({"error": "CSV must contain a recognized spend/cost column."}, status=400)
-
-            # ==========================================
-            # DATABASE INSERTION
-            # ==========================================
-            dataset = ForecastDataset.objects.create(name=dataset_name)
-            # Save to session so the get_suggestions view can use it immediately
-            request.session['current_dataset_id'] = str(dataset.id)
+            # Update session state
+            request.session['current_dataset_id'] = dataset_id
             request.session.modified = True
-
-            spend_records = []
-
-            # Check for optional columns (using the canonical names now!)
-            has_account = 'accountName' in df.columns
-            has_service = 'serviceName' in df.columns
-            has_bucode = 'buCode' in df.columns
-            has_segment = 'segment' in df.columns
-
-            for index, row in df.iterrows():
-                record = HistoricalSpend(
-                    dataset=dataset,
-                    # We can safely assume 'date' and 'spend' exist now
-                    date=pd.to_datetime(row['date']).date(),
-                    spend=row['spend'],
-
-                    # Safely handle optional columns
-                    account_name=row['accountName'] if has_account and pd.notna(row['accountName']) else None,
-                    service_name=row['serviceName'] if has_service and pd.notna(row['serviceName']) else None,
-                    bu_code=int(row['buCode']) if has_bucode and pd.notna(row['buCode']) else None,
-                    segment=row['segment'] if has_segment and pd.notna(row['segment']) else None,
-                )
-                spend_records.append(record)
-
-            with transaction.atomic():
-                HistoricalSpend.objects.bulk_create(spend_records, batch_size=5000)
-
-            logger.info(f"Successfully saved {len(spend_records)} rows to Postgres.")
 
             return JsonResponse({
                 "status": "success",
-                # "task_id": task.id,
-                "dataset_id": str(dataset.id),
+                "dataset_id": dataset_id,
                 "message": "Upload successful, processing started."
             })
 
+        except ValueError as e:
+            # Catch bad CSV formats or empty files cleanly
+            logger.warning(f"Upload validation failed: {e}")
+            return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
         except Exception as e:
-            logger.error(f"Upload failed: {e}")
+            logger.error(f"Critical Upload failure: {e}")
             return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
     return JsonResponse({"status": "error", "message": "Invalid request or missing file"}, status=400)
 
 @csrf_exempt
 @require_POST
+@permission_classes([AllowAny])
 def trigger_forecast(request):
     """Standard forecast trigger - strictly HTTP boundary."""
-    try:
-        # 1. Map HTTP Request directly to Domain DTO
-        # The __post_init__ in the DTO will throw a ValueError if data is bad
-        dto = ForecastTriggerDTO(
-            dataset_id=request.POST.get("dataset_id"),
-            forecast_type=request.POST.get("forecast_type", "overall_aggregate"),
-            granularity=request.POST.get("granularity", "monthly"),
-            account_name=request.POST.get("account_name") or None,
-            service_name=request.POST.get("service_name") or None,
-            bu_code=request.POST.get("bu_code") or None,
-            segment_name=request.POST.get("segment_name") or None
-        )
 
-        # 2. Delegate to Business Logic
-        service = ForecastOrchestrationService()
-        result = service.trigger_standard_forecast(dto)
+    # Pass request.data to the serializer (handles both JSON and Form-Data)
+    serializer = ForecastTriggerSerializer(data=request.data)
 
-        # 3. Return Standardized HTTP Response
-        return JsonResponse(result, status=202)
+    # Validate and If bad data is sent, it stops right here.
+    if serializer.is_valid():
+        try:
+            # Map HTTP Request directly to Domain DTO
+            # The __post_init__ in the DTO will throw a ValueError if data is bad
+            dto = ForecastTriggerDTO(
+                dataset_id=request.POST.get("dataset_id"),
+                forecast_type=request.POST.get("forecast_type", "overall_aggregate"),
+                granularity=request.POST.get("granularity", "monthly"),
+                account_name=request.POST.get("account_name") or None,
+                service_name=request.POST.get("service_name") or None,
+                bu_code=request.POST.get("bu_code") or None,
+                segment_name=request.POST.get("segment_name") or None
+            )
 
-    except ValueError as e:
-        logger.warning(f"Validation error in trigger_forecast: {e}")
-        return JsonResponse({"status": "error", "message": str(e)}, status=400)
-    except Exception as e:
-        logger.error(f"Unexpected error in trigger_forecast: {e}")
-        return JsonResponse({"status": "error", "message": "Internal Server Error"}, status=500)
+            # Delegate to Business Logic
+            service = ForecastOrchestrationService()
+            result = service.trigger_standard_forecast(dto)
+
+            # Return Standardized HTTP Response
+            return JsonResponse(result, status=202)
+
+        except ValueError as e:
+            logger.warning(f"Validation error in trigger_forecast: {e}")
+            return JsonResponse({"status": "error", "message": str(e)}, status=400)
+        except Exception as e:
+            logger.error(f"Unexpected error in trigger_forecast: {e}")
+            return JsonResponse({"status": "error", "message": "Internal Server Error"}, status=500)
+    # If serializer fails, it returns a precise dict of exactly what went wrong
+    # e.g., {"bu_code": ["A valid integer is required."]}
+    return Response({"status": "error", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @csrf_exempt
 @require_POST
+@permission_classes([AllowAny])
 def run_custom_scenario(request):
     """Custom scenario trigger - strictly HTTP boundary."""
-    try:
-        body = json.loads(request.body)
 
-        # 1. Map to DTO (Fail-fast validation and type-casting happens here)
-        dto = CustomScenarioDTO(
-            dataset_id=body.get("dataset_id"),
-            changepoint_prior_scale=float(body.get("changepoint_prior_scale", 0.05)),
-            seasonality_mode=str(body.get("seasonality_mode", "additive")),
-            include_holidays=bool(body.get("include_holidays", False))
-        )
+    serializer = CustomScenarioSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            body = json.loads(request.body)
 
-        # 2. Delegate to Service
-        service = ForecastOrchestrationService()
-        result = service.trigger_custom_scenario(dto)
+            # 1. Map to DTO (Fail-fast validation and type-casting happens here)
+            dto = CustomScenarioDTO(
+                dataset_id=body.get("dataset_id"),
+                changepoint_prior_scale=float(body.get("changepoint_prior_scale", 0.05)),
+                seasonality_mode=str(body.get("seasonality_mode", "additive")),
+                include_holidays=bool(body.get("include_holidays", False))
+            )
 
-        return JsonResponse(result, status=202)
+            # 2. Delegate to Service
+            service = ForecastOrchestrationService()
+            result = service.trigger_custom_scenario(dto)
 
-    except (ValueError, TypeError, json.JSONDecodeError) as e:
-        return JsonResponse({"status": "error", "message": f"Invalid input: {str(e)}"}, status=400)
-    except Exception as e:
-        logger.error(f"Error in custom scenario: {e}")
-        return JsonResponse({"status": "error", "message": "Internal Server Error"}, status=500)
+            return JsonResponse(result, status=202)
 
+        except (ValueError, TypeError, json.JSONDecodeError) as e:
+            return JsonResponse({"status": "error", "message": f"Invalid input: {str(e)}"}, status=400)
+        except Exception as e:
+            logger.error(f"Error in custom scenario: {e}")
+            return JsonResponse({"status": "error", "message": "Internal Server Error"}, status=500)
+    return Response({"status": "error", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 def get_suggestions(request):
     """
@@ -479,14 +437,3 @@ def get_dashboard_data(request):
         "metrics": metrics,
         "dataset_id": dataset_id
     })
-
-def get_mapped_columns(available_columns: list, mappings: Dict[str, list]) -> Dict[str, str]:
-    """Maps available column names to standardized canonical names."""
-    columns_dict = {}
-    for canonical_name, possible_names in mappings.items():
-        # Case-insensitive match is usually safer, but keeping your original logic here
-        match = next((name for name in possible_names if name in available_columns), None)
-        if match:
-            columns_dict[canonical_name] = match
-    return columns_dict
-

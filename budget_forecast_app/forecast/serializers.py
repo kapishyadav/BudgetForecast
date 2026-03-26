@@ -29,3 +29,34 @@ class RegisterSerializer(serializers.ModelSerializer):
             first_name=validated_data.get('name', '') # Save the full name into the first_name field
         )
         return user
+
+
+class ForecastTriggerSerializer(serializers.Serializer):
+    """Validates incoming HTTP data for a standard forecast trigger."""
+    # Using CharField instead of UUIDField just in case dataset_id is sometimes a string ID
+    dataset_id = serializers.CharField(required=True)
+    forecast_type = serializers.CharField(default="overall_aggregate")
+    granularity = serializers.CharField(default="monthly")
+
+    # Optional cascading filters
+    account_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    service_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    bu_code = serializers.IntegerField(required=False, allow_null=True)
+    segment_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+
+
+class CustomScenarioSerializer(serializers.Serializer):
+    """Validates incoming HTTP data for a custom hyperparameter scenario."""
+    dataset_id = serializers.CharField(required=True)
+
+    # DRF will automatically block strings and cast to float
+    changepoint_prior_scale = serializers.FloatField(default=0.05, min_value=0.001)
+
+    # DRF will automatically reject any string that isn't one of these choices
+    seasonality_mode = serializers.ChoiceField(
+        choices=["additive", "multiplicative"],
+        default="additive"
+    )
+
+    # DRF handles converting strings like "true", "1", "False" to actual booleans
+    include_holidays = serializers.BooleanField(default=False)

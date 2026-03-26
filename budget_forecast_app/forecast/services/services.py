@@ -48,26 +48,25 @@ class ForecastOrchestrationService:
     def trigger_custom_scenario(self, dto: CustomScenarioDTO) -> dict:
         dataset = get_object_or_404(ForecastDataset, id=dto.dataset_id)
 
-        logger.info(f"Dispatching custom scenario task for dataset {dto.dataset_id}")
+        logger.info(f"Dispatching custom {dto.model_name} scenario for dataset {dto.dataset_id}")
         task = generate_forecast_task.delay(
             dataset_id=dto.dataset_id,
-            changepoint_prior_scale=dto.changepoint_prior_scale,
-            seasonality_mode=dto.seasonality_mode,
-            include_holidays=dto.include_holidays
+            model_name=dto.model_name,
+            hyperparameters=dto.hyperparameters
         )
 
+        # Save the generic JSON field to the database
         ForecastRun.objects.create(
             dataset=dataset,
             task_id=task.id,
-            changepoint_prior_scale=dto.changepoint_prior_scale,
-            seasonality_mode=dto.seasonality_mode,
-            include_holidays=dto.include_holidays
+            model_name=dto.model_name,
+            hyperparameters=dto.hyperparameters
         )
 
         return {
             "status": "success",
             "task_id": task.id,
-            "message": "Scenario triggered successfully."
+            "message": f"{dto.model_name.capitalize()} scenario triggered successfully."
         }
 
     def execute_forecast_pipeline(self, task_id: str, dataset_id: str, forecast_type_str: str, granularity_str: str,

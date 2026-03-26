@@ -25,7 +25,7 @@ class OverallAggregateStrategy(ForecastStrategy):
         pass  # No specific filters required for an overall aggregate
 
     def execute(self, df, granularity, logger, **kwargs):
-        return run_prophet_forecast(df, ForecastType.OVERALL_AGGREGATE, granularity, logger, **kwargs)
+        return run_prophet_forecast(df, granularity=granularity, logger=logger, **kwargs)
 
 
 class AccountForecastStrategy(ForecastStrategy):
@@ -34,7 +34,7 @@ class AccountForecastStrategy(ForecastStrategy):
             raise ValueError("Account name must be provided for account-level forecast.")
 
     def execute(self, df, granularity, logger, **kwargs):
-        return run_prophet_forecast(df, ForecastType.ACCOUNT, granularity, logger, **kwargs)
+        return run_prophet_forecast(df, granularity=granularity, logger=logger, **kwargs)
 
 
 class ServiceForecastStrategy(ForecastStrategy):
@@ -43,7 +43,7 @@ class ServiceForecastStrategy(ForecastStrategy):
             raise ValueError("Service name must be provided for service-level forecast.")
 
     def execute(self, df, granularity, logger, **kwargs):
-        return run_prophet_forecast(df, ForecastType.SERVICE, granularity, logger, **kwargs)
+        return run_prophet_forecast(df, granularity=granularity, logger=logger, **kwargs)
 
 
 class BuCodeForecastStrategy(ForecastStrategy):
@@ -53,7 +53,7 @@ class BuCodeForecastStrategy(ForecastStrategy):
 
     def execute(self, df, granularity, logger, **kwargs):
         logger.info(f"Executing BU Code Strategy with BU: {kwargs.get('bu_code')}")
-        return run_prophet_forecast(df, ForecastType.BUCODE, granularity, logger, **kwargs)
+        return run_prophet_forecast(df, granularity=granularity, logger=logger, **kwargs)
 
 
 class SegmentForecastStrategy(ForecastStrategy):
@@ -62,7 +62,7 @@ class SegmentForecastStrategy(ForecastStrategy):
             raise ValueError("Segment name must be provided for segment-level forecast.")
 
     def execute(self, df, granularity, logger, **kwargs):
-        return run_prophet_forecast(df, ForecastType.SEGMENT, granularity, logger, **kwargs)
+        return run_prophet_forecast(df, granularity=granularity, logger=logger, **kwargs)
 
 
 class ForecastStrategyFactory:

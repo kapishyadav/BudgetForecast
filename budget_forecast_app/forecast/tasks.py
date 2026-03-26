@@ -3,7 +3,6 @@ import logging
 
 import pandas as pd
 from celery import shared_task
-from .services.services import ForecastOrchestrationService
 from .models import ForecastRun
 
 # Import your ML logic and Enums
@@ -19,6 +18,7 @@ def generate_forecast_task(self, dataset_id, forecast_type_str="overall_aggregat
     logger.info(f"Task {self.request.id}: Starting forecast generation for dataset id: {dataset_id}")
 
     try:
+        from .services.services import ForecastOrchestrationService
         service = ForecastOrchestrationService()
         result = service.execute_forecast_pipeline(
             task_id=self.request.id,

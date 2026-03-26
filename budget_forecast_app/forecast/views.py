@@ -85,8 +85,7 @@ def upload_file(request):
 
     return JsonResponse({"status": "error", "message": "Invalid request or missing file"}, status=400)
 
-@csrf_exempt
-@require_POST
+@api_view(['POST'])
 @permission_classes([AllowAny])
 def trigger_forecast(request):
     """Standard forecast trigger - strictly HTTP boundary."""
@@ -102,8 +101,7 @@ def trigger_forecast(request):
     return api_response(data=result, message="Processing started.", status_code=202)
 
 
-@csrf_exempt
-@require_POST
+@api_view(['POST'])
 @permission_classes([AllowAny])
 def run_custom_scenario(request):
     """Custom scenario trigger - strictly HTTP boundary."""

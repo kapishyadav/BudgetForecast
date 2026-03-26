@@ -175,13 +175,18 @@ export function ForecastUpload() {
               }
         });
 
-        const data = await response.json();
+        const responseData = await response.json();
 
-        if (data.task_id) {
-            pollTaskStatus(data.task_id);
+        if (responseData.status === "success" && responseData.data?.task_id) {
+            pollTaskStatus(responseData.data.task_id);
         } else {
-            console.error("Backend error:", data.message || "Unknown error");
-            alert(data.message || "Upload failed. Please try again.");
+            console.error("Backend error:", responseData.errors || responseData.message);
+            // Gracefully handle DRF Validation errors if they exist
+            if (responseData.errors) {
+               alert("Validation Error: " + JSON.stringify(responseData.errors));
+            } else {
+               alert(responseData.message || "Upload failed. Please try again.");
+            }
             setIsLoading(false);
         }
       } catch (err) {

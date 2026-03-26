@@ -39,27 +39,23 @@ export function KharchuDashboard() {
   const initialGranularity = searchParams.get('granularity') || 'monthly';
   const initialForecastType = searchParams.get('forecastType');
 
-  // --- THE FIX: Rebuild Tabs AND Values from the URL ---
+  // --- Rebuild Tabs AND Values from the URL ---
   const getInitialFilters = () => {
      const filters: string[] = [];
      const values: Record<string, any> = {};
 
      if (initialForecastType && initialForecastType !== 'overall_aggregate') {
-         // Unconditionally activate the correct tab based on the forecastType URL parameter!
          const activeTab = FORECAST_TYPE_TO_TAB[initialForecastType];
          if (activeTab) {
              filters.push(activeTab);
          }
 
-         // 2. Check if they ALSO passed specific dropdown text values
          Object.entries(FILTER_FIELD_MAP).forEach(([tabName, paramKey]) => {
              const urlVal = searchParams.get(paramKey);
              if (urlVal) {
-                 // Ensure the tab is active if a value exists, just to be safe
                  if (!filters.includes(tabName)) {
                      filters.push(tabName);
                  }
-                 // Reconstruct the react-select object so the UI looks perfect!
                  values[tabName] = { label: urlVal, value: urlVal };
              }
          });
@@ -73,20 +69,15 @@ export function KharchuDashboard() {
 
   const [granularity, setGranularity] = useState(initialGranularity);
 
-  // Initialize with the data parsed from the URL
   const initialData = getInitialFilters();
   const [activeFilters, setActiveFilters] = useState<string[]>(initialData.filters);
   const [filterValues, setFilterValues] = useState(initialData.values);
 
   const navigate = useNavigate();
 
-  // Sign out logic
   const handleSignOut = () => {
-    //  Clear the tokens from the browser
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
-
-    //  Redirect to the home page
     navigate('/');
   };
 
@@ -96,7 +87,6 @@ export function KharchuDashboard() {
       setGranularity(urlGranularity);
     }
 
-    // Stop if no task ID is present
     if (!taskId) {
       console.log("No taskId found in the URL. Waiting...");
       setIsLoading(false);
@@ -110,12 +100,17 @@ export function KharchuDashboard() {
         const apiUrl = `/api/dashboard-data/?task_id=${taskId}`;
         const response = await axios.get(apiUrl, { withCredentials: true });
 
-        setForecastData(response.data.forecast || []);
-        setHistoricalData(response.data.historical || []);
-        setMetricsData(response.data.metrics || null);
+        // DEFENSIVE FIX: Axios puts JSON in 'response.data'. If our backend wrapped it in the
+        // new api_response utility, the real payload is deeply nested inside 'response.data.data'.
+        // This handles BOTH the old format and the new format safely!
+        const payload = response.data.data ? response.data.data : response.data;
 
-        if (response.data.dataset_id) {
-            setDatasetId(response.data.dataset_id);
+        setForecastData(payload.forecast || []);
+        setHistoricalData(payload.historical || []);
+        setMetricsData(payload.metrics || null);
+
+        if (payload.dataset_id) {
+            setDatasetId(payload.dataset_id);
         }
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
@@ -125,19 +120,14 @@ export function KharchuDashboard() {
     };
 
     fetchDashboardData();
-  }, [taskId, searchParams]); // Added searchParams so it listens for the URL update
+  }, [taskId, searchParams]);
 
-  // --- Async Suggestions Logic ---
   const loadOptions = async (inputValue, filterName) => {
-    console.log(`Fetching options for ${filterName} | Query: "${inputValue}" | Dataset ID:`, datasetId);
-    // ONLY abort if datasetId is missing. We WANT to allow empty inputValues.
     if (!datasetId) {
-      console.warn("Suggestions aborted: datasetId is null. Check your Django Celery task return dictionary.");
       return [];
     }
     if (!inputValue || !datasetId) return [];
 
-    // Map UI Tab Names to your backend field names
     const fieldMap = {
       "By Account": "account",
       "By Service": "service",
@@ -145,7 +135,6 @@ export function KharchuDashboard() {
       "By BU Code": "bu_code"
     };
 
-    // Map for the backend parameter names
     const paramMap: Record<string, string> = {
       "By Account": "account_name",
       "By Service": "service_name",
@@ -155,17 +144,13 @@ export function KharchuDashboard() {
 
     const field = fieldMap[filterName];
 
-    // Initialize URL parameters using the standard API
     const queryParams = new URLSearchParams({
       q: inputValue || "",
       field: field,
       dataset_id: datasetId
     });
 
-    // Loop through the currently active filters and append them to the URL
-    // so the backend knows to restrict the suggestions
     Object.keys(filterValues).forEach(key => {
-      // If a value is selected AND it's not the box we are currently typing in
       if (filterValues[key] && key !== filterName) {
          queryParams.append(paramMap[key], filterValues[key].value);
       }
@@ -173,9 +158,7 @@ export function KharchuDashboard() {
 
     try {
       const response = await fetch(`/get_suggestions/?${queryParams.toString()}`);
-
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
       const data = await response.json();
       return (data.suggestions || []).map((item) => ({ value: item, label: item }));
     } catch (error) {
@@ -184,7 +167,6 @@ export function KharchuDashboard() {
     }
   };
 
-  // --- Filter Handlers ---
   const handleToggleFilter = (filterName) => {
     if (filterName === 'Global View') {
       setActiveFilters(['Global View']);
@@ -202,7 +184,6 @@ export function KharchuDashboard() {
     }
   };
 
-  // Note: 'value' here will now be the full object { value: '...', label: '...' } from AsyncSelect
   const handleUpdateFilterValue = (filterName, selectedOption) => {
     setFilterValues(prev => ({ ...prev, [filterName]: selectedOption }));
   };
@@ -216,7 +197,6 @@ export function KharchuDashboard() {
     setIsLoading(true);
     setForecastMessage("Initializing new forecast model...");
 
-    // 1. Map your UI tab names to the exact field names your Django backend expects
     const fieldMap: Record<string, string> = {
       "By Account": "account_name",
       "By Service": "service_name",
@@ -224,21 +204,16 @@ export function KharchuDashboard() {
       "By BU Code": "bu_code"
     };
 
-    // 2. Determine the primary "forecast_type" based on the most granular filter selected
-    // Your trigger_forecast view relies on this to know which kwargs to extract.
     let forecastType = "overall_aggregate";
     if (activeFilters.includes("By Segment")) forecastType = "segment";
     if (activeFilters.includes("By BU Code")) forecastType = "bu_code";
     if (activeFilters.includes("By Account")) forecastType = "account";
     if (activeFilters.includes("By Service")) forecastType = "service";
 
-
-    // 3. Prepare the FormData payload for your existing Django view
     const formData = new FormData();
     formData.append('dataset_id', datasetId);
 
     const currentGranularity = overrideGranularity || granularity;
-
 
     if (isGlobalReset == true) {
         formData.append('forecast_type', 'overall_aggregate');
@@ -247,7 +222,6 @@ export function KharchuDashboard() {
     else {
         formData.append('forecast_type', forecastType);
         formData.append('granularity', currentGranularity);
-        // Append the selected filter values
         Object.keys(filterValues).forEach(key => {
           if (filterValues[key]) {
              const backendKey = fieldMap[key];
@@ -257,23 +231,27 @@ export function KharchuDashboard() {
     }
 
     try {
-      // 4. Hit your existing trigger_forecast endpoint
       const response = await fetch('/trigger-forecast/', {
         method: 'POST',
         body: formData,
         credentials: 'same-origin',
           headers: {
               'X-CSRFToken' : getCsrfToken(),
-              }
+          }
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
-      if (data.task_id) {
-        // 5. Start polling the new task
-        pollTaskStatus(data.task_id);
+      // FIXED: Standard API wrapper support
+      if (responseData.status === "success" && responseData.data?.task_id) {
+        pollTaskStatus(responseData.data.task_id);
       } else {
-        alert(data.message || "Failed to trigger filtered forecast.");
+        console.error("Backend error:", responseData.errors || responseData.message);
+        if (responseData.errors) {
+           alert("Validation Error: " + JSON.stringify(responseData.errors));
+        } else {
+           alert(responseData.message || "Failed to trigger filtered forecast.");
+        }
         setIsLoading(false);
       }
     } catch (error) {
@@ -282,104 +260,82 @@ export function KharchuDashboard() {
     }
   };
 
-  // --- DOWNLOAD LOGIC ---
   const handleDownloadCSV = () => {
     if (!forecastData || forecastData.length === 0) {
       alert("No forecast data available to download.");
       return;
     }
 
-    // Set up Base CSV headers
     const headers = ['Date', 'Predicted Spend', 'Lower Bound', 'Upper Bound'];
-
-    // Identify which filters are actually active (ignore Global View)
     const activeFilterKeys = activeFilters.filter(f => f !== 'Global View');
 
-    // Dynamically add the filter names to the headers
     activeFilterKeys.forEach(filter => {
-      headers.push(filter.replace('By ', '')); // Converts "By Account" to "Account"
+      headers.push(filter.replace('By ', ''));
     });
 
     const csvRows = [headers.join(',')];
 
-    // Extract the exact values the user selected for those filters.
-    // We wrap them in quotes `""` so that if an account name has a comma in it
-    // (e.g., "Acme, Inc."), it doesn't accidentally break the CSV layout!
     const filterRowValues = activeFilterKeys.map(filter => {
        const val = filterValues[filter]?.value;
-       return val ? `"${val}"` : '"All"'; // Default to "All" if they opened the tab but left it blank
+       return val ? `"${val}"` : '"All"';
     });
 
-    // Loop through data and format rows
     forecastData.forEach(row => {
-      // Safely format the date (extract YYYY-MM-DD from the timestamp)
       const date = row.ds ? new Date(row.ds).toISOString().split('T')[0] : '';
-      // Round financial numbers to 2 decimal places
       const yhat = row.yhat ? row.yhat.toFixed(2) : '0.00';
       const lower = row.yhat_lower ? row.yhat_lower.toFixed(2) : '0.00';
       const upper = row.yhat_upper ? row.yhat_upper.toFixed(2) : '0.00';
 
-      // Build the base row, then append the dynamic filter values
       const baseRow = [date, yhat, lower, upper];
       const fullRow = [...baseRow, ...filterRowValues];
 
       csvRows.push(fullRow.join(','));
     });
 
-    // Create a Blob and trigger download
     const csvString = csvRows.join('\n');
     const blob = new Blob([csvString], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
 
-    // Generate a short 8-character UUID
     const uniqueId = crypto.randomUUID().split('-')[0];
 
     const link = document.createElement('a');
     link.href = url;
-    // Inject the date and the unique UUID into the filename
     link.download = `forecast_results_${new Date().toISOString().split('T')[0]}_${uniqueId}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // --- REUSED POLLING LOGIC FROM UPLOAD PAGE ---
   const pollTaskStatus = (newTaskId: string) => {
     const pollInterval = setInterval(async () => {
       try {
         const response = await fetch(`/status/${newTaskId}/`);
 
-        // 1. Catch HTTP errors before trying to parse JSON
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
+        const payload = data.data ? data.data : data; // Safe unwrapping
 
-        // 2. Define clear status states
-        const isSuccess = data.status === 'SUCCESS' || data.state === 'SUCCESS';
-        const isFailure = data.status === 'FAILURE' || data.state === 'FAILURE' || data.status === 'error';
+        const isSuccess = payload.status === 'SUCCESS' || payload.state === 'SUCCESS';
+        const isFailure = payload.status === 'FAILURE' || payload.state === 'FAILURE' || payload.status === 'error';
 
-        // 3. Handle Progress
-        if (data.status === 'PROGRESS') {
-          setForecastMessage(data.message || "Running ML models...");
-          return; // Early return to keep logic flat
+        if (payload.status === 'PROGRESS') {
+          setForecastMessage(payload.message || "Running ML models...");
+          return;
         }
 
-        // 4. Handle Success
         if (isSuccess) {
           clearInterval(pollInterval);
           setForecastMessage("Complete!");
 
-          // --- Determine current active tab and preserve it in URL ---
           let activeType = "overall_aggregate";
           if (activeFilters.includes("By Segment")) activeType = "segment";
           if (activeFilters.includes("By BU Code")) activeType = "bu_code";
           if (activeFilters.includes("By Account")) activeType = "account";
           if (activeFilters.includes("By Service")) activeType = "service";
 
-
-          // Updating search params changes the URL and triggers the fetch useEffect
           setSearchParams({
               taskId: newTaskId,
               granularity,
@@ -387,25 +343,22 @@ export function KharchuDashboard() {
           return;
         }
 
-        // 5. Handle Failure & Smart Error Interception
         if (isFailure) {
           clearInterval(pollInterval);
           setIsLoading(false);
 
-          const errorMessage = (data.message || "").toLowerCase();
+          const errorMessage = (payload.message || "").toLowerCase();
 
-          // Intercept missing date column errors for daily forecasts
           if (errorMessage.includes("'date'") || errorMessage.includes("daily")) {
             alert("Daily data unavailable in the uploaded file. Please upload a new file with daily data.");
-            setGranularity('monthly'); // Reset UI toggle to prevent a blocked state
+            setGranularity('monthly');
           } else {
-            alert(`The filtered forecast failed: ${data.message || "Unknown error"}`);
+            alert(`The filtered forecast failed: ${payload.message || "Unknown error"}`);
           }
           return;
         }
 
       } catch (err) {
-        // 6. Handle Network/Parsing Exceptions
         console.error("Polling error:", err);
         clearInterval(pollInterval);
         setIsLoading(false);
@@ -509,11 +462,8 @@ export function KharchuDashboard() {
                     </span>
                   ) : (
                     activeFilters.map(filter => {
-                      // Grab the selected dropdown object
                       const valueObj = filterValues[filter];
-                      // If they opened the tab but haven't picked a specific item yet, default to "All"
                       const displayValue = valueObj ? valueObj.label : 'All';
-                      // Strip out the "By " text (e.g., "By Account" -> "Account")
                       const filterLabel = filter.replace('By ', '');
 
                       return (

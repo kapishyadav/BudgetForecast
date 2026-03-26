@@ -206,22 +206,19 @@ def get_suggestions(request):
     No more slow CSV reading!
     Now supports Cascading Filters!
     """
-    query = request.GET.get("q", "").strip().lower()
-    field = request.GET.get("field")  # 'account', 'service', 'bu_code', or 'segment'
     dataset_id = request.GET.get("dataset_id", "").strip()
-
+    # Fallback to latest dataset if none provided
     if not dataset_id:
-        # Fallback 1: Get the session dataset id
-        dataset_id = request.session.get("current_dataset_id")
-    if not dataset_id:
-    # Fallback 2: Get the most recent dataset uploaded to the DB
         latest_spend = HistoricalSpend.objects.order_by('-id').first()
         if latest_spend:
             dataset_id = latest_spend.dataset_id
         else:
             return JsonResponse({"suggestions": []})
 
-    # 2. Map the frontend field name to our PostgreSQL model field name
+    field = request.GET.get("field")
+    query = request.GET.get("q", "").strip().lower()
+
+    # Map the frontend field name to our PostgreSQL model field name
     field_map = {
         "account": "account_name",
         "service": "service_name",
@@ -233,48 +230,23 @@ def get_suggestions(request):
     if not model_field:
         return JsonResponse({"error": "Invalid field"}, status=400)
 
+    # Gather active UI filters
+    active_filters = {
+        "account_name": request.GET.get("account_name"),
+        "service_name": request.GET.get("service_name"),
+        "bu_code": request.GET.get("bu_code"),
+        "segment": request.GET.get("segment_name")
+    }
+
     try:
-        # 3. Use optimized SQL to find distinct matches
-        # This is MUCH faster than Pandas for 160k rows
-        filter_kwargs = {"dataset_id": dataset_id}
-
-        # ==========================================
-        # CASCADING FILTER LOGIC
-        # Extract other active filters from the request
-        # ==========================================
-        account_name = request.GET.get("account_name")
-        service_name = request.GET.get("service_name")
-        bu_code = request.GET.get("bu_code")
-        segment = request.GET.get("segment_name")
-
-        # Add them to the DB query IF they exist AND the user isn't currently typing in that exact box
-        if account_name and model_field != "account_name":
-            filter_kwargs["account_name"] = account_name
-
-        if service_name and model_field != "service_name":
-            filter_kwargs["service_name"] = service_name
-
-        if bu_code and model_field != "bu_code":
-            filter_kwargs["bu_code"] = bu_code
-
-        if segment and model_field != "segment":
-            filter_kwargs["segment"] = segment
-
-        # Only apply the ILIKE (icontains) search if the user typed something
-        if query:
-            filter_kwargs[f"{model_field}__icontains"] = query
-
-        suggestions = (
-            HistoricalSpend.objects
-            .filter(**filter_kwargs)
-            .values_list(model_field, flat=True)
-            .distinct()[:10]  # Limit to 10 for the UI dropdown
+        # DELEGATE TO DATA ACCESS LAYER
+        suggestions = HistoricalSpend.objects.get_cascading_suggestions(
+            dataset_id=dataset_id,
+            model_field=model_field,
+            query=query,
+            active_filters=active_filters
         )
-
-        # Convert to list and filter out None values
-        suggestion_list = [str(val) for val in suggestions if val is not None]
-
-        return JsonResponse({"suggestions": suggestion_list})
+        return JsonResponse({"suggestions": suggestions})
 
     except Exception as e:
         logger.error(f"ERROR in get_suggestions: {e}")

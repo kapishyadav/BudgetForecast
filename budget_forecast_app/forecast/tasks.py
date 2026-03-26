@@ -21,14 +21,8 @@ def generate_forecast_task(self, dataset_id, forecast_type_str, granularity_str,
     logger.info(f"Task {self.request.id}: Starting forecast generation for dataset id: {dataset_id}")
 
     try:
-        historical_data = HistoricalSpend.objects.filter(dataset_id=dataset_id).values(
-            'date', 'spend', 'account_name', 'service_name', 'bu_code', 'segment'
-        )
-
-        if not historical_data:
-            raise ValueError(f"No historical data found for dataset {dataset_id}")
-
-        df = pd.DataFrame(list(historical_data))
+        # FETCH DATA VIA DATA ACCESS LAYER (No ORM logic here)
+        df = HistoricalSpend.objects.get_dataset_as_dataframe(dataset_id=dataset_id)
 
         try:
             forecast_type = ForecastType(forecast_type_str)
@@ -38,7 +32,7 @@ def generate_forecast_task(self, dataset_id, forecast_type_str, granularity_str,
             forecast_type = ForecastType.OVERALL_AGGREGATE
             granularity = Granularity.MONTHLY
 
-        # 3. Handle the Date/Month column requirement safely
+        #  Handle the Date/Month column requirement safely
         # forecast_monthly_spend expects 'month', forecast_daily_spend expects 'date'
         if granularity == Granularity.MONTHLY:
             df.rename(columns={'date': 'month'}, inplace=True)
@@ -46,28 +40,23 @@ def generate_forecast_task(self, dataset_id, forecast_type_str, granularity_str,
         # NOTICE: We completely removed the camelCase renaming for account_name, etc.
         # They will remain snake_case, which matches the new run_prophet_forecast filters!
 
-        # 4. Run the heavy ML pipeline
+        #  Run the heavy ML pipeline
         # **kwargs safely passes account_name, service_name, etc. directly into the pipeline
         logger.info(f"Task {self.request.id}: Passing kwargs to run_forecast: {kwargs}")
         result = run_forecast(df, forecast_type, granularity=granularity, **kwargs)
 
-        # 5. Extract the Pandas DataFrames
-        forecast_df = result["forecast"]
-        historical_df = result["history"]
-        metrics_dict = result["metrics"]
-
-        # 6. Convert DataFrames to JSON strings safely
-        forecast_json = forecast_df.to_json(orient="records", date_format="iso")
-        historical_json = historical_df.to_json(orient="records", date_format="iso")
+        #  Extract and Serialize Results
+        forecast_json = result["forecast"].to_json(orient="records", date_format="iso")
+        historical_json = result["history"].to_json(orient="records", date_format="iso")
 
         logger.info(f"Task {self.request.id}: Forecast complete. Saving results to Redis.")
 
-        # 7. Return the payload.
+        #  Return the payload.
         return {
             "status": "success",
             "forecast_json": forecast_json,
             "historical_json": historical_json,
-            "metrics": metrics_dict,
+            "metrics": result["metrics"],
             "dataset_id": dataset_id
         }
 

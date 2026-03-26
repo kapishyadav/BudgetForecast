@@ -1,90 +1,118 @@
 """
 prophet_model.py
 ----------------
-Prophet-based forecasting module.
-Loads DataFrame, trains Prophet model, and returns forecast + Plotly figure.
+Unified Prophet forecasting module.
+Handles data validation, dynamic filtering, and Prophet model execution.
 """
 import pandas as pd
+from prophet import Prophet
+from prophet.diagnostics import cross_validation, performance_metrics
+import warnings
 
-from .legacy_prophet_model import *
-from .enums import ForecastType, Granularity
+from .enums import Granularity
 from .utils.setup_logging import setup_logging
-from typing import List, Dict
+
+warnings.filterwarnings("ignore")
 
 
-def run_prophet_forecast(
-        df: pd.DataFrame,
-        forecast_type: ForecastType = ForecastType.OVERALL_AGGREGATE,
-        granularity: Granularity = Granularity.MONTHLY,
-        logger=None,
-        account_name=None,
-        service_name=None,
-        bu_code=None,
-        segment_name=None):
+def validate_and_filter_data(df: pd.DataFrame, granularity: Granularity, **kwargs) -> pd.DataFrame:
+    """SRP: This function ONLY handles data validation and filtering."""
+    if df is None or df.empty:
+        raise ValueError("The provided dataset is empty and contains no historical spend data.")
+
+    # 1. Dynamic Column Validation
+    if granularity == Granularity.MONTHLY and ('month' not in df.columns or 'spend' not in df.columns):
+        raise ValueError("DataFrame for monthly granularity must contain 'month' and 'spend' columns.")
+    elif granularity == Granularity.DAILY and ('date' not in df.columns or 'spend' not in df.columns):
+        raise ValueError("DataFrame for daily granularity must contain 'date' and 'spend' columns.")
+
+    # 2. Dynamic Filtering
+    data = df.copy()
+    filter_mapping = {
+        'account_name': 'account_name',
+        'service_name': 'service_name',
+        'bu_code': 'bu_code',
+        'segment_name': 'segment'
+    }
+
+    for kwarg_key, df_column in filter_mapping.items():
+        val = kwargs.get(kwarg_key)
+        if val is not None:
+            data = data[data[df_column] == val]
+
+    # 3. Final Safety Check
+    if data.empty:
+        raise ValueError("The selected combination of filters resulted in an empty dataset. Cannot generate forecast.")
+
+    return data
+
+
+def run_prophet_forecast(df: pd.DataFrame, granularity: Granularity = Granularity.MONTHLY, logger=None, **kwargs):
+    """
+    Main entry point. Prepares data and runs the universal Prophet pipeline.
+    """
     if logger is None:
         logger = setup_logging()
 
-    data = df
-    logger.info(f"Dataset loaded successfully from DB. Shape: {data.shape}")
+    # 1. Prepare Data
+    data = validate_and_filter_data(df, granularity, **kwargs)
+    logger.info(f"Dataset prepared successfully. Shape: {data.shape}")
 
-    # 1. Safety Check (Replaces the old FileNotFoundError)
-    if data is None or data.empty:
-        raise ValueError("The provided dataset is empty and contains no historical spend data.")
-
-    # --- DYNAMIC VALIDATION ---
+    # 2. Configuration Map based on Granularity
     if granularity == Granularity.MONTHLY:
-        if 'month' not in df.columns or 'spend' not in df.columns:
-            raise ValueError("DataFrame for monthly granularity must contain 'month' and 'spend' columns.")
+        date_col = 'month'
+        freq = 'ME'
+        periods = 24
+        avg_multiplier = 1
+        period_label = "24 mo"
     elif granularity == Granularity.DAILY:
-        if 'date' not in df.columns or 'spend' not in df.columns:
-            raise ValueError("DataFrame for daily granularity must contain 'date' and 'spend' columns.")
+        date_col = 'date'
+        freq = 'D'
+        periods = 90
+        avg_multiplier = 30.44
+        period_label = "90 days"
     else:
-        raise ValueError(f"Unsupported granularity: {granularity}")
+        raise ValueError("Granularity must be MONTHLY or DAILY.")
 
-    # We apply whichever filters were passed from the UI.
-    # If a filter is None, it safely ignores it.
-    if account_name:
-        data = data[data['account_name'] == account_name]
+    # 3. Grouping and Prophet Formatting
+    data[date_col] = pd.to_datetime(data[date_col], errors='coerce')
+    grouped_spend = data.groupby(date_col, as_index=False)["spend"].sum()
 
-    if service_name:
-        data = data[data['service_name'] == service_name]
+    prophet_df = grouped_spend.rename(columns={date_col: "ds", "spend": "y"}).dropna(subset=['ds'])
+    last_date = prophet_df['ds'].max()
 
-    if bu_code is not None:  # Using `is not None` in case a BU code is mathematically 0
-        data = data[data['bu_code'] == bu_code]
+    # 4. Model Training
+    m = Prophet()
+    logger.info(f"Fitting Prophet model for {granularity.value} granularity. Rows: {len(prophet_df)}")
+    m.fit(prophet_df)
 
-    if segment_name:
-        # Note: adjust 'segment' to match whatever you named the column in df renaming step
-        data = data[data['segment'] == segment_name]
+    # 5. Cross Validation Metrics
+    metrics_dict = {"rmse": 0, "mse": 0, "mae": 0, "mape": 0, "total_forecasted_spend": 0}
+    try:
+        logger.info("Starting historical cross-validation for metrics...")
+        df_cv = cross_validation(m, initial='180 days', period='30 days', horizon='90 days')
+        df_p = performance_metrics(df_cv)
 
-    # If the user's specific combination of filters yields no data, catch it before Prophet crashes
-    if data.empty:
-        raise ValueError(
-            "The selected combination of filters resulted in an empty dataset. Cannot generate forecast.")
+        metrics_dict.update({
+            "rmse": float(df_p['rmse'].mean()),
+            "mse": float(df_p['mse'].mean()),
+            "mae": float(df_p['mae'].mean()),
+            "mape": float(df_p['mape'].mean()),
+        })
+        logger.info(f"Metrics calculated successfully: RMSE={metrics_dict['rmse']:.2f}")
+    except Exception as e:
+        logger.warning(f"Could not calculate metrics (likely insufficient historical data): {e}")
 
-    # ==========================================
-    # ROUTE TO PIPELINE
-    # ==========================================
-    if forecast_type == ForecastType.OVERALL_AGGREGATE:
-        logger.info(f"DEBUG starting save_overall_aggregate_forecasts now!")
-        forecast_df, historical_df, metrics_dict = save_overall_aggregate_forecasts(data, logger, granularity)
+    # 6. Forecasting
+    future = m.make_future_dataframe(periods=periods, freq=freq)
+    forecast_full = m.predict(future)
+    forecast_future = forecast_full[forecast_full['ds'] > last_date]
 
-    elif forecast_type == ForecastType.ACCOUNT:
-        logger.info(f"DEBUG starting save_forecast_by_accounts now!")
-        forecast_df, historical_df, metrics_dict = save_forecast_by_accounts(data, logger, granularity)
+    # 7. Formatting Output
+    forecast = forecast_future[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
 
-    elif forecast_type == ForecastType.SERVICE:
-        forecast_df, historical_df, metrics_dict = save_forecasts_by_service(data, logger, granularity)
+    metrics_dict["total_forecasted_spend"] = float(forecast['yhat'].sum())
+    metrics_dict["average_monthly_spend"] = float(forecast['yhat'].mean() * avg_multiplier)
+    metrics_dict["forecast_period"] = period_label
 
-    elif forecast_type == ForecastType.BUCODE:
-        logger.info(f"Value of bu Code in prophet_model.py : {bu_code}")
-        forecast_df, historical_df, metrics_dict = save_forecasts_by_bucode(data, logger,granularity)
-
-    elif forecast_type == ForecastType.SEGMENT:
-        logger.info(f"Value of segment in prophet_model.py : {segment_name}")
-        forecast_df, historical_df, metrics_dict = save_forecasts_by_segment(data, logger, granularity)
-
-    else:
-        raise ValueError(f"Invalid forecast type: {forecast_type}")
-
-    return forecast_df, historical_df, metrics_dict
-
+    return forecast, prophet_df, metrics_dict

@@ -51,9 +51,18 @@ class CustomScenarioSerializer(serializers.Serializer):
 
     # User selects which algorithm to use
     model_name = serializers.ChoiceField(
-        choices=["prophet", "catboost", "linear_regression"],
+        choices=["prophet", "catboost", "xgboost"],
         default="prophet"
     )
 
     # Accepts an arbitrary dictionary of settings!
     hyperparameters = serializers.JSONField(default=dict)
+
+    forecast_type = serializers.CharField(default="overall_aggregate")
+    granularity = serializers.CharField(default="monthly")
+
+    # Optional cascading filters (Crucial for tree-based models on specific slices)
+    account_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    service_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    bu_code = serializers.IntegerField(required=False, allow_null=True)
+    segment_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)

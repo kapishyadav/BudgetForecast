@@ -29,3 +29,6 @@ dj-database-url>=2.0.0
 djangorestframework
 django-cors-headers
 djangorestframework-simplejwt
+
+xgboost>=2.0.0
+catboost>=1.2.0

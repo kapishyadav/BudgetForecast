@@ -1,4 +1,5 @@
 import { MoreVertical, Globe, Clock, TrendingUp, RefreshCcw, Sparkles } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 interface MetricCardsProps {
   metrics: {
@@ -11,9 +12,10 @@ interface MetricCardsProps {
     mae?: number;
   } | null;
   isLoading: boolean;
+  datasetId: string | null;
 }
 
-export function MetricCards({ metrics, isLoading }: MetricCardsProps) {
+export function MetricCards({ metrics, isLoading, datasetId }: MetricCardsProps) {
 
   // A helper to format large numbers nicely (e.g. $12.45M)
   const formatCurrency = (val: number) => {
@@ -39,7 +41,7 @@ export function MetricCards({ metrics, isLoading }: MetricCardsProps) {
           <div className="h-10 bg-gray-100 rounded w-full"></div>
         </div>
         {/* The Promo card doesn't need to load, it's static */}
-        <PromoCard />
+        <PromoCard datasetId={datasetId} />
       </div>
     );
   }
@@ -205,16 +207,27 @@ export function MetricCards({ metrics, isLoading }: MetricCardsProps) {
       </div>
 
       {/* Card 4 - Promotional */}
-      <PromoCard />
+      <PromoCard datasetId={datasetId} />
 
     </div>
   );
 }
 
 // Extracted Promo card to keep the main component clean
-function PromoCard() {
+function PromoCard({ datasetId }: { datasetId: string | null }) {
+  const navigate = useNavigate();
+
+  const handleNavigate = () => {
+    // If the backend hasn't loaded the real dataset ID yet, stop them.
+    if (!datasetId) {
+      alert("Still loading dataset context. Please wait a moment!");
+      return;
+    }
+    // Safely attach the REAL dataset ID to the URL
+    navigate(`/custom-scenario?datasetId=${datasetId}`);
+  };
+
   return (
-    // Added shrink-0 and min-w here so it behaves inside the horizontal scroller
     <div className="min-w-[320px] flex-1 shrink-0 bg-[#EAFF52] rounded-[24px] p-6 shadow-md text-gray-500 justify-between relative overflow-hidden group z-0">
       <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-blue-500/30 transition-colors"></div>
       <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl -ml-10 -mb-10 group-hover:bg-purple-500/30 transition-colors"></div>
@@ -224,13 +237,16 @@ function PromoCard() {
           Optimize with AI Forecasting Scenarios
         </h3>
         <div className="mt-auto">
-          <button className="bg-white text-[#1A1A1A] px-6 py-3 rounded-xl font-medium flex items-center space-x-2 hover:bg-gray-100 transition-colors">
+          <button
+            onClick={handleNavigate}
+            className="bg-white text-[#1A1A1A] px-6 py-3 rounded-xl font-medium flex items-center space-x-2 hover:bg-gray-100 transition-colors z-20 relative cursor-pointer"
+          >
             <Sparkles size={16} className="text-blue-600" />
             <span>Run New Scenario</span>
           </button>
         </div>
       </div>
-      <div className="absolute top-6 right-6 z-10 text-[#1A1A1A]/20">
+      <div className="absolute top-6 right-6 z-10 text-[#1A1A1A]/20 pointer-events-none">
         <div className="w-24 h-24 border border-[#1A1A1A]/20 rounded-full flex items-center justify-center">
           <div className="w-16 h-16 border border-[#1A1A1A]/30 rounded-full"></div>
         </div>

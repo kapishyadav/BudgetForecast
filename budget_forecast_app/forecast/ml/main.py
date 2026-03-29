@@ -15,11 +15,14 @@ logger = setup_logging()
 
 def run_forecast(df: pd.DataFrame,
                  forecast_type: ForecastType = ForecastType.OVERALL_AGGREGATE,
-                 granularity: Granularity = Granularity.MONTHLY,
-                 **kwargs):
+                 granularity: Granularity = Granularity.MONTHLY, model_name: str = "prophet",
+                 hyperparameters: dict = None, **kwargs):
     """Main entry point for the forecasting pipeline using the Strategy Pattern."""
 
-    logger.info(f"Running forecast with type: {forecast_type.value}")
+    if hyperparameters is None:
+        hyperparameters = {}
+
+    logger.info(f"Running {model_name} forecast with type: {forecast_type.value}")
 
     if df is None or df.empty:
         raise ValueError("The provided dataset is empty and contains no historical spend data.")
@@ -37,6 +40,8 @@ def run_forecast(df: pd.DataFrame,
             df=df,
             granularity=granularity,
             logger=logger,
+            model_name = model_name,
+            hyperparameters = hyperparameters,
             **kwargs
         )
         logger.info(f"{forecast_type.value} forecasting complete.")

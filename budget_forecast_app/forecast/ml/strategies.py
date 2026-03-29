@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import pandas as pd
 import logging
 
-from .prophet_model import run_prophet_forecast
+from .engine_factory import ModelEngineFactory
 from .enums import ForecastType
 
 
@@ -24,8 +24,12 @@ class OverallAggregateStrategy(ForecastStrategy):
     def validate(self, **kwargs):
         pass  # No specific filters required for an overall aggregate
 
-    def execute(self, df, granularity, logger, **kwargs):
-        return run_prophet_forecast(df, granularity=granularity, logger=logger, **kwargs)
+    def execute(self, df, granularity, logger, model_name = "prophet", hyperparameters = None, **kwargs):
+        if hyperparameters is None:
+            hyperparameters = {}
+
+        engine = ModelEngineFactory.get_engine(model_name)
+        return engine(df, granularity=granularity, logger=logger, hyperparameters=hyperparameters, **kwargs)
 
 
 class AccountForecastStrategy(ForecastStrategy):
@@ -33,8 +37,12 @@ class AccountForecastStrategy(ForecastStrategy):
         if not kwargs.get('account_name'):
             raise ValueError("Account name must be provided for account-level forecast.")
 
-    def execute(self, df, granularity, logger, **kwargs):
-        return run_prophet_forecast(df, granularity=granularity, logger=logger, **kwargs)
+    def execute(self, df, granularity, logger, model_name = "prophet", hyperparameters = None, **kwargs):
+        if hyperparameters is None:
+            hyperparameters = {}
+
+        engine = ModelEngineFactory.get_engine(model_name)
+        return engine(df, granularity=granularity, logger=logger, hyperparameters=hyperparameters, **kwargs)
 
 
 class ServiceForecastStrategy(ForecastStrategy):
@@ -42,8 +50,12 @@ class ServiceForecastStrategy(ForecastStrategy):
         if not kwargs.get('service_name'):
             raise ValueError("Service name must be provided for service-level forecast.")
 
-    def execute(self, df, granularity, logger, **kwargs):
-        return run_prophet_forecast(df, granularity=granularity, logger=logger, **kwargs)
+    def execute(self, df, granularity, logger, model_name = "prophet", hyperparameters = None, **kwargs):
+        if hyperparameters is None:
+            hyperparameters = {}
+
+        engine = ModelEngineFactory.get_engine(model_name)
+        return engine(df, granularity=granularity, logger=logger, hyperparameters=hyperparameters, **kwargs)
 
 
 class BuCodeForecastStrategy(ForecastStrategy):
@@ -51,9 +63,13 @@ class BuCodeForecastStrategy(ForecastStrategy):
         if kwargs.get('bu_code') is None:
             raise ValueError("BU Code must be provided for bu-code-level forecast.")
 
-    def execute(self, df, granularity, logger, **kwargs):
+    def execute(self, df, granularity, logger, model_name = "prophet", hyperparameters = None, **kwargs):
         logger.info(f"Executing BU Code Strategy with BU: {kwargs.get('bu_code')}")
-        return run_prophet_forecast(df, granularity=granularity, logger=logger, **kwargs)
+        if hyperparameters is None:
+            hyperparameters = {}
+
+        engine = ModelEngineFactory.get_engine(model_name)
+        return engine(df, granularity=granularity, logger=logger, hyperparameters=hyperparameters, **kwargs)
 
 
 class SegmentForecastStrategy(ForecastStrategy):
@@ -61,8 +77,12 @@ class SegmentForecastStrategy(ForecastStrategy):
         if not kwargs.get('segment_name'):
             raise ValueError("Segment name must be provided for segment-level forecast.")
 
-    def execute(self, df, granularity, logger, **kwargs):
-        return run_prophet_forecast(df, granularity=granularity, logger=logger, **kwargs)
+    def execute(self, df, granularity, logger, model_name = "prophet", hyperparameters = None, **kwargs):
+        if hyperparameters is None:
+            hyperparameters = {}
+
+        engine = ModelEngineFactory.get_engine(model_name)
+        return engine(df, granularity=granularity, logger=logger, hyperparameters=hyperparameters, **kwargs)
 
 
 class ForecastStrategyFactory:

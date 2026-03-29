@@ -33,10 +33,18 @@ class CustomScenarioDTO:
     dataset_id: str
     model_name: str
     hyperparameters: dict
+    forecast_type: str = "overall_aggregate"
+    granularity: str = "monthly"
+    account_name: Optional[str] = None
+    service_name: Optional[str] = None
+    bu_code: Optional[int] = None
+    segment_name: Optional[str] = None
 
     def __post_init__(self):
         if not self.dataset_id:
             raise ValueError("dataset_id is required.")
+        if self.bu_code is not None and not isinstance(self.bu_code, int):
+            object.__setattr__(self, 'bu_code', int(self.bu_code))
         if not isinstance(self.hyperparameters, dict):
             raise ValueError("Hyperparameters must be a JSON dictionary.")
 

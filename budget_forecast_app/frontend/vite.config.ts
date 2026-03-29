@@ -88,6 +88,10 @@ export default defineConfig(({ command }) => ({
       '/api/forecast': {
         target: 'http://app:8000',
         changeOrigin: true,
+      },
+      '/api/run-scenario/': {
+        target: 'http://app:8000',
+        changeOrigin: true,
       }
     }
   }

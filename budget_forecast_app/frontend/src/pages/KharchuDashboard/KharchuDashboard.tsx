@@ -83,35 +83,60 @@ export function KharchuDashboard() {
 
   useEffect(() => {
     const urlGranularity = searchParams.get('granularity');
-    if (urlGranularity) {
-      setGranularity(urlGranularity);
-    }
+    if (urlGranularity) setGranularity(urlGranularity);
 
     if (!taskId) {
-      console.log("No taskId found in the URL. Waiting...");
       setIsLoading(false);
       return;
     }
 
     const fetchDashboardData = async () => {
       setIsLoading(true);
-
       try {
         const apiUrl = `/api/dashboard-data/?task_id=${taskId}`;
         const response = await axios.get(apiUrl, { withCredentials: true });
-
-        // DEFENSIVE FIX: Axios puts JSON in 'response.data'. If our backend wrapped it in the
-        // new api_response utility, the real payload is deeply nested inside 'response.data.data'.
-        // This handles BOTH the old format and the new format safely!
         const payload = response.data.data ? response.data.data : response.data;
 
-        setForecastData(payload.forecast || []);
-        setHistoricalData(payload.historical || []);
-        setMetricsData(payload.metrics || null);
+        // --- THE DATA ADAPTER (NORMALIZER) ---
 
-        if (payload.dataset_id) {
-            setDatasetId(payload.dataset_id);
+        // 1. Extract and Parse Forecast
+        const rawForecast = typeof payload.forecast_json === 'string'
+            ? JSON.parse(payload.forecast_json)
+            : payload.forecast || [];
+
+        // 2. Extract and Parse Historical
+        const rawHistorical = typeof payload.historical_json === 'string'
+            ? JSON.parse(payload.historical_json)
+            : payload.historical || [];
+
+        // 3. Normalize Keys (date -> ds, forecast -> yhat)
+        const normalizedForecast = rawForecast.map((item: any) => ({
+          ds: item.ds || item.date || item.Month,
+          yhat: item.yhat !== undefined ? item.yhat : item.forecast,
+          yhat_lower: item.yhat_lower !== undefined ? item.yhat_lower : (item.forecast ? item.forecast * 0.9 : 0),
+          yhat_upper: item.yhat_upper !== undefined ? item.yhat_upper : (item.forecast ? item.forecast * 1.1 : 0),
+        }));
+
+        const normalizedHistorical = rawHistorical.map((item: any) => ({
+          ds: item.ds || item.date || item.Month,
+          y: item.y !== undefined ? item.y : (item.spend || item.Cost || 0),
+        }));
+
+        setForecastData(normalizedForecast);
+        setHistoricalData(normalizedHistorical);
+
+        // 4. Map Metrics Safely
+        if (payload.metrics) {
+            setMetricsData({
+                total_forecasted_spend: payload.metrics.total_forecasted_spend || normalizedForecast.reduce((acc: number, curr: any) => acc + (curr.yhat || 0), 0),
+                average_monthly_spend: payload.metrics.average_monthly_spend || 0,
+                rmse: payload.metrics.rmse || 0,
+                mape: payload.metrics.mape || 0,
+                forecast_period: payload.metrics.forecast_period || "Next 12 Months"
+            });
         }
+
+        if (payload.dataset_id) setDatasetId(payload.dataset_id);
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
       } finally {
@@ -243,7 +268,7 @@ export function KharchuDashboard() {
       const responseData = await response.json();
 
       // FIXED: Standard API wrapper support
-      if (responseData.status === "success" && responseData.data?.task_id) {
+      if (responseData.status === "SUCCESS" && responseData.data?.task_id) {
         pollTaskStatus(responseData.data.task_id);
       } else {
         console.error("Backend error:", responseData.errors || responseData.message);
@@ -385,7 +410,7 @@ export function KharchuDashboard() {
           />
 
           <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar">
-            <MetricCards metrics={metricsData} isLoading={isLoading} />
+            <MetricCards metrics={metricsData} isLoading={isLoading} datasetId={datasetId}/>
 
             {isLoading ? (
               <div className="h-[400px] flex flex-col items-center justify-center bg-white rounded-[24px] shadow-sm border border-gray-100 mt-6">

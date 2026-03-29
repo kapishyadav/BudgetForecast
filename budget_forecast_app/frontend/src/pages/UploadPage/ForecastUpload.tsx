@@ -177,8 +177,12 @@ export function ForecastUpload() {
 
         const responseData = await response.json();
 
-        if (responseData.status === "success" && responseData.data?.task_id) {
-            pollTaskStatus(responseData.data.task_id);
+        // Normalize case and safely grab the ID
+        const currentStatus = (responseData.status || '').toLowerCase();
+        const taskId = responseData.data?.task_id || responseData.task_id;
+
+        if (currentStatus === "success" && taskId) {
+            pollTaskStatus(taskId);
         } else {
             console.error("Backend error:", responseData.errors || responseData.message);
             // Gracefully handle DRF Validation errors if they exist
@@ -201,19 +205,22 @@ export function ForecastUpload() {
       try {
         const response = await fetch(`/status/${taskId}/`, {
             credentials: 'same-origin'
-            });
+        });
 
         if (!response.ok) throw new Error(`HTTP Error! status: ${response.status}`);
 
-        const data = await response.json()
+        const data = await response.json();
 
-        if (data.status === 'PROGRESS') {
+        // Unify and lowercase the status checks
+        const currentState = (data.status || data.state || '').toLowerCase();
+
+        if (currentState === 'progress' || currentState === 'pending') {
             const current = data.current || 0;
             const total = data.total || 100;
             setForecastProgress(Math.round((current / total) * 100));
             if (data.message) setForecastMessage(data.message);
         }
-        else if (data.status === 'SUCCESS' || data.state === 'SUCCESS') {
+        else if (['success', 'completed'].includes(currentState)) {
           clearInterval(interval);
           setForecastProgress(100);
           setForecastMessage("Complete!");
@@ -222,12 +229,12 @@ export function ForecastUpload() {
             navigate(`/kharchu?taskId=${taskId}&granularity=${granularity}&forecastType=${forecastType}`);
           }, 500);
         }
-        else if (data.status === 'FAILURE' || data.state === 'FAILURE' || data.status === 'error') {
+        else if (['failure', 'error'].includes(currentState)) {
           clearInterval(interval);
           setIsLoading(false);
           alert("The forecast generation failed: " + (data.message || "Unknown error"));
         }
-        } catch (err) {
+      } catch (err) {
         console.error("Polling error. Is Django returning JSON?", err);
         clearInterval(interval);
         setIsLoading(false);

@@ -11,9 +11,15 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task(bind=True)
-def generate_forecast_task(self, dataset_id, forecast_type_str="overall_aggregate", granularity_str="monthly", **kwargs):
+def generate_forecast_task(self, dataset_id,
+                           forecast_type_str="overall_aggregate",
+                           granularity_str="monthly",
+                           model_name = "prophet",
+                           hyperparameters = None,
+                           **kwargs):
     logger.info(f"Task {self.request.id}: Starting forecast generation for dataset id: {dataset_id}")
-
+    if hyperparameters is None:
+        hyperparameters = {}
     try:
         from .services.services import ForecastOrchestrationService
         service = ForecastOrchestrationService()
@@ -22,6 +28,8 @@ def generate_forecast_task(self, dataset_id, forecast_type_str="overall_aggregat
             dataset_id=dataset_id,
             forecast_type_str=forecast_type_str,
             granularity_str=granularity_str,
+            model_name = model_name,
+            hyperparameters = hyperparameters,
             **kwargs
         )
         return {"status": "success", **result}

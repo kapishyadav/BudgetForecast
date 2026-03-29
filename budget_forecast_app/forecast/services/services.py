@@ -48,11 +48,25 @@ class ForecastOrchestrationService:
     def trigger_custom_scenario(self, dto: CustomScenarioDTO) -> dict:
         dataset = get_object_or_404(ForecastDataset, id=dto.dataset_id)
 
+        # Reconstruct the dynamic filters (kwargs) cleanly from the DTO
+        filters = {
+            "account_name": getattr(dto, 'account_name', None),
+            "service_name": getattr(dto, 'service_name', None),
+            "bu_code": getattr(dto, 'bu_code', None),
+            "segment_name": getattr(dto, 'segment_name', None)
+        }
+        active_filters = {k: v for k, v in filters.items() if v is not None}
+
         logger.info(f"Dispatching custom {dto.model_name} scenario for dataset {dto.dataset_id}")
+
+        # Pass ALL parameters to the Celery task
         task = generate_forecast_task.delay(
             dataset_id=dto.dataset_id,
+            forecast_type_str=getattr(dto, 'forecast_type', 'overall_aggregate'),
+            granularity_str=getattr(dto, 'granularity', 'monthly'),
             model_name=dto.model_name,
-            hyperparameters=dto.hyperparameters
+            hyperparameters=dto.hyperparameters,
+            **active_filters
         )
 
         # Save the generic JSON field to the database
@@ -69,9 +83,15 @@ class ForecastOrchestrationService:
             "message": f"{dto.model_name.capitalize()} scenario triggered successfully."
         }
 
-    def execute_forecast_pipeline(self, task_id: str, dataset_id: str, forecast_type_str: str, granularity_str: str,
+    def execute_forecast_pipeline(self, task_id: str, dataset_id: str,
+                                  forecast_type_str: str,
+                                  granularity_str: str,
+                                  model_name: str = "prophet",
+                                  hyperparameters: dict = None,
                                   logger=logger, **kwargs) -> dict:
         """Executes the ML pipeline and manages DB state."""
+        if hyperparameters is None:
+            hyperparameters = {}
         run = ForecastRun.objects.filter(task_id=task_id).first()
 
         # 1. Fetch Data using Data Access Layer
@@ -90,7 +110,8 @@ class ForecastOrchestrationService:
             df.rename(columns={'date': 'month'}, inplace=True)
 
         # 3. Execute Strategy Pattern Engine
-        result = run_forecast(df, forecast_type, granularity=granularity, **kwargs)
+        result = run_forecast(df, forecast_type, granularity=granularity, model_name = model_name,
+                              hyperparameters = hyperparameters, **kwargs)
 
         # 4. Serialize
         forecast_json = result["forecast"].to_json(orient="records", date_format="iso")

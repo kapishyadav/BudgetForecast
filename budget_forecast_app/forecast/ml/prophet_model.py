@@ -47,12 +47,18 @@ def validate_and_filter_data(df: pd.DataFrame, granularity: Granularity, **kwarg
     return data
 
 
-def run_prophet_forecast(df: pd.DataFrame, granularity: Granularity = Granularity.MONTHLY, logger=None, **kwargs):
+def run_prophet_forecast(df: pd.DataFrame, granularity: Granularity = Granularity.MONTHLY, logger=None,
+                         hyperparameters=None, **kwargs):
     """
     Main entry point. Prepares data and runs the universal Prophet pipeline.
     """
     if logger is None:
         logger = setup_logging()
+
+    # Extract hyperparameters with safe defaults
+    seasonality = hyperparameters.get("seasonality_mode", "additive")
+    cps = hyperparameters.get("changepoint_prior_scale", 0.05)
+    country_holidays = hyperparameters.get("holidays", None)
 
     # 1. Prepare Data
     data = validate_and_filter_data(df, granularity, **kwargs)
@@ -82,7 +88,12 @@ def run_prophet_forecast(df: pd.DataFrame, granularity: Granularity = Granularit
     last_date = prophet_df['ds'].max()
 
     # 4. Model Training
-    m = Prophet()
+    m = Prophet(
+        seasonality_mode=seasonality,
+        changepoint_prior_scale=float(cps)
+    )
+    if country_holidays:
+        m.add_country_holidays(country_name=country_holidays)
     logger.info(f"Fitting Prophet model for {granularity.value} granularity. Rows: {len(prophet_df)}")
     m.fit(prophet_df)
 

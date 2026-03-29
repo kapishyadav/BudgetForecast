@@ -62,14 +62,12 @@ export function StatisticsChart({ forecast = [], historical = [], granularity = 
   const formatDateKey = (ds: string) => {
     const date = new Date(ds);
     if (granularity === 'daily') {
-      // Returns "Mar 25, 2026" so every day gets its own unique point on the graph
       return date.toLocaleDateString('en-GB', {
           month: 'short',
           day: '2-digit',
           year: 'numeric'
       }).replace(/ /g, '-');
     }
-    // Returns "Mar 2026" for monthly grouping
     return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   };
 
@@ -137,7 +135,6 @@ export function StatisticsChart({ forecast = [], historical = [], granularity = 
         </div>
       </div>
 
-      {/* CRITICAL FIX: The wrapper div MUST have a strict height, otherwise ResponsiveContainer collapses */}
       <div style={{ width: '100%', height: 400, position: 'relative' }}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={formattedData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>

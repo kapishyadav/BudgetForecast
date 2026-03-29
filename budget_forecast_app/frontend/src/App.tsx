@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LandingPage } from './pages/LandingPage';
 import { KharchuDashboard } from './pages/KharchuDashboard/KharchuDashboard';
+import { CustomScenarioPage } from './pages/CustomScenario/CustomScenarioPage';
 import { UploadPage } from './pages/UploadPage/UploadPage';
 import { AuthPage } from './pages/LoginPage/AuthPage';
 
@@ -41,6 +42,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <UploadPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/custom-scenario"
+          element={
+            <ProtectedRoute>
+              <CustomScenarioPage />
             </ProtectedRoute>
           }
         />

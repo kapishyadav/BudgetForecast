@@ -128,7 +128,7 @@ export function CustomScenarioPage() {
      // but in this view, we want "Execute Scenario" to be the final trigger.
   };
 
-  const pollCustomTaskStatus = (newTaskId: string, activeModel: string) => {
+  const pollCustomTaskStatus = (newTaskId: string, activeModel: string, mappedForecastType: string) => {
     const pollInterval = setInterval(async () => {
       try {
         const response = await fetch(`/status/${newTaskId}/`);
@@ -139,7 +139,33 @@ export function CustomScenarioPage() {
 
         if (['success', 'completed'].includes(currentState)) {
           clearInterval(pollInterval);
-          navigate(`/kharchu?taskId=${newTaskId}&model=${activeModel}`);
+
+          // Initialize the base URL parameters
+          const queryParams = new URLSearchParams({
+            taskId: newTaskId,
+            model: activeModel,
+            forecastType: mappedForecastType,
+            granularity: 'monthly'
+          });
+
+          // Map frontend tab names to backend URL keys
+          const paramMap: Record<string, string> = {
+            "By Account": "account_name",
+            "By Service": "service_name",
+            "By Segment": "segment_name",
+            "By BU Code": "bu_code"
+          };
+
+          // Append any active filters to the URL
+          activeFilters.forEach(filter => {
+            if (filter !== 'Global View' && filterValues[filter]) {
+              queryParams.append(paramMap[filter], filterValues[filter].value);
+            }
+          });
+
+          // Navigate with the fully loaded URL
+          navigate(`/kharchu?${queryParams.toString()}`);
+
         } else if (['failure', 'error'].includes(currentState)) {
           clearInterval(pollInterval);
           setIsSubmitting(false);
@@ -193,7 +219,7 @@ export function CustomScenarioPage() {
       });
       const data = await response.json();
       if (response.ok && (data.status?.toUpperCase() === "SUCCESS")) {
-        pollCustomTaskStatus(data.task_id || data.data?.task_id, modelType);
+        pollCustomTaskStatus(data.task_id || data.data?.task_id, modelType, mappedForecastType);
       } else {
         alert("Failed: " + (data.message || "Unknown error"));
         setIsSubmitting(false);

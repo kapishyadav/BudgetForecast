@@ -41,8 +41,10 @@ class TreeForecaster(BaseForecaster):
         pass
 
     def run(self, df: pd.DataFrame):
+        # Filter the data FIRST using the inherited base method
+        data = self._validate_and_filter_data(df)
         # 1. Prepare Data
-        df_clean = self._standardize_and_aggregate(df)
+        df_clean = self._standardize_and_aggregate(data)
         df_features = self._create_features(df_clean)
         train_df = df_features.dropna(subset=['spend', 'lag_1', 'lag_2', 'lag_3']).copy()
 

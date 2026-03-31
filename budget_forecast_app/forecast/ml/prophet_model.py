@@ -17,37 +17,6 @@ warnings.filterwarnings("ignore")
 
 class ProphetForecaster(BaseForecaster):
 
-    def _validate_and_filter_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        """SRP: Preserved legacy validation and dynamic filtering logic."""
-        if df is None or df.empty:
-            raise ValueError("The provided dataset is empty and contains no historical spend data.")
-
-        # 1. Dynamic Column Validation
-        if self.granularity == Granularity.MONTHLY and ('month' not in df.columns or 'spend' not in df.columns):
-            raise ValueError("DataFrame for monthly granularity must contain 'month' and 'spend' columns.")
-        elif self.granularity == Granularity.DAILY and ('date' not in df.columns or 'spend' not in df.columns):
-            raise ValueError("DataFrame for daily granularity must contain 'date' and 'spend' columns.")
-
-        # 2. Dynamic Filtering using kwargs passed to the BaseForecaster
-        data = df.copy()
-        filter_mapping = {
-            'account_name': 'account_name',
-            'service_name': 'service_name',
-            'bu_code': 'bu_code',
-            'segment_name': 'segment'
-        }
-
-        for kwarg_key, df_column in filter_mapping.items():
-            val = self.kwargs.get(kwarg_key)
-            if val is not None:
-                data = data[data[df_column] == val]
-
-        # 3. Final Safety Check
-        if data.empty:
-            raise ValueError("The selected combination of filters resulted in an empty dataset. Cannot generate forecast.")
-
-        return data
-
     def run(self, df: pd.DataFrame):
         """Main execution pipeline overriding the BaseForecaster abstract method."""
         if self.logger is None:

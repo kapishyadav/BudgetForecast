@@ -1,0 +1,52 @@
+name: Kharchu Build Check
+
+# This triggers the workflow on any push or pull request to the main branch
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  # ==========================================
+  # FRONTEND BUILD CHECK
+  # ==========================================
+  frontend-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22' # Matching the node:22-alpine from your compose file
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Build Frontend
+        working-directory: ./frontend
+        # This ensures Vite can successfully compile the React/Vue code for production
+        run: npm run build
+
+  # ==========================================
+  # BACKEND BUILD CHECK
+  # ==========================================
+  backend-docker-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Django Backend Image
+        # This tests if the actual Dockerfile compiles successfully without errors
+        run: docker compose build app

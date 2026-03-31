@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Play, UploadCloud, Settings2 } from 'lucide-react';
 import { LeftSidebar } from '../KharchuDashboard/LeftSidebar';
 import { TopHeader } from '../KharchuDashboard/TopHeader';
-import AsyncSelect from 'react-select/async';
+import { TabNavigation } from '../KharchuDashboard/TabNavigation';
 
 const MODEL_CONFIGS = {
   prophet: {
@@ -38,15 +38,12 @@ export function CustomScenarioPage() {
   // Core State
   const [datasetId, setDatasetId] = useState(searchParams.get('datasetId') || '');
   const [modelType, setModelType] = useState('xgboost');
-  const [forecastType, setForecastType] = useState('overall_aggregate');
   const [hyperparameters, setHyperparameters] = useState<any>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- ADDED: Missing Filter States ---
-  const [accountName, setAccountName] = useState<any>(null);
-  const [serviceName, setServiceName] = useState<any>(null);
-  const [segmentName, setSegmentName] = useState<any>(null);
-  const [buCode, setBuCode] = useState<any>(null);
+  // --- REPLACED: Unified Filter State for TabNavigation ---
+  const [activeFilters, setActiveFilters] = useState<string[]>(['Global View']);
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({});
 
   useEffect(() => {
     const defaults: any = {};
@@ -56,11 +53,62 @@ export function CustomScenarioPage() {
     setHyperparameters(defaults);
   }, [modelType]);
 
-  // --- ADDED: Missing loadOptions function ---
-  const loadOptions = async (inputValue: string, field: string) => {
-    if (!inputValue || !datasetId) return [];
+  // --- ADDED: Handlers for TabNavigation ---
+  const handleToggleFilter = (filterName: string) => {
+    if (filterName === 'Global View') {
+      setActiveFilters(['Global View']);
+      setFilterValues({});
+    } else {
+      setActiveFilters((prev) => {
+        const activeWithoutGlobal = prev.filter(f => f !== 'Global View');
+        if (activeWithoutGlobal.includes(filterName)) {
+          const updated = activeWithoutGlobal.filter(f => f !== filterName);
+          return updated.length === 0 ? ['Global View'] : updated;
+        } else {
+          return [...activeWithoutGlobal, filterName];
+        }
+      });
+    }
+  };
+
+  const handleUpdateFilterValue = (filterName: string, selectedOption: any) => {
+    setFilterValues(prev => ({ ...prev, [filterName]: selectedOption }));
+  };
+
+  const loadOptions = async (inputValue: string, filterName: string) => {
+    if (!datasetId || !inputValue) return [];
+
+    const fieldMap: Record<string, string> = {
+      "By Account": "account",
+      "By Service": "service",
+      "By Segment": "segment",
+      "By BU Code": "bu_code"
+    };
+
+    const paramMap: Record<string, string> = {
+      "By Account": "account_name",
+      "By Service": "service_name",
+      "By Segment": "segment_name",
+      "By BU Code": "bu_code"
+    };
+
+    const field = fieldMap[filterName];
+
+    const queryParams = new URLSearchParams({
+      q: inputValue || "",
+      field: field,
+      dataset_id: datasetId
+    });
+
+    Object.keys(filterValues).forEach(key => {
+      if (filterValues[key] && key !== filterName) {
+         queryParams.append(paramMap[key], filterValues[key].value);
+      }
+    });
+
     try {
-      const response = await fetch(`/get_suggestions/?q=${inputValue}&field=${field}&dataset_id=${datasetId}`);
+      const response = await fetch(`/get_suggestions/?${queryParams.toString()}`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       return (data.suggestions || []).map((item: string) => ({ value: item, label: item }));
     } catch (error) {
@@ -71,6 +119,13 @@ export function CustomScenarioPage() {
 
   const handleParamChange = (key: string, value: string) => {
     setHyperparameters((prev: any) => ({ ...prev, [key]: parseFloat(value) }));
+  };
+
+  // --- ADDED: Empty placeholder to satisfy TabNavigation props.
+  // We handle the API call in handleRunScenario instead.
+  const handleApplyFilters = () => {
+     // Intentionally left blank. TabNavigation might trigger this on "Apply",
+     // but in this view, we want "Execute Scenario" to be the final trigger.
   };
 
   const pollCustomTaskStatus = (newTaskId: string, activeModel: string) => {
@@ -103,25 +158,31 @@ export function CustomScenarioPage() {
       return;
     }
 
-    // --- Validation Logic ---
-    if (forecastType === 'account' && !accountName) return alert("Please select an Account.");
-    if (forecastType === 'service' && !serviceName) return alert("Please select a Service.");
-    if (forecastType === 'segment' && !segmentName) return alert("Please select a Segment.");
-    if (forecastType === 'bu_code' && !buCode) return alert("Please select a BU Code.");
+    // --- Dynamic Payload Mapping based on Tabs ---
+    let mappedForecastType = "overall_aggregate";
+    if (activeFilters.includes("By Segment")) mappedForecastType = "segment";
+    if (activeFilters.includes("By BU Code")) mappedForecastType = "bu_code";
+    if (activeFilters.includes("By Account")) mappedForecastType = "account";
+    if (activeFilters.includes("By Service")) mappedForecastType = "service";
+
+    // Validation
+    const missingSelections = activeFilters.filter(filter => filter !== 'Global View' && !filterValues[filter]);
+    if (missingSelections.length > 0) {
+       return alert(`Please select a value for: ${missingSelections.join(', ')}`);
+    }
 
     setIsSubmitting(true);
 
     const payload = {
       dataset_id: datasetId,
       model_name: modelType,
-      forecast_type: forecastType,
+      forecast_type: mappedForecastType,
       granularity: "monthly",
       hyperparameters: hyperparameters,
-      // Pass the selected values
-      account_name: accountName?.value,
-      service_name: serviceName?.value,
-      segment_name: segmentName?.value,
-      bu_code: buCode?.value
+      account_name: filterValues["By Account"]?.value || null,
+      service_name: filterValues["By Service"]?.value || null,
+      segment_name: filterValues["By Segment"]?.value || null,
+      bu_code: filterValues["By BU Code"]?.value || null
     };
 
     try {
@@ -131,7 +192,7 @@ export function CustomScenarioPage() {
         body: JSON.stringify(payload)
       });
       const data = await response.json();
-      if (response.ok && (data.status === "success" || data.status === "SUCCESS")) {
+      if (response.ok && (data.status?.toUpperCase() === "SUCCESS")) {
         pollCustomTaskStatus(data.task_id || data.data?.task_id, modelType);
       } else {
         alert("Failed: " + (data.message || "Unknown error"));
@@ -149,6 +210,16 @@ export function CustomScenarioPage() {
         <div className="flex-1 flex flex-col py-8 px-8 overflow-y-auto custom-scrollbar">
           <TopHeader />
 
+          {/* Tab Navigation replaces the old Target section */}
+          <TabNavigation
+            activeFilters={activeFilters}
+            onToggleFilter={handleToggleFilter}
+            filterValues={filterValues}
+            onUpdateFilterValue={handleUpdateFilterValue}
+            onApplyFilters={handleApplyFilters}
+            loadOptions={loadOptions}
+          />
+
           <div className="flex items-center gap-4 mt-6 mb-8">
             <button onClick={() => navigate(-1)} className="p-2 bg-white rounded-full shadow-sm">
               <ArrowLeft size={20} className="text-gray-600" />
@@ -159,6 +230,7 @@ export function CustomScenarioPage() {
           </div>
 
           <div className="grid grid-cols-3 gap-8 max-w-5xl">
+            {/* Left Column: Dataset */}
             <div className="col-span-1 space-y-6">
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -169,53 +241,35 @@ export function CustomScenarioPage() {
                     {datasetId}
                   </div>
                 )}
-                <button onClick={() => navigate('/upload')} className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm">
+                <button onClick={() => navigate('/upload')} className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
                   Upload New Dataset
                 </button>
               </div>
+            </div>
 
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h3 className="font-semibold text-gray-800 mb-4">Forecast Target</h3>
-                <select
-                  className="w-full bg-gray-50 border border-gray-200 text-sm rounded-xl p-3 mb-6"
-                  value={forecastType}
-                  onChange={(e) => {
-                    setForecastType(e.target.value);
-                    setAccountName(null); setServiceName(null); setSegmentName(null); setBuCode(null);
-                  }}
-                >
-                  <option value="overall_aggregate">Global View (Aggregate)</option>
-                  <option value="account">By Account</option>
-                  <option value="service">By Service</option>
-                  <option value="segment">By Segment</option>
-                  <option value="bu_code">By BU Code</option>
-                </select>
-
-                <div className="space-y-4">
-                  {forecastType === 'account' && <AsyncSelect cacheOptions loadOptions={(v) => loadOptions(v, 'account')} onChange={setAccountName} placeholder="Search account..." />}
-                  {forecastType === 'service' && <AsyncSelect cacheOptions loadOptions={(v) => loadOptions(v, 'service')} onChange={setServiceName} placeholder="Search service..." />}
-                  {forecastType === 'segment' && <AsyncSelect cacheOptions loadOptions={(v) => loadOptions(v, 'segment')} onChange={setSegmentName} placeholder="Search segment..." />}
-                  {forecastType === 'bu_code' && <AsyncSelect cacheOptions loadOptions={(v) => loadOptions(v, 'bu_code')} onChange={setBuCode} placeholder="Search BU code..." />}
-                </div>
-              </div>
-            </div> {/* Column 1 Close */}
-
+            {/* Right Column: Algorithms */}
             <div className="col-span-2 space-y-6">
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <h3 className="font-semibold text-gray-800 mb-6 flex items-center gap-2">
                   <Settings2 size={18} className="text-purple-500" /> Algorithm Settings
                 </h3>
+
                 <div className="flex bg-[#E5E0D8] rounded-xl p-1 mb-8 w-fit">
                   {Object.keys(MODEL_CONFIGS).map(modelKey => (
                     <button
                       key={modelKey}
                       onClick={() => setModelType(modelKey)}
-                      className={`px-6 py-2 text-sm font-semibold rounded-lg ${modelType === modelKey ? 'bg-white text-black' : 'text-gray-500'}`}
+                      className={`px-6 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                        modelType === modelKey
+                          ? 'bg-white text-black shadow-sm'
+                          : 'text-gray-500 hover:text-gray-800'
+                      }`}
                     >
                       {MODEL_CONFIGS[modelKey as keyof typeof MODEL_CONFIGS].name}
                     </button>
                   ))}
                 </div>
+
                 <div className="grid grid-cols-2 gap-6">
                   {MODEL_CONFIGS[modelType as keyof typeof MODEL_CONFIGS].params.map(param => (
                     <div key={param.key} className="flex flex-col">
@@ -225,7 +279,7 @@ export function CustomScenarioPage() {
                         step={param.step}
                         value={hyperparameters[param.key] ?? ''}
                         onChange={(e) => handleParamChange(param.key, e.target.value)}
-                        className="bg-gray-50 border border-gray-200 text-sm rounded-xl p-3"
+                        className="bg-gray-50 border border-gray-200 text-sm rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                       />
                     </div>
                   ))}
@@ -236,16 +290,20 @@ export function CustomScenarioPage() {
                 <button
                   onClick={handleRunScenario}
                   disabled={isSubmitting}
-                  className={`flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-lg ${isSubmitting ? 'bg-gray-200 text-gray-400' : 'bg-[#D4FF00] text-black'}`}
+                  className={`flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-lg transition-all ${
+                    isSubmitting
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-[#D4FF00] text-black hover:bg-[#bce600] shadow-sm hover:shadow-md'
+                  }`}
                 >
                   {isSubmitting ? 'Initializing...' : 'Execute Scenario'}
                   {!isSubmitting && <Play size={20} className="fill-current" />}
                 </button>
               </div>
-            </div> {/* Column 2 Close */}
-          </div> {/* Grid Close */}
-        </div> {/* Content Close */}
-      </div> {/* Card Close */}
-    </div> // Page Close
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

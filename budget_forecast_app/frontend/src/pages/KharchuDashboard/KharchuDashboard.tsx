@@ -213,7 +213,15 @@ export function KharchuDashboard() {
     setFilterValues(prev => ({ ...prev, [filterName]: selectedOption }));
   };
 
-  const handleApplyFilters = async (isGlobalReset = false, overrideGranularity = null) => {
+  const handleApplyFilters = async (eOrIsGlobalReset, overrideGranularity = null) => {
+    // 1. Catch the event and stop the browser from doing a native GET request
+    if (eOrIsGlobalReset && typeof eOrIsGlobalReset.preventDefault === 'function') {
+      eOrIsGlobalReset.preventDefault();
+    }
+
+    // 2. Safely determine if this was a global reset or an event
+    const isReset = eOrIsGlobalReset === true;
+
     if (!datasetId) {
       alert("Dataset ID is missing. Cannot run localized forecast.");
       return;
@@ -222,7 +230,7 @@ export function KharchuDashboard() {
     setIsLoading(true);
     setForecastMessage("Initializing new forecast model...");
 
-    const fieldMap: Record<string, string> = {
+    const fieldMap = {
       "By Account": "account_name",
       "By Service": "service_name",
       "By Segment": "segment_name",
@@ -240,11 +248,10 @@ export function KharchuDashboard() {
 
     const currentGranularity = overrideGranularity || granularity;
 
-    if (isGlobalReset == true) {
+    if (isReset === true) {
         formData.append('forecast_type', 'overall_aggregate');
         formData.append('granularity', currentGranularity);
-    }
-    else {
+    } else {
         formData.append('forecast_type', forecastType);
         formData.append('granularity', currentGranularity);
         Object.keys(filterValues).forEach(key => {
@@ -260,16 +267,19 @@ export function KharchuDashboard() {
         method: 'POST',
         body: formData,
         credentials: 'same-origin',
-          headers: {
-              'X-CSRFToken' : getCsrfToken(),
-          }
+        headers: {
+            'X-CSRFToken': getCsrfToken(),
+        }
       });
+
+      if (!response.ok) {
+        throw new Error("No historical data found for this combination of filters.");
+      }
 
       const responseData = await response.json();
 
-      // FIXED: Standard API wrapper support
-      if (responseData.status === "SUCCESS" && responseData.data?.task_id) {
-        pollTaskStatus(responseData.data.task_id);
+      if (responseData.status?.toUpperCase() === "SUCCESS" && (responseData.data?.task_id || responseData.task_id)) {
+        pollTaskStatus(responseData.data?.task_id || responseData.task_id);
       } else {
         console.error("Backend error:", responseData.errors || responseData.message);
         if (responseData.errors) {
@@ -281,6 +291,7 @@ export function KharchuDashboard() {
       }
     } catch (error) {
       console.error("Error applying filters:", error);
+      alert(`Forecast Failed: ${error.message}`);
       setIsLoading(false);
     }
   };

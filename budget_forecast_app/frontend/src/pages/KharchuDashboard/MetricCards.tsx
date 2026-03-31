@@ -49,9 +49,23 @@ export function MetricCards({ metrics, isLoading, datasetId }: MetricCardsProps)
   // --- Calculations for Card 1: Total Forecasted Spend ---
   // We need a dummy "budget" to show the progress bar working.
   // Let's assume the budget is 20% higher than whatever Prophet predicted.
+  console.log("Current Metrics Data:", metrics);
   const totalSpend = metrics.total_forecasted_spend || 0;
   const dummyBudget = totalSpend * 1.2;
   const spendPercentage = dummyBudget > 0 ? (totalSpend / dummyBudget) * 100 : 0;
+
+  const [searchParams] = useSearchParams();
+  const urlModel = searchParams.get('model'); // returns "xgboost"
+
+  const modelDisplayNames: Record<string, string> = {
+    xgboost: 'XGBoost',
+    prophet: 'Prophet',
+    catboost: 'CatBoost',
+  };
+  // Safely grab the formatted name, defaulting to 'Model' if it's an unknown string
+  const activeModelName = urlModel
+    ? (modelDisplayNames[urlModel.toLowerCase()] || 'Model')
+    : 'Prophet';
 
   // Calculate how many of the 8 segments should be fully black
   const segmentsFilled = Math.floor((spendPercentage / 100) * 8);
@@ -172,7 +186,7 @@ export function MetricCards({ metrics, isLoading, datasetId }: MetricCardsProps)
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center space-x-2 text-gray-500 font-medium text-sm bg-gray-50 px-3 py-1.5 rounded-full">
             <RefreshCcw size={16} />
-            <span>Prophet Confidence</span>
+            <span>{activeModelName} Confidence</span>
           </div>
           <button className="text-gray-400 hover:text-gray-800">
             <MoreVertical size={20} />

@@ -98,7 +98,8 @@ export function TabNavigation({
           ))}
 
           <button
-            onClick={onApplyFilters}
+            type="button"
+            onClick={() => onApplyFilters(false)}
             className="px-6 py-2.5 bg-[#1A1A1A] text-white rounded-xl text-sm font-medium hover:bg-black transition-all shadow-sm h-[42px] whitespace-nowrap mb-[2px]"
           >
             Apply Filters

@@ -404,9 +404,7 @@ export function KharchuDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#E5E0D8] p-4 flex justify-center items-center">
-      <div className="bg-[#F5F1EB] rounded-[40px] shadow-2xl w-full max-w-[1600px] h-[95vh] flex overflow-hidden border border-white/40">
-
+    <div className="h-screen w-screen bg-[#F5F1EB] flex overflow-hidden">
         <LeftSidebar />
 
         <div className="flex-1 flex flex-col py-8 px-2 overflow-hidden">
@@ -520,6 +518,5 @@ export function KharchuDashboard() {
           <RightSidebar />
         </div>
       </div>
-    </div>
   );
 }

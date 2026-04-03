@@ -7,11 +7,10 @@ import { LeftSidebar } from './KharchuDashboard/LeftSidebar';
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#E5E0D8] p-4 flex justify-center items-center">
-      <div className="bg-[#F5F1EB] rounded-[40px] shadow-2xl w-full max-w-[1600px] h-[95vh] flex overflow-hidden border border-white/40">
+    <div className="h-screen w-screen bg-[#F5F1EB] flex overflow-hidden">
         <LeftSidebar />
 
-        <div className="flex-[3] flex flex-col overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300">
+        <div id="main-scroll-area" className="flex-[3] flex flex-col overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300">
           <Header />
           <Hero />
           <Features />
@@ -19,6 +18,5 @@ export function LandingPage() {
           <CTA />
         </div>
       </div>
-    </div>
   );
 }

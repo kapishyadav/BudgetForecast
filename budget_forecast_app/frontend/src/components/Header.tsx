@@ -1,8 +1,40 @@
 import { Settings, Plus, LogIn, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 export function Header() {
   const navigate = useNavigate();
+
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    // Find the specific div we gave an ID to in Step 1
+    const scrollContainer = document.getElementById('main-scroll-area');
+
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      const currentScrollY = scrollContainer.scrollTop;
+
+      // If scrolling DOWN and we are past the top 50px, hide the header
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        setIsVisible(false);
+      }
+      // If scrolling UP, show the header again
+      else if (currentScrollY < lastScrollY) {
+        setIsVisible(true);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleScroll);
+    };
+  }, [lastScrollY]);
 
   // Check if the user is logged in by looking for the token
   const isAuthenticated = localStorage.getItem('access_token') !== null;
@@ -21,13 +53,17 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 pt-4 pb-2" style={{
-      transition: 'var(--transition)'
-    }}>
-      {/* Added the exact same container classes here as your Hero component
-        to guarantee perfect edge-to-edge alignment.
+    <header
+      className={`sticky top-0 z-50 pt-8 pb-4 bg-[#F5F1EB] transition-transform duration-300 ease-in-out ${
+        isVisible ? 'translate-y-0' : '-translate-y-full'
+      }`}
+    >
+      {/*
+        REMOVED max-w-7xl and mx-auto.
+        Now it spans 100% of the available space next to the sidebar.
+        Adjust the px-8 (horizontal padding) if you want it closer/further from the edges.
       */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      <div className="w-full px-8">
         <div className="flex justify-between items-center mb-6">
 
           {/* Titles */}

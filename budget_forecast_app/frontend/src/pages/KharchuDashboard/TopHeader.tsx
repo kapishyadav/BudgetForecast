@@ -23,14 +23,14 @@ export function TopHeader() {
     <div className="flex justify-between items-start mb-6">
 
       {/* Title Section */}
-      <div>
-        <h1 className="text-4xl font-semibold text-[#1A1A1A] tracking-tight mb-1">
-          KHARCHU
-        </h1>
-        <p className="text-lg text-gray-600">
-          Interactive Budget Forecasting Dashboard
-        </p>
-      </div>
+      <div className="-mt-0">
+      <h1 className="text-4xl font-semibold text-[#1A1A1A] tracking-tight mb-1">
+        KHARCHU
+      </h1>
+      <p className="text-lg text-gray-600">
+        Interactive Budget Forecasting Dashboard
+      </p>
+    </div>
 
       {/* Action Buttons */}
       <div className="flex items-center space-x-3">

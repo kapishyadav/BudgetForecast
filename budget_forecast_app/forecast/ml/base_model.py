@@ -13,7 +13,7 @@ class BaseForecaster(ABC):
         gran_str = granularity.value if hasattr(granularity, 'value') else str(granularity).lower()
         self.is_daily = gran_str == 'daily'
         self.freq = 'D' if self.is_daily else 'MS'
-        self.periods = kwargs.get('periods', 30 if self.is_daily else 12)
+        self.periods = kwargs.get('periods', 90 if self.is_daily else 24)
 
     def _standardize_and_aggregate(self, df: pd.DataFrame) -> pd.DataFrame:
         """Handles date extraction and period aggregation (SRP)"""

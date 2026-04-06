@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Play, UploadCloud, Settings2 } from 'lucide-react';
 import { LeftSidebar } from '../KharchuDashboard/LeftSidebar';
+import { RightSidebar } from '../KharchuDashboard/RightSidebar';
 import { TopHeader } from '../KharchuDashboard/TopHeader';
 import { TabNavigation } from '../KharchuDashboard/TabNavigation';
 
@@ -218,13 +219,10 @@ export function CustomScenarioPage() {
 
   return (
     // Outer canvas: bg-bg-color
-    <div className="min-h-screen bg-bg-color p-4 flex justify-center items-center transition-colors duration-300">
-
-      {/* Floating Window: bg-background with border-border */}
-      <div className="bg-background rounded-[40px] shadow-2xl w-full max-w-[1600px] h-[95vh] flex overflow-hidden border border-border transition-colors duration-300">
+    <div className="h-screen w-screen bg-background flex overflow-hidden transition-colors duration-300">
         <LeftSidebar />
 
-        <div className="flex-1 flex flex-col py-8 px-8 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 flex flex-col py-8 px-2 overflow-hidden">
           <TopHeader />
           <TabNavigation
             activeFilters={activeFilters}
@@ -320,7 +318,10 @@ export function CustomScenarioPage() {
             </div>
           </div>
         </div>
-      </div>
+        {/* Right Sidebar Wrapper */}
+        <div className="py-8 pr-8 pl-4 border-l border-border transition-colors duration-300">
+          <RightSidebar />
+        </div>
     </div>
   );
 }

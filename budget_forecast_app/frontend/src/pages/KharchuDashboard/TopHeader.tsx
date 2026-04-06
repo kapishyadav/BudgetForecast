@@ -23,16 +23,16 @@ export function TopHeader() {
   };
 
   return (
-    <div className="flex justify-between items-start mb-6 transition-colors">
+    <div className="flex justify-between items-start mb-6 transition-colors duration-300">
 
       {/* Title Section */}
       <div className="-mt-0">
-        {/* Added dark:text-white */}
-        <h1 className="text-4xl font-semibold text-[#1A1A1A] dark:text-white tracking-tight mb-1 transition-colors">
+        {/* Replaced text-[#1A1A1A] and dark:text-white with text-foreground */}
+        <h1 className="text-4xl font-semibold text-foreground tracking-tight mb-1 transition-colors duration-300">
           KHARCHU
         </h1>
-        {/* Added dark:text-gray-400 */}
-        <p className="text-lg text-gray-600 dark:text-gray-400 transition-colors">
+        {/* Replaced text-gray-600 and dark:text-gray-400 with text-muted-foreground */}
+        <p className="text-lg text-muted-foreground transition-colors duration-300">
           Interactive Budget Forecasting Dashboard
         </p>
       </div>
@@ -40,35 +40,35 @@ export function TopHeader() {
       {/* Action Buttons */}
       <div className="flex items-center space-x-3">
 
-        {/* NEW: Dynamic Dark Mode Toggle */}
+        {/* Dynamic Dark Mode Toggle: Replaced hardcoded backgrounds with bg-card and border-border */}
         <button
           onClick={toggleTheme}
-          className="p-3 bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer border border-transparent dark:border-gray-700"
+          className="p-3 bg-card text-foreground rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer border border-border"
           aria-label="Toggle Dark Mode"
         >
           {theme === 'dark' ? (
-            <Sun size={20} className="text-yellow-500" />
+            <Sun size={20} className="text-foreground transition-colors" />
           ) : (
-            <Moon size={20} className="text-gray-600" />
+            <Moon size={20} className="text-foreground transition-colors" />
           )}
         </button>
 
-        {/* Upload Button: Matched to landing page dark mode styling */}
+        {/* Upload Button: Uses primary theme variables for automatic black/white flip */}
         <Link
           to="/upload"
-          className="flex items-center space-x-2 bg-[#1A1A1A] dark:bg-blue-600 text-white px-6 py-3 rounded-2xl hover:bg-black dark:hover:bg-blue-700 transition-colors font-medium cursor-pointer"
+          className="flex items-center space-x-2 bg-primary text-primary-foreground px-6 py-3 rounded-2xl hover:opacity-90 transition-opacity font-medium cursor-pointer shadow-sm"
         >
           <Plus size={18} />
           <span>Upload a New File</span>
         </Link>
 
-        {/* Dynamic Auth Button */}
+        {/* Dynamic Auth Button: Unified using bg-card and border-border */}
         <button
           onClick={handleAuthAction}
-          className={`flex items-center space-x-2 px-6 py-3 rounded-2xl transition-colors font-medium cursor-pointer shadow-sm border ${
+          className={`flex items-center space-x-2 px-6 py-3 rounded-2xl transition-all font-medium cursor-pointer shadow-sm border border-border ${
             isAuthenticated
-              ? 'bg-red-50 text-red-600 hover:bg-red-100 border-red-100 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800' // Logged In Style (Dark mode supported)
-              : 'bg-white text-[#1A1A1A] hover:bg-gray-50 border-gray-200 dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700' // Logged Out Style (Dark mode supported)
+              ? 'bg-card text-red-500 hover:bg-muted'
+              : 'bg-card text-foreground hover:bg-muted'
           }`}
         >
           {isAuthenticated ? (

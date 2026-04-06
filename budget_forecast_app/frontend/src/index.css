@@ -61,7 +61,7 @@
     --light-accent: #EAFF52;  /* Your lime green */
     --secondary: #d8c3a5;
     --muted: #eae6e0;         /* Disabled states, subtle backgrounds */
-    --border: #d8c3a5;
+    --border: #f7f3ee;
     --ring: #a47148;
 
     /* --- 4. UTILITIES --- */
@@ -72,9 +72,9 @@
   .dark {
   /* --- 1. BACKGROUNDS & SURFACES --- */
   --bg-color: #09090B;      /* Deepest zinc for the main dashboard canvas */
-  --background: #09090B;
+  --background: #181818;
   --sidebar: #121214;       /* Slightly elevated to separate navigation */
-  --card: #18181B;          /* Elevated surface for metric cards & upload box */
+  --card: #2E2E2E;          /* Elevated surface for metric cards & upload box */
   --popover: #18181B;       /* Matches card elevation for dropdowns */
 
   /* --- 2. TEXT & FOREGROUNDS --- */
@@ -88,7 +88,7 @@
   --primary: #FAFAFA;       /* Inverts main action buttons to pure white */
   --primary-foreground: #09090B; /* Dark text inside the white primary buttons */
 
-  --light-accent: #EAFF52;  /* RETAINED: The lime green becomes the star of the UI */
+  --light-accent: #AFCC1D;  /* RETAINED: The lime green becomes the star of the UI */
   --accent: #27272A;        /* Cool gray for hover states and subtle highlights */
   --secondary: #27272A;
   --muted: #27272A;         /* Neutral background for disabled states */

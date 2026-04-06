@@ -26,7 +26,7 @@ export function Hero() {
 
           {/* Main Heading - text-center is key */}
           <h1 className="text-5xl md:text-7xl font-bold text-[#1A1A1A] dark:text-white tracking-tight mb-6 leading-[1.1] text-center w-full transition-colors">
-            Keep Your Cloud <span className="text-[#7E6363] dark:text-light-accent transition-colors">Kharchu</span> <br className="hidden md:block" />
+            Keep Your Cloud <span className="text-[#826363] dark:text-light-accent transition-colors">Kharchu</span> <br className="hidden md:block" />
             Under Control
           </h1>
 

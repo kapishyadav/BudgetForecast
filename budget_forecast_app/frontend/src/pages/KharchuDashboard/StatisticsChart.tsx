@@ -26,17 +26,20 @@ const formatYAxis = (value: number) => {
   return `$${value}`;
 };
 
+// 1. Tooltip Theme Fixed
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border-2 border-[#1A1A1A] rounded-xl p-4 shadow-xl z-50">
-        <p className="font-bold text-[#1A1A1A] mb-2">{label}</p>
+      <div className="bg-card border border-border rounded-xl p-4 shadow-xl z-50 transition-colors duration-300">
+        <p className="font-bold text-foreground mb-2 transition-colors duration-300">{label}</p>
         {payload.map((entry: any, index: number) => {
           if (entry.dataKey === 'confidenceBand') return null;
+
+          // Note: entry.color comes from the Line stroke prop, which we dynamically set below!
           return (
             <p key={index} className="text-sm flex justify-between space-x-4" style={{ color: entry.color }}>
               <span className="font-semibold">{entry.name}:</span>
-              <span>${Math.round(entry.value || 0).toLocaleString()}</span>
+              <span className="text-foreground transition-colors duration-300">${Math.round(entry.value || 0).toLocaleString()}</span>
             </p>
           );
         })}
@@ -48,7 +51,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export function StatisticsChart({ forecast = [], historical = [], granularity = 'monthly' }: ChartProps) {
 
-  // Safely parse data
   const safeForecast = typeof forecast === 'string' ? JSON.parse(forecast) : forecast;
   const safeHistorical = typeof historical === 'string' ? JSON.parse(historical) : historical;
 
@@ -58,7 +60,6 @@ export function StatisticsChart({ forecast = [], historical = [], granularity = 
   const formattedData: any[] = [];
   let splitDateName = "";
 
-  // ---  Dynamic Date Formatter ---
   const formatDateKey = (ds: string) => {
     const date = new Date(ds);
     if (granularity === 'daily') {
@@ -71,21 +72,19 @@ export function StatisticsChart({ forecast = [], historical = [], granularity = 
     return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   };
 
-  // Format Historical
   historicalArray.forEach((item: any) => {
     if (!item.ds) return;
     const dateString = formatDateKey(item.ds);
 
     formattedData.push({
       name: dateString,
-      actual: Number(item.y) || 0, // Force to be a number
+      actual: Number(item.y) || 0,
       predicted: null,
       confidenceBand: null,
     });
     splitDateName = dateString;
   });
 
-  // Format Forecast
   forecastArray.forEach((item: any) => {
     if (!item.ds || !item.yhat) return;
     const dateString = formatDateKey(item.ds);
@@ -104,32 +103,38 @@ export function StatisticsChart({ forecast = [], historical = [], granularity = 
     }
   });
 
-  // Show a loading/empty state if data isn't mapped properly
+  // 2. Empty State Theme Fixed
   if (formattedData.length === 0) {
     return (
-      <div className="bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 flex-1 flex items-center justify-center min-h-[400px]">
-        <p className="text-gray-400 font-medium">Waiting for forecast data...</p>
+      <div className="bg-card rounded-[24px] p-6 shadow-sm border border-border flex-1 flex items-center justify-center min-h-[400px] transition-colors duration-300">
+        <p className="text-muted-foreground font-medium transition-colors duration-300">Waiting for forecast data...</p>
       </div>
     );
   }
 
+  // 3. Main Chart Theme Fixed
   return (
-    <div className="bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 flex-1 flex flex-col">
+    <div className="bg-card rounded-[24px] p-6 shadow-sm border border-border flex-1 flex flex-col transition-colors duration-300">
+
+      {/* Chart Header & Legend */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center space-x-6 w-full">
           <div className="flex items-center space-x-2">
-            <span className="p-2 bg-gray-50 rounded-xl"><BarChart2 size={20} className="text-gray-500"/></span>
-            <h2 className="text-xl font-bold text-[#1A1A1A]">Forecast Overview</h2>
+            <span className="p-2 bg-muted rounded-xl transition-colors duration-300">
+              <BarChart2 size={20} className="text-muted-foreground transition-colors duration-300"/>
+            </span>
+            <h2 className="text-xl font-bold text-foreground transition-colors duration-300">Forecast Overview</h2>
           </div>
 
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#1A1A1A]"></div>
-              <span className="text-sm font-medium text-gray-600">Historical</span>
+              <div className="w-2.5 h-2.5 rounded-full bg-foreground transition-colors duration-300"></div>
+              <span className="text-sm font-medium text-muted-foreground transition-colors duration-300">Historical</span>
             </div>
             <div className="flex items-center space-x-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#C6D82F]"></div>
-              <span className="text-sm font-medium text-gray-600">Predicted</span>
+              {/* Uses your lime green accent natively */}
+              <div className="w-2.5 h-2.5 rounded-full bg-light-accent transition-colors duration-300"></div>
+              <span className="text-sm font-medium text-muted-foreground transition-colors duration-300">Predicted</span>
             </div>
           </div>
         </div>
@@ -138,34 +143,61 @@ export function StatisticsChart({ forecast = [], historical = [], granularity = 
       <div style={{ width: '100%', height: 400, position: 'relative' }}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={formattedData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+
+            {/* 4. Chart SVG Gradients & Definitions */}
             <defs>
               <pattern id="diagonalHatch" width="8" height="8" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-                <line x1="0" y1="0" x2="0" y2="8" stroke="#f9fafb" strokeWidth="4" />
+                {/* Changed stroke to var(--muted) so the shading matches the theme */}
+                <line x1="0" y1="0" x2="0" y2="8" stroke="var(--muted)" strokeWidth="4" />
               </pattern>
               <linearGradient id="colorBand" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#C6D82F" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#C6D82F" stopOpacity={0.05}/>
+                <stop offset="5%" stopColor="var(--light-accent)" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="var(--light-accent)" stopOpacity={0.05}/>
               </linearGradient>
             </defs>
 
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+            {/* 5. Chart Grid & Axes using CSS Variables */}
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
 
-            <XAxis dataKey="name" minTickGap={40} axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} tickFormatter={formatYAxis} dx={-10} />
+            <XAxis dataKey="name" minTickGap={40} axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} dy={10} />
+            <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} tickFormatter={formatYAxis} dx={-10} />
 
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#9CA3AF', strokeWidth: 1, strokeDasharray: '5 5' }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--muted-foreground)', strokeWidth: 1, strokeDasharray: '5 5' }} />
 
             {splitDateName && (
               <>
                 <ReferenceArea x1={splitDateName} fill="url(#diagonalHatch)" fillOpacity={1} />
-                <ReferenceLine x={splitDateName} stroke="#1A1A1A" strokeWidth={1} strokeDasharray="3 3" />
+                <ReferenceLine x={splitDateName} stroke="var(--foreground)" strokeWidth={1} strokeDasharray="3 3" />
               </>
             )}
 
             <Area type="monotone" dataKey="confidenceBand" stroke="none" fill="url(#colorBand)" />
 
-            <Line type="monotone" dataKey="actual" stroke="#1A1A1A" strokeWidth={3} dot={{ r: 3, fill: '#1A1A1A', strokeWidth: 2, stroke: 'white' }} activeDot={{ r: 6, fill: '#1A1A1A', strokeWidth: 0 }} name="Actual" connectNulls />
-            <Line type="monotone" dataKey="predicted" stroke="#C6D82F" strokeWidth={3} strokeDasharray="5 5" dot={{ r: 3, fill: '#C6D82F', strokeWidth: 2, stroke: 'white' }} activeDot={{ r: 6, fill: '#C6D82F', strokeWidth: 0 }} name="Forecast" connectNulls />
+            {/* 6. The Chart Lines! */}
+            {/* Historical Line: Uses var(--foreground), with dots that match the card background to punch holes out! */}
+            <Line
+              type="monotone"
+              dataKey="actual"
+              stroke="var(--foreground)"
+              strokeWidth={3}
+              dot={{ r: 3, fill: 'var(--foreground)', strokeWidth: 2, stroke: 'var(--card)' }}
+              activeDot={{ r: 6, fill: 'var(--foreground)', strokeWidth: 0 }}
+              name="Actual"
+              connectNulls
+            />
+
+            {/* Forecast Line: Uses var(--light-accent) */}
+            <Line
+              type="monotone"
+              dataKey="predicted"
+              stroke="var(--light-accent)"
+              strokeWidth={3}
+              strokeDasharray="5 5"
+              dot={{ r: 3, fill: 'var(--light-accent)', strokeWidth: 2, stroke: 'var(--card)' }}
+              activeDot={{ r: 6, fill: 'var(--light-accent)', strokeWidth: 0 }}
+              name="Forecast"
+              connectNulls
+            />
 
           </ComposedChart>
         </ResponsiveContainer>

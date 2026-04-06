@@ -4,8 +4,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 interface MetricCardsProps {
   metrics: {
     total_forecasted_spend?: number;
-    average_monthly_spend?: number; // Added for TS
-    forecast_period?: string;       // Added for TS
+    average_monthly_spend?: number;
+    forecast_period?: string;
     mape?: number;
     rmse?: number;
     mse?: number;
@@ -17,75 +17,64 @@ interface MetricCardsProps {
 
 export function MetricCards({ metrics, isLoading, datasetId }: MetricCardsProps) {
 
-  // A helper to format large numbers nicely (e.g. $12.45M)
   const formatCurrency = (val: number) => {
     if (!val) return '$0';
     if (val >= 1000000) return `$${(val / 1000000).toFixed(2)}M`;
     return `$${val.toLocaleString()}`;
   };
 
-  // If loading, render the exact same structure but with pulse animations
+  // Loading State - Updated to use bg-card, border-border, and bg-muted
   if (isLoading || !metrics) {
     return (
       <div className="flex flex-nowrap overflow-x-auto gap-6 pb-4 w-full custom-scrollbar mb-8 animate-pulse">
-        {/* Placeholder Card 1 */}
-        <div className="min-w-[320px] flex-1 bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 h-[220px] shrink-0">
-          <div className="h-6 bg-gray-200 rounded-full w-1/3 mb-10"></div>
-          <div className="h-10 bg-gray-200 rounded w-1/2 mb-4"></div>
-          <div className="h-10 bg-gray-100 rounded w-full"></div>
+        <div className="min-w-[320px] flex-1 bg-card rounded-[24px] p-6 shadow-sm border border-border h-[220px] shrink-0 transition-colors duration-300">
+          <div className="h-6 bg-muted rounded-full w-1/3 mb-10 transition-colors duration-300"></div>
+          <div className="h-10 bg-muted rounded w-1/2 mb-4 transition-colors duration-300"></div>
+          <div className="h-10 bg-muted rounded w-full transition-colors duration-300"></div>
         </div>
-        {/* Placeholder Card 2 */}
-        <div className="min-w-[320px] flex-1 bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 h-[220px] shrink-0">
-          <div className="h-6 bg-gray-200 rounded-full w-1/3 mb-10"></div>
-          <div className="h-10 bg-gray-200 rounded w-1/2 mb-4"></div>
-          <div className="h-10 bg-gray-100 rounded w-full"></div>
+        <div className="min-w-[320px] flex-1 bg-card rounded-[24px] p-6 shadow-sm border border-border h-[220px] shrink-0 transition-colors duration-300">
+          <div className="h-6 bg-muted rounded-full w-1/3 mb-10 transition-colors duration-300"></div>
+          <div className="h-10 bg-muted rounded w-1/2 mb-4 transition-colors duration-300"></div>
+          <div className="h-10 bg-muted rounded w-full transition-colors duration-300"></div>
         </div>
-        {/* The Promo card doesn't need to load, it's static */}
         <PromoCard datasetId={datasetId} />
       </div>
     );
   }
 
-  // --- Calculations for Card 1: Total Forecasted Spend ---
-  // We need a dummy "budget" to show the progress bar working.
-  // Let's assume the budget is 20% higher than whatever Prophet predicted.
-  console.log("Current Metrics Data:", metrics);
+  // Calculations
   const totalSpend = metrics.total_forecasted_spend || 0;
   const dummyBudget = totalSpend * 1.2;
   const spendPercentage = dummyBudget > 0 ? (totalSpend / dummyBudget) * 100 : 0;
 
   const [searchParams] = useSearchParams();
-  const urlModel = searchParams.get('model'); // returns "xgboost"
+  const urlModel = searchParams.get('model');
 
   const modelDisplayNames: Record<string, string> = {
     xgboost: 'XGBoost',
     prophet: 'Prophet',
     catboost: 'CatBoost',
   };
-  // Safely grab the formatted name, defaulting to 'Model' if it's an unknown string
   const activeModelName = urlModel
     ? (modelDisplayNames[urlModel.toLowerCase()] || 'Model')
     : 'Prophet';
 
-  // Calculate how many of the 8 segments should be fully black
   const segmentsFilled = Math.floor((spendPercentage / 100) * 8);
 
-  // --- Calculations for Card 2: Model Accuracy (MAPE) ---
-  // MAPE is an error rate. So Accuracy = 100% - Error%.
   const mapeError = metrics.mape ? metrics.mape * 100 : 0;
   const accuracyPercentage = Math.max(0, 100 - mapeError);
-
-  // Calculate segments for Accuracy (out of 8)
   const accuracySegmentsFilled = Math.floor((accuracyPercentage / 100) * 8);
 
   return (
     <div className="flex flex-nowrap overflow-x-auto gap-6 pb-4 w-full custom-scrollbar mb-8">
 
       {/* Card 1: Total Forecasted Spend */}
-      <div className="min-w-[320px] flex-1 bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 flex flex-col justify-between shrink-0">
+      {/* Replaced bg-white and border-gray-50 with bg-card and border-border */}
+      <div className="min-w-[320px] flex-1 bg-card rounded-[24px] p-6 shadow-sm border border-border flex flex-col justify-between shrink-0 transition-colors duration-300">
         <div className="flex justify-between items-start mb-6">
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-[#F5F1EB]/50 text-gray-600 rounded-full text-sm font-medium border border-gray-100">
+              {/* Replaced bg-[#F5F1EB] with bg-muted */}
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-sm font-medium border border-border transition-colors duration-300">
                 <Globe size={16} />
                 <span>Predicted Future Spend</span>
               </div>
@@ -94,39 +83,34 @@ export function MetricCards({ metrics, isLoading, datasetId }: MetricCardsProps)
 
         <div>
           <div className="flex justify-between items-center mb-1">
-
-            {/* Left Side: Period Pill */}
             {metrics?.forecast_period ? (
-              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-50 text-gray-400 rounded-full text-[10px] font-bold uppercase tracking-wider border border-gray-100">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-muted text-muted-foreground rounded-full text-[10px] font-bold uppercase tracking-wider border border-border transition-colors duration-300">
                 <Clock size={10} />
                 <span>{metrics.forecast_period}</span>
               </div>
             ) : (
-              /* Add an empty div as a fallback so 'justify-between' doesn't push the percentage to the left if the period is missing */
               <div></div>
             )}
-
-            {/* Right Side: Percentage Pill */}
-            <span className="text-sm font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
+            <span className="text-sm font-semibold text-foreground bg-muted border border-border px-2 py-0.5 rounded-full transition-colors duration-300">
               {spendPercentage.toFixed(1)}%
             </span>
-
           </div>
-          <div className="text-4xl font-bold text-[#1A1A1A] mb-1 tracking-tight">
+          {/* Replaced text-[#1A1A1A] with text-foreground */}
+          <div className="text-4xl font-bold text-foreground mb-1 tracking-tight transition-colors duration-300">
             {formatCurrency(totalSpend)}
           </div>
-          <div className="text-sm text-gray-500 mb-6">/ {formatCurrency(dummyBudget)} Budget</div>
+          <div className="text-sm text-muted-foreground mb-6 transition-colors duration-300">/ {formatCurrency(dummyBudget)} Budget</div>
 
           <div className="flex space-x-1.5 h-10">
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className={`flex-1 rounded-full ${
+                className={`flex-1 rounded-full transition-colors duration-300 ${
                   i < segmentsFilled
-                    ? 'bg-[#1A1A1A]'
+                    ? 'bg-foreground'
                     : i === segmentsFilled
-                      ? 'bg-[#1A1A1A] opacity-50' // Partial fill for the current segment
-                      : 'bg-transparent border-2 border-dashed border-gray-300'
+                      ? 'bg-foreground opacity-50'
+                      : 'bg-transparent border-2 border-dashed border-border'
                 }`}
               />
             ))}
@@ -135,10 +119,10 @@ export function MetricCards({ metrics, isLoading, datasetId }: MetricCardsProps)
       </div>
 
       {/* Card 2: Average Monthly Spend */}
-        <div className="min-w-[320px] flex-1 bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 flex flex-col justify-between shrink-0">
+        <div className="min-w-[320px] flex-1 bg-card rounded-[24px] p-6 shadow-sm border border-border flex flex-col justify-between shrink-0 transition-colors duration-300">
           <div className="flex justify-between items-start mb-6">
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 text-gray-500 rounded-full text-sm font-medium border border-gray-100">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-sm font-medium border border-border transition-colors duration-300">
                   <TrendingUp size={16} />
                   <span>Average Monthly Spend</span>
                 </div>
@@ -147,31 +131,26 @@ export function MetricCards({ metrics, isLoading, datasetId }: MetricCardsProps)
 
           <div>
             <div className="flex justify-end mb-1">
-              {/* Moved the percentage here to match Card 1 perfectly */}
-              <span className="text-sm font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
+              <span className="text-sm font-semibold text-foreground bg-muted border border-border px-2 py-0.5 rounded-full transition-colors duration-300">
                 {spendPercentage.toFixed(1)}%
               </span>
             </div>
-
-            <div className="text-4xl font-bold text-[#1A1A1A] mb-1 tracking-tight">
+            <div className="text-4xl font-bold text-foreground mb-1 tracking-tight transition-colors duration-300">
               {formatCurrency(metrics?.average_monthly_spend || 0)}
             </div>
-
-            {/* Moved the Limit down here, mimicking the "/ Budget" placement of Card 1 */}
-            <div className="text-sm text-gray-500 mb-6">
+            <div className="text-sm text-muted-foreground mb-6 transition-colors duration-300">
               / {formatCurrency((metrics?.average_monthly_spend || 0) * 1.2)} Limit
             </div>
-
             <div className="flex space-x-1.5 h-10">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className={`flex-1 rounded-full ${
+                  className={`flex-1 rounded-full transition-colors duration-300 ${
                     i < segmentsFilled
-                      ? 'bg-[#1A1A1A]'
+                      ? 'bg-foreground'
                       : i === segmentsFilled
-                        ? 'bg-[#1A1A1A] opacity-50'
-                        : 'bg-transparent border-2 border-dashed border-gray-300'
+                        ? 'bg-foreground opacity-50'
+                        : 'bg-transparent border-2 border-dashed border-border'
                   }`}
                 />
               ))}
@@ -179,40 +158,36 @@ export function MetricCards({ metrics, isLoading, datasetId }: MetricCardsProps)
           </div>
         </div>
 
-
-
       {/* Card 3: Model Accuracy */}
-      <div className="min-w-[320px] flex-1 bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 flex flex-col justify-between shrink-0">
+      <div className="min-w-[320px] flex-1 bg-card rounded-[24px] p-6 shadow-sm border border-border flex flex-col justify-between shrink-0 transition-colors duration-300">
         <div className="flex justify-between items-start mb-6">
-          <div className="flex items-center space-x-2 text-gray-500 font-medium text-sm bg-gray-50 px-3 py-1.5 rounded-full">
+          <div className="flex items-center space-x-2 text-muted-foreground font-medium text-sm bg-muted border border-border px-3 py-1.5 rounded-full transition-colors duration-300">
             <RefreshCcw size={16} />
             <span>{activeModelName} Confidence</span>
           </div>
-          <button className="text-gray-400 hover:text-gray-800">
+          <button className="text-muted-foreground hover:text-foreground transition-colors duration-300">
             <MoreVertical size={20} />
           </button>
         </div>
 
         <div>
           <div className="flex justify-end mb-1">
-            {/* Show the actual Error Margin (RMSE) up top */}
-            <span className="text-sm font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
+            <span className="text-sm font-semibold text-foreground bg-muted border border-border px-2 py-0.5 rounded-full transition-colors duration-300">
               ± {formatCurrency(metrics.rmse || 0)}
             </span>
           </div>
-          <div className="text-4xl font-bold text-[#1A1A1A] mb-1 tracking-tight">
+          <div className="text-4xl font-bold text-foreground mb-1 tracking-tight transition-colors duration-300">
             {accuracyPercentage.toFixed(1)}%
           </div>
-          <div className="text-sm text-gray-500 mb-6">Overall Model Accuracy</div>
-
+          <div className="text-sm text-muted-foreground mb-6 transition-colors duration-300">Overall Model Accuracy</div>
           <div className="flex space-x-1.5 h-10">
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className={`flex-1 rounded-full ${
+                className={`flex-1 rounded-full transition-colors duration-300 ${
                   i < accuracySegmentsFilled
-                    ? 'bg-[#1A1A1A]'
-                    : 'bg-transparent border-2 border-dashed border-gray-300'
+                    ? 'bg-foreground'
+                    : 'bg-transparent border-2 border-dashed border-border'
                 }`}
               />
             ))}
@@ -227,42 +202,42 @@ export function MetricCards({ metrics, isLoading, datasetId }: MetricCardsProps)
   );
 }
 
-// Extracted Promo card to keep the main component clean
+// Extracted Promo card
 function PromoCard({ datasetId }: { datasetId: string | null }) {
   const navigate = useNavigate();
 
   const handleNavigate = () => {
-    // If the backend hasn't loaded the real dataset ID yet, stop them.
     if (!datasetId) {
       alert("Still loading dataset context. Please wait a moment!");
       return;
     }
-    // Safely attach the REAL dataset ID to the URL
     navigate(`/custom-scenario?datasetId=${datasetId}`);
   };
 
   return (
-    <div className="min-w-[320px] flex-1 shrink-0 bg-[#EAFF52] dark:bg-[#d9ed42] text-[#1A1A1A] rounded-[24px] p-6 shadow-md text-gray-500 justify-between relative overflow-hidden group z-0">
+    // Uses bg-light-accent and forces text to be dark (#09090B) to maintain contrast against the neon
+    <div className="min-w-[320px] flex-1 shrink-0 bg-light-accent text-[#09090B] rounded-[24px] p-6 shadow-md justify-between relative overflow-hidden group z-0 transition-colors duration-300 border border-light-accent">
       <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-blue-500/30 transition-colors"></div>
       <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl -ml-10 -mb-10 group-hover:bg-purple-500/30 transition-colors"></div>
 
       <div className="relative z-10 h-full flex flex-col">
-        <h3 className="text-2xl font-semibold leading-tight mb-4 pr-12 text-[#1A1A1A]">
+        <h3 className="text-2xl font-semibold leading-tight mb-4 pr-12 text-[#09090B]">
           Optimize with AI Forecasting Scenarios
         </h3>
         <div className="mt-auto">
+          {/* Button uses bg-card and text-card-foreground */}
           <button
             onClick={handleNavigate}
-            className="bg-white text-[#1A1A1A] px-6 py-3 rounded-xl font-medium flex items-center space-x-2 hover:bg-gray-100 transition-colors z-20 relative cursor-pointer"
+            className="bg-card text-card-foreground px-6 py-3 rounded-xl font-medium flex items-center space-x-2 hover:bg-muted transition-colors z-20 relative cursor-pointer shadow-sm border border-border"
           >
-            <Sparkles size={16} className="text-blue-600" />
+            <Sparkles size={16} className="text-blue-500" />
             <span>Run New Scenario</span>
           </button>
         </div>
       </div>
-      <div className="absolute top-6 right-6 z-10 text-[#1A1A1A]/20 pointer-events-none">
-        <div className="w-24 h-24 border border-[#1A1A1A]/20 rounded-full flex items-center justify-center">
-          <div className="w-16 h-16 border border-[#1A1A1A]/30 rounded-full"></div>
+      <div className="absolute top-6 right-6 z-10 text-[#09090B]/20 pointer-events-none">
+        <div className="w-24 h-24 border border-[#09090B]/20 rounded-full flex items-center justify-center">
+          <div className="w-16 h-16 border border-[#09090B]/30 rounded-full"></div>
         </div>
       </div>
     </div>

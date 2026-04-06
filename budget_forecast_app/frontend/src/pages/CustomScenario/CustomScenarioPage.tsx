@@ -319,9 +319,7 @@ export function CustomScenarioPage() {
           </div>
         </div>
         {/* Right Sidebar Wrapper */}
-        <div className="py-8 pr-8 pl-4 border-l border-border transition-colors duration-300">
           <RightSidebar />
-        </div>
     </div>
   );
 }

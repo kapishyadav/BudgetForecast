@@ -36,29 +36,30 @@ export function ForecastDemo() {
 
       {/* Header */}
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold text-[#1A1A1A] tracking-tight mb-3">
+        <h2 className="text-3xl font-bold text-foreground tracking-tight mb-3 transition-colors">
           Forecast Preview
         </h2>
-        <p className="text-gray-500 text-sm max-w-xl mx-auto">
+        <p className="text-muted-foreground text-sm max-w-xl mx-auto transition-colors">
           Visualize historical spending alongside predicted future trends.
         </p>
       </div>
 
       {/* Main Card */}
-      <div className="bg-white rounded-[24px] p-8 shadow-sm border border-gray-50">
+      <div className="bg-card rounded-[24px] p-8 shadow-sm border border-border transition-colors">
 
         {/* Top Section */}
         <div className="mb-8 flex justify-between items-center flex-wrap gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-[#1A1A1A]">
+            <h3 className="text-lg font-semibold text-card-foreground transition-colors">
               AWS Budget Forecast - 2024
             </h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground transition-colors">
               Historical vs forecasted spending
             </p>
           </div>
 
-          <div className="text-sm font-semibold text-gray-400 bg-gray-50 px-4 py-2 rounded-full">
+          {/* Using your custom light-accent (Lime Green) for the badge! */}
+          <div className="text-sm font-semibold text-[#09090B] bg-light-accent px-4 py-2 rounded-full transition-colors">
             Real-time
           </div>
         </div>
@@ -68,49 +69,51 @@ export function ForecastDemo() {
           <AreaChart width={chartWidth} height={400} data={historicalData}>
             <defs>
               <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#1A1A1A" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#1A1A1A" stopOpacity={0.05} />
+                {/* Removed hsl(), using var() directly since your variables are hex codes */}
+                <stop offset="5%" stopColor="var(--foreground)" stopOpacity={0.4} />
+                <stop offset="95%" stopColor="var(--foreground)" stopOpacity={0.05} />
               </linearGradient>
               <linearGradient id="colorForecast" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#9CA3AF" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#9CA3AF" stopOpacity={0.05} />
+                <stop offset="5%" stopColor="var(--muted-foreground)" stopOpacity={0.4} />
+                <stop offset="95%" stopColor="var(--muted-foreground)" stopOpacity={0.05} />
               </linearGradient>
             </defs>
 
-            <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
-            <XAxis dataKey="month" stroke="#9CA3AF" />
-            <YAxis stroke="#9CA3AF" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis dataKey="month" stroke="var(--muted-foreground)" />
+            <YAxis stroke="var(--muted-foreground)" />
 
             <Tooltip
               contentStyle={{
-                backgroundColor: '#fff',
-                border: '1px solid #E5E7EB',
+                backgroundColor: 'var(--card)',
+                border: '1px solid var(--border)',
                 borderRadius: '12px',
+                color: 'var(--card-foreground)'
               }}
               formatter={(value: number) => `$${value}`}
             />
 
-            <Legend />
+            <Legend wrapperStyle={{ color: 'var(--foreground)' }} />
 
             <Area
               type="monotone"
               dataKey="actual"
-              stroke="#1A1A1A"
+              stroke="var(--foreground)"
               fill="url(#colorActual)"
               strokeWidth={2}
               name="Actual"
-              dot={{ r: 3 }}
+              dot={{ r: 3, fill: 'var(--background)', stroke: 'var(--foreground)', strokeWidth: 2 }}
             />
 
             <Area
               type="monotone"
               dataKey="forecast"
-              stroke="#9CA3AF"
+              stroke="var(--muted-foreground)"
               fill="url(#colorForecast)"
               strokeWidth={2}
               strokeDasharray="5 5"
               name="Forecast"
-              dot={{ r: 3 }}
+              dot={{ r: 3, fill: 'var(--background)', stroke: 'var(--muted-foreground)', strokeWidth: 2 }}
             />
           </AreaChart>
         </div>
@@ -118,38 +121,38 @@ export function ForecastDemo() {
         {/* Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
 
-          <div className="bg-gray-50 p-5 rounded-xl border border-gray-100">
-            <p className="text-xs font-semibold text-gray-500 mb-1 uppercase">
+          <div className="bg-muted p-5 rounded-xl border border-border transition-colors">
+            <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase transition-colors">
               Current Month
             </p>
-            <p className="text-xl font-bold text-[#1A1A1A]">
+            <p className="text-xl font-bold text-foreground transition-colors">
               $6,200
             </p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1 transition-colors">
               ↓ 5% vs last month
             </p>
           </div>
 
-          <div className="bg-gray-50 p-5 rounded-xl border border-gray-100">
-            <p className="text-xs font-semibold text-gray-500 mb-1 uppercase">
+          <div className="bg-muted p-5 rounded-xl border border-border transition-colors">
+            <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase transition-colors">
               Next Month
             </p>
-            <p className="text-xl font-bold text-[#1A1A1A]">
+            <p className="text-xl font-bold text-foreground transition-colors">
               $6,500
             </p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1 transition-colors">
               ↑ 4.8% predicted
             </p>
           </div>
 
-          <div className="bg-gray-50 p-5 rounded-xl border border-gray-100">
-            <p className="text-xs font-semibold text-gray-500 mb-1 uppercase">
+          <div className="bg-muted p-5 rounded-xl border border-border transition-colors">
+            <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase transition-colors">
               6-Month Forecast
             </p>
-            <p className="text-xl font-bold text-[#1A1A1A]">
+            <p className="text-xl font-bold text-foreground transition-colors">
               $7,600
             </p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1 transition-colors">
               95% confidence interval
             </p>
           </div>

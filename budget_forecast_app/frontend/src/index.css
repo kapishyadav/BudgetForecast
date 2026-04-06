@@ -1,19 +1,19 @@
 @import "tailwindcss";
+/*  Tells Tailwind v4 to use your React .dark class */
+@custom-variant dark (&:is(.dark *));
 
 /* ==========================================
-  TAILWIND V4 THEME MAPPING
-  ==========================================
-  This tells Tailwind to create utility classes (like bg-primary, text-muted, rounded-theme)
-  and point them directly to your dynamic CSS variables below.
-*/
+   TAILWIND V4 THEME MAPPING
+   ========================================== */
 @theme {
   --color-primary: var(--primary);
   --color-accent: var(--accent);
   --color-light-accent: var(--light-accent);
-  --color-bg-color: var(--bg-color);
 
+  --color-bg-color: var(--bg-color);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -24,161 +24,109 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
 
   --radius-theme: var(--radius);
 }
 
 /* ==========================================
-   BASE VARIABLES (LIGHT & DARK MODE)
-  ==========================================
-*/
+   MASTER COLOR PALETTE
+   ========================================== */
 @layer base {
   :root {
-    --bg-color: #F5F1EB;
-    --primary: #1A1A1A;
+    /* --- 1. BACKGROUNDS & SURFACES (Tweak these for layout testing) --- */
+    --bg-color: #F5F1EB;      /* Dashboard main canvas */
+    --background: #f7f3ee;    /* General app background */
+    --card: #ffffff;          /* Metric cards, upload box */
+    --popover: #ffffff;       /* Dropdowns, tooltips */
+    --sidebar: #f7f3ee;       /* Sidebar background */
+
+    /* --- 2. TEXT & FOREGROUNDS --- */
+    --foreground: #3b2f2f;    /* Main text */
+    --card-foreground: #3b2f2f;
+    --popover-foreground: #3b2f2f;
+    --muted-foreground: #6b5d5d;
+    --sidebar-foreground: #3b2f2f;
+
+    /* --- 3. BRAND & ACCENTS --- */
+    --primary: #1A1A1A;       /* Primary buttons (black) */
+    --primary-foreground: #f7f3ee; /* Text on primary buttons */
     --accent: #E5E0D8;
-    --light-accent: #EAFF52;
+    --light-accent: #EAFF52;  /* Your lime green */
+    --secondary: #d8c3a5;
+    --muted: #eae6e0;         /* Disabled states, subtle backgrounds */
+    --border: #d8c3a5;
+    --ring: #a47148;
+
+    /* --- 4. UTILITIES --- */
     --radius: 12px;
     --shadow: 4px 4px 0 var(--primary);
-    --transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    --background: #159d30;
-    --foreground: #3b2f2f;
-    --card: #fff;
-    --card-foreground: #3b2f2f;
-    --popover: #fff;
-    --popover-foreground: #3b2f2f;
-    --primary-foreground: #f7f3ee;
-    --secondary: #d8c3a5;
-    --secondary-foreground: #3b2f2f;
-    --muted: #eae6e0;
-    --muted-foreground: #6b5d5d;
-    --accent-foreground: #f7f3ee;
-    --destructive: #c43a3a;
-    --destructive-foreground: #fff;
-    --border: #d8c3a5;
-    --input: transparent;
-    --input-background: #fff;
-    --switch-background: #d8c3a5;
-    --font-weight-medium: 500;
-    --font-weight-normal: 400;
-    --ring: #a47148;
-    --chart-1: #a47148;
-    --chart-2: #8b5a3c;
-    --chart-3: #d8c3a5;
-    --chart-4: #6b5d5d;
-    --chart-5: #3b2f2f;
-    --sidebar: #f7f3ee;
-    --sidebar-foreground: #3b2f2f;
-    --sidebar-primary: #a47148;
-    --sidebar-primary-foreground: #f7f3ee;
-    --sidebar-accent: #d8c3a5;
-    --sidebar-accent-foreground: #3b2f2f;
-    --sidebar-border: #d8c3a5;
-    --sidebar-ring: #a47148;
   }
 
   .dark {
-    --bg-color: #2a2120;
-    --primary: #f7f3ee;
-    --accent: #a47148;
-    --light-accent: #6b5d5d;
-    --shadow: 8px 8px 0 var(--accent);
-    --background: #2a2120;
-    --foreground: #f7f3ee;
-    --card: #3b2f2f;
-    --card-foreground: #f7f3ee;
-    --popover: #3b2f2f;
-    --popover-foreground: #f7f3ee;
-    --primary-foreground: #2a2120;
-    --secondary: #6b5d5d;
-    --secondary-foreground: #f7f3ee;
-    --muted: #4a3d3d;
-    --muted-foreground: #d8c3a5;
-    --accent-foreground: #f7f3ee;
-    --destructive: #c43a3a;
-    --destructive-foreground: #fff;
-    --border: #6b5d5d;
-    --input: #3b2f2f;
-    --ring: #a47148;
-    --font-weight-medium: 500;
-    --font-weight-normal: 400;
-    --chart-1: #a47148;
-    --chart-2: #c89666;
-    --chart-3: #d8c3a5;
-    --chart-4: #8b5a3c;
-    --chart-5: #6b5d5d;
-    --sidebar: #2a2120;
-    --sidebar-foreground: #f7f3ee;
-    --sidebar-primary: #a47148;
-    --sidebar-primary-foreground: #f7f3ee;
-    --sidebar-accent: #3b2f2f;
-    --sidebar-accent-foreground: #f7f3ee;
-    --sidebar-border: #6b5d5d;
-    --sidebar-ring: #a47148;
+  /* --- 1. BACKGROUNDS & SURFACES --- */
+  --bg-color: #09090B;      /* Deepest zinc for the main dashboard canvas */
+  --background: #09090B;
+  --sidebar: #121214;       /* Slightly elevated to separate navigation */
+  --card: #18181B;          /* Elevated surface for metric cards & upload box */
+  --popover: #18181B;       /* Matches card elevation for dropdowns */
+
+  /* --- 2. TEXT & FOREGROUNDS --- */
+  --foreground: #FAFAFA;    /* Crisp, clean white for maximum readability */
+  --card-foreground: #FAFAFA;
+  --popover-foreground: #FAFAFA;
+  --sidebar-foreground: #FAFAFA;
+  --muted-foreground: #A1A1AA; /* Soft, cool gray for subtitles/secondary text */
+
+  /* --- 3. BRAND & ACCENTS --- */
+  --primary: #FAFAFA;       /* Inverts main action buttons to pure white */
+  --primary-foreground: #09090B; /* Dark text inside the white primary buttons */
+
+  --light-accent: #EAFF52;  /* RETAINED: The lime green becomes the star of the UI */
+  --accent: #27272A;        /* Cool gray for hover states and subtle highlights */
+  --secondary: #27272A;
+  --muted: #27272A;         /* Neutral background for disabled states */
+
+  --border: #27272A;        /* Clean, sharp borders that define cards without clutter */
+  --ring: #EAFF52;          /* Using the lime green for keyboard focus rings! */
+
+  /* --- 4. UTILITIES --- */
+  --shadow: 8px 8px 0 rgba(0, 0, 0, 0.7); /* Much darker, sharper shadow to maintain the brutalist edge */
+}
+}
+
+/* --- Base HTML Application --- */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
- /* --- Custom Disappearing Scrollbars --- */
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;  /* Slightly wider to make it easier to grab */
-  height: 8px;
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-/* 1. Default State: Completely Transparent */
+/* --- Custom Scrollbars --- */
+.custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: transparent;
   border-radius: 10px;
-  /* This creates a tiny invisible border so the scrollbar doesn't touch the very edge of the screen */
   border: 2px solid transparent;
   background-clip: padding-box;
 }
-
-/* 2. Container Hover State: Show the scrollbar */
-.custom-scrollbar:hover::-webkit-scrollbar-thumb {
-  background-color: #D1D5DB; /* Tailwind gray-300 */
-}
-
-/* 3. Thumb Hover State: Darken when they actually grab it */
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: #9CA3AF; /* Tailwind gray-400 */
-}
-
-/* For Firefox (Firefox doesn't support hover states on scrollbars, so we keep it thin and subtle) */
+.custom-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #D1D5DB; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: #9CA3AF; }
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
   transition: scrollbar-color 0.3s ease;
 }
-
-.custom-scrollbar:hover {
-  scrollbar-color: #D1D5DB transparent;
-}
-
-  html {
-    /* Safe fallback in case --font-size isn't defined yet */
-    font-size: var(--font-size, 16px);
-  }
-}
+.custom-scrollbar:hover { scrollbar-color: #D1D5DB transparent; }

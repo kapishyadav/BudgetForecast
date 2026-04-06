@@ -6,7 +6,7 @@ import { ForecastUpload } from './ForecastUpload'; // The component we just buil
 
 export function UploadPage() {
   return (
-    <div className="h-screen w-screen bg-[#F5F1EB] flex overflow-hidden">
+    <div className="h-screen w-screen bg-[#F5F1EB] dark:bg-gray-900 flex overflow-hidden">
 
         {/* Navigation Sidebar */}
         <LeftSidebar />
@@ -30,7 +30,7 @@ export function UploadPage() {
         </div>
 
         {/* Resources Sidebar */}
-        <div className="py-8 pr-8 pl-4 border-l border-gray-200/50 bg-[#F5F1EB]">
+        <div className="py-8 pr-8 pl-4 border-l border-gray-200/50 dark:border-gray-800 bg-[#F5F1EB] dark:bg-gray-900">
           <RightSidebar />
         </div>
 

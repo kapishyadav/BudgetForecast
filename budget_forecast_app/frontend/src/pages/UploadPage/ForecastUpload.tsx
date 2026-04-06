@@ -244,7 +244,7 @@ export function ForecastUpload() {
 
   return (
     <div className="max-w-2xl mx-auto mb-8">
-      <div className="bg-white rounded-[24px] p-8 shadow-sm border border-gray-50">
+      <div className="bg-white dark:bg-gray-800 rounded-[24px] p-8 shadow-sm border border-gray-50">
 
         {/* Header Area */}
         <div className="mb-8 flex justify-between items-center">
@@ -279,7 +279,7 @@ export function ForecastUpload() {
                     key={g}
                     type="button"
                     onClick={() => setGranularity(g)}
-                    className={`flex-1 py-3 text-sm font-medium rounded-lg transition-all capitalize ${granularity === g ? 'bg-white text-[#1A1A1A] shadow-sm border border-gray-200/60' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`flex-1 py-3 text-sm font-medium rounded-lg transition-all capitalize ${granularity === g ? 'bg-white dark:bg-gray-800 text-[#1A1A1A] shadow-sm border border-gray-200/60' : 'text-gray-500 hover:text-gray-700'}`}
                   >
                     {g}
                   </button>
@@ -296,7 +296,7 @@ export function ForecastUpload() {
               <div className={`relative border-2 border-dashed rounded-[16px] p-8 transition-colors text-center cursor-pointer group ${file ? 'border-green-400 bg-green-50' : 'border-gray-200 bg-gray-50 hover:bg-gray-100/50'}`}>
                 <input type="file" name="dataset" accept=".csv" required onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                 <div className="flex flex-col items-center justify-center space-y-3 pointer-events-none">
-                  <div className={`p-3 rounded-full shadow-sm transition-transform group-hover:scale-110 ${file ? 'bg-green-100 text-green-600' : 'bg-white text-blue-500'}`}>
+                  <div className={`p-3 rounded-full shadow-sm transition-transform group-hover:scale-110 ${file ? 'bg-green-100 text-green-600' : 'bg-white dark:bg-gray-800 text-blue-500'}`}>
                     {file ? <FileSpreadsheet size={24} /> : <UploadCloud size={24} />}
                   </div>
                   <span className={`font-medium ${file ? 'text-green-700' : 'text-[#1A1A1A]'}`}>
@@ -395,7 +395,7 @@ export function ForecastUpload() {
                   </span>
                   <span>{forecastProgress}%</span>
                 </div>
-                <div className="w-full bg-white rounded-full h-3 overflow-hidden shadow-inner">
+                <div className="w-full bg-white dark:bg-gray-800 rounded-full h-3 overflow-hidden shadow-inner">
                   <div
                     className="bg-[#c2d62e] h-3 rounded-full transition-all duration-500 ease-out relative"
                     style={{ width: `${forecastProgress}%` }}
@@ -410,7 +410,7 @@ export function ForecastUpload() {
                   type="button"
                   onClick={() => setStep(1)}
                   disabled={isLoading}
-                  className="w-1/3 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl px-6 py-4 font-semibold text-lg flex items-center justify-center space-x-2 transition-all shadow-sm"
+                  className="w-1/3 bg-white dark:bg-gray-800 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl px-6 py-4 font-semibold text-lg flex items-center justify-center space-x-2 transition-all shadow-sm"
                 >
                   <ArrowLeft size={20} />
                   <span>Back</span>

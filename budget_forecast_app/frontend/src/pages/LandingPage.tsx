@@ -7,10 +7,11 @@ import { LeftSidebar } from './KharchuDashboard/LeftSidebar';
 
 export function LandingPage() {
   return (
-    <div className="h-screen w-screen bg-[#F5F1EB] flex overflow-hidden">
+    <div className="h-screen w-screen bg-background flex overflow-hidden transition-colors duration-300">
+
         <LeftSidebar />
 
-        <div id="main-scroll-area" className="flex-[3] flex flex-col overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300">
+        <div id="main-scroll-area" className="flex-[3] flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar">
           <Header />
           <Hero />
           <Features />

@@ -1,15 +1,16 @@
-import { Settings, Plus, LogIn, LogOut } from 'lucide-react';
+import { Settings, Plus, LogIn, LogOut, Sun, Moon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 export function Header() {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
-    // Find the specific div we gave an ID to in Step 1
     const scrollContainer = document.getElementById('main-scroll-area');
 
     if (!scrollContainer) return;
@@ -17,11 +18,9 @@ export function Header() {
     const handleScroll = () => {
       const currentScrollY = scrollContainer.scrollTop;
 
-      // If scrolling DOWN and we are past the top 50px, hide the header
       if (currentScrollY > lastScrollY && currentScrollY > 50) {
         setIsVisible(false);
       }
-      // If scrolling UP, show the header again
       else if (currentScrollY < lastScrollY) {
         setIsVisible(true);
       }
@@ -36,42 +35,33 @@ export function Header() {
     };
   }, [lastScrollY]);
 
-  // Check if the user is logged in by looking for the token
   const isAuthenticated = localStorage.getItem('access_token') !== null;
 
   const handleAuthAction = () => {
     if (isAuthenticated) {
-      // --- SIGN OUT LOGIC ---
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
-      // Force a re-render of the page to instantly update the button UI
       navigate(0);
     } else {
-      // --- LOGIN LOGIC ---
       navigate('/login');
     }
   };
 
   return (
     <header
-      className={`sticky top-0 z-50 pt-8 pb-4 bg-[#F5F1EB] transition-transform duration-300 ease-in-out ${
+      className={`sticky top-0 z-50 pt-8 pb-4 bg-background transition-all duration-300 ease-in-out ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}
     >
-      {/*
-        REMOVED max-w-7xl and mx-auto.
-        Now it spans 100% of the available space next to the sidebar.
-        Adjust the px-8 (horizontal padding) if you want it closer/further from the edges.
-      */}
       <div className="w-full px-8">
         <div className="flex justify-between items-center mb-6">
 
           {/* Titles */}
           <div>
-            <h1 className="text-4xl font-semibold text-[#1A1A1A] tracking-tight mb-1">
+            <h1 className="text-4xl font-semibold text-foreground tracking-tight mb-1 transition-colors">
               KHARCHU
             </h1>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-muted-foreground transition-colors">
               Interactive Budget Forecasting Dashboard
             </p>
           </div>
@@ -79,27 +69,35 @@ export function Header() {
           {/* Action Buttons */}
           <div className="flex items-center space-x-3">
 
-            {/* Settings */}
-            <button className="p-3 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-              <Settings size={20} className="text-gray-600" />
+            {/* Dynamic Dark Mode Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-3 bg-card text-foreground rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer border border-border"
+              aria-label="Toggle Dark Mode"
+            >
+              {theme === 'dark' ? (
+                <Sun size={20} className="text-foreground transition-colors" />
+              ) : (
+                <Moon size={20} className="text-foreground transition-colors" />
+              )}
             </button>
 
-            {/* Upload */}
+            {/* Upload Button */}
             <Link
               to="/upload"
-              className="flex items-center space-x-2 bg-[#1A1A1A] text-white px-6 py-3 rounded-2xl hover:bg-black transition-colors font-medium cursor-pointer"
+              className="flex items-center space-x-2 bg-primary text-primary-foreground px-6 py-3 rounded-2xl hover:opacity-90 transition-opacity font-medium cursor-pointer shadow-sm"
             >
               <Plus size={18} />
               <span>Upload a New File</span>
             </Link>
 
-            {/* NEW: Dynamic Auth Button */}
+            {/* Dynamic Auth Button */}
             <button
               onClick={handleAuthAction}
-              className={`flex items-center space-x-2 px-6 py-3 rounded-2xl transition-colors font-medium cursor-pointer shadow-sm border ${
+              className={`flex items-center space-x-2 px-6 py-3 rounded-2xl transition-all font-medium cursor-pointer shadow-sm border border-border ${
                 isAuthenticated
-                  ? 'bg-red-50 text-red-600 hover:bg-red-100 border-red-100' // Logged In Style
-                  : 'bg-white text-[#1A1A1A] hover:bg-gray-50 border-gray-200' // Logged Out Style
+                  ? 'bg-card text-red-500 hover:bg-muted' // Standard Tailwind red works great for destructive actions
+                  : 'bg-card text-foreground hover:bg-muted'
               }`}
             >
               {isAuthenticated ? (

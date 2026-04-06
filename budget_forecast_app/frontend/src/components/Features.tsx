@@ -37,12 +37,14 @@ export function Features() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-20">
 
-      {/* Header Section (matches UploadPage tone) */}
+      {/* Header Section */}
       <div className="mb-12 text-center">
-        <h2 className="text-3xl font-bold text-[#1A1A1A] tracking-tight mb-3">
+        {/* Changed to text-foreground */}
+        <h2 className="text-3xl font-bold text-foreground tracking-tight mb-3 transition-colors">
           Powerful Forecasting Features
         </h2>
-        <p className="text-gray-500 text-sm max-w-xl mx-auto">
+        {/* Changed to text-muted-foreground */}
+        <p className="text-muted-foreground text-sm max-w-xl mx-auto transition-colors">
           Everything you need to understand, predict, and optimize your cloud spending.
         </p>
       </div>
@@ -56,21 +58,26 @@ export function Features() {
           return (
             <div
               key={index}
-              className="bg-white rounded-[24px] p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all"
+              className="bg-card text-card-foreground rounded-[24px] p-6 border border-border shadow-sm hover:shadow-md transition-all"
             >
+              {/* Changed to bg-card, text-card-foreground, and border-border */}
+
               {/* Icon */}
               <div className="flex items-center space-x-4 mb-4">
-                <div className="bg-gray-50 p-3 rounded-full text-gray-500">
+                {/* Changed to bg-muted and text-muted-foreground */}
+                <div className="bg-muted p-3 rounded-full text-muted-foreground transition-colors">
                   <Icon size={20} />
                 </div>
 
-                <h3 className="text-lg font-semibold text-[#1A1A1A]">
+                {/* Color is inherited from text-card-foreground on the parent div */}
+                <h3 className="text-lg font-semibold transition-colors">
                   {feature.title}
                 </h3>
               </div>
 
               {/* Description */}
-              <p className="text-gray-500 text-sm leading-relaxed pl-12">
+              {/* Changed to text-muted-foreground */}
+              <p className="text-muted-foreground text-sm leading-relaxed pl-12 transition-colors">
                 {feature.description}
               </p>
             </div>

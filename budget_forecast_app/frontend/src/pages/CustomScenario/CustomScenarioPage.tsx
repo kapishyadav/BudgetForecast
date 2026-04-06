@@ -41,7 +41,6 @@ export function CustomScenarioPage() {
   const [hyperparameters, setHyperparameters] = useState<any>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- REPLACED: Unified Filter State for TabNavigation ---
   const [activeFilters, setActiveFilters] = useState<string[]>(['Global View']);
   const [filterValues, setFilterValues] = useState<Record<string, any>>({});
 
@@ -53,7 +52,6 @@ export function CustomScenarioPage() {
     setHyperparameters(defaults);
   }, [modelType]);
 
-  // --- ADDED: Handlers for TabNavigation ---
   const handleToggleFilter = (filterName: string) => {
     if (filterName === 'Global View') {
       setActiveFilters(['Global View']);
@@ -121,12 +119,7 @@ export function CustomScenarioPage() {
     setHyperparameters((prev: any) => ({ ...prev, [key]: parseFloat(value) }));
   };
 
-  // --- ADDED: Empty placeholder to satisfy TabNavigation props.
-  // We handle the API call in handleRunScenario instead.
-  const handleApplyFilters = () => {
-     // Intentionally left blank. TabNavigation might trigger this on "Apply",
-     // but in this view, we want "Execute Scenario" to be the final trigger.
-  };
+  const handleApplyFilters = () => {};
 
   const pollCustomTaskStatus = (newTaskId: string, activeModel: string, mappedForecastType: string) => {
     const pollInterval = setInterval(async () => {
@@ -140,7 +133,6 @@ export function CustomScenarioPage() {
         if (['success', 'completed'].includes(currentState)) {
           clearInterval(pollInterval);
 
-          // Initialize the base URL parameters
           const queryParams = new URLSearchParams({
             taskId: newTaskId,
             model: activeModel,
@@ -148,7 +140,6 @@ export function CustomScenarioPage() {
             granularity: 'monthly'
           });
 
-          // Map frontend tab names to backend URL keys
           const paramMap: Record<string, string> = {
             "By Account": "account_name",
             "By Service": "service_name",
@@ -156,14 +147,12 @@ export function CustomScenarioPage() {
             "By BU Code": "bu_code"
           };
 
-          // Append any active filters to the URL
           activeFilters.forEach(filter => {
             if (filter !== 'Global View' && filterValues[filter]) {
               queryParams.append(paramMap[filter], filterValues[filter].value);
             }
           });
 
-          // Navigate with the fully loaded URL
           navigate(`/kharchu?${queryParams.toString()}`);
 
         } else if (['failure', 'error'].includes(currentState)) {
@@ -184,14 +173,12 @@ export function CustomScenarioPage() {
       return;
     }
 
-    // --- Dynamic Payload Mapping based on Tabs ---
     let mappedForecastType = "overall_aggregate";
     if (activeFilters.includes("By Segment")) mappedForecastType = "segment";
     if (activeFilters.includes("By BU Code")) mappedForecastType = "bu_code";
     if (activeFilters.includes("By Account")) mappedForecastType = "account";
     if (activeFilters.includes("By Service")) mappedForecastType = "service";
 
-    // Validation
     const missingSelections = activeFilters.filter(filter => filter !== 'Global View' && !filterValues[filter]);
     if (missingSelections.length > 0) {
        return alert(`Please select a value for: ${missingSelections.join(', ')}`);
@@ -230,13 +217,15 @@ export function CustomScenarioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#E5E0D8] p-4 flex justify-center items-center">
-      <div className="bg-[#F5F1EB] rounded-[40px] shadow-2xl w-full max-w-[1600px] h-[95vh] flex overflow-hidden border border-white/40">
+    // Outer canvas: bg-bg-color
+    <div className="min-h-screen bg-bg-color p-4 flex justify-center items-center transition-colors duration-300">
+
+      {/* Floating Window: bg-background with border-border */}
+      <div className="bg-background rounded-[40px] shadow-2xl w-full max-w-[1600px] h-[95vh] flex overflow-hidden border border-border transition-colors duration-300">
         <LeftSidebar />
+
         <div className="flex-1 flex flex-col py-8 px-8 overflow-y-auto custom-scrollbar">
           <TopHeader />
-
-          {/* Tab Navigation replaces the old Target section */}
           <TabNavigation
             activeFilters={activeFilters}
             onToggleFilter={handleToggleFilter}
@@ -247,27 +236,28 @@ export function CustomScenarioPage() {
           />
 
           <div className="flex items-center gap-4 mt-6 mb-8">
-            <button onClick={() => navigate(-1)} className="p-2 bg-white rounded-full shadow-sm">
-              <ArrowLeft size={20} className="text-gray-600" />
+            <button onClick={() => navigate(-1)} className="p-2 bg-card border border-border hover:bg-muted rounded-full shadow-sm transition-colors duration-300 cursor-pointer">
+              <ArrowLeft size={20} className="text-foreground transition-colors duration-300" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-[#1A1A1A]">Configure Custom Scenario</h1>
+              <h1 className="text-2xl font-bold text-foreground transition-colors duration-300">Configure Custom Scenario</h1>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-8 max-w-5xl">
             {/* Left Column: Dataset */}
             <div className="col-span-1 space-y-6">
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <UploadCloud size={18} className="text-blue-500" /> Dataset Context
+              {/* Inner cards: bg-card */}
+              <div className="bg-card rounded-2xl p-6 shadow-sm border border-border transition-colors duration-300">
+                <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2 transition-colors duration-300">
+                  <UploadCloud size={18} className="text-primary" /> Dataset Context
                 </h3>
                 {datasetId && (
-                  <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl mb-4 text-xs font-mono truncate">
+                  <div className="bg-muted border border-border p-3 rounded-xl mb-4 text-xs font-mono truncate text-muted-foreground transition-colors duration-300">
                     {datasetId}
                   </div>
                 )}
-                <button onClick={() => navigate('/upload')} className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+                <button onClick={() => navigate('/upload')} className="w-full py-2.5 border-2 border-dashed border-border rounded-xl text-sm font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-300 cursor-pointer">
                   Upload New Dataset
                 </button>
               </div>
@@ -275,20 +265,20 @@ export function CustomScenarioPage() {
 
             {/* Right Column: Algorithms */}
             <div className="col-span-2 space-y-6">
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h3 className="font-semibold text-gray-800 mb-6 flex items-center gap-2">
-                  <Settings2 size={18} className="text-purple-500" /> Algorithm Settings
+              <div className="bg-card rounded-2xl p-6 shadow-sm border border-border transition-colors duration-300">
+                <h3 className="font-semibold text-foreground mb-6 flex items-center gap-2 transition-colors duration-300">
+                  <Settings2 size={18} className="text-primary" /> Algorithm Settings
                 </h3>
 
-                <div className="flex bg-[#E5E0D8] rounded-xl p-1 mb-8 w-fit">
+                <div className="flex bg-muted border border-border rounded-xl p-1 mb-8 w-fit transition-colors duration-300">
                   {Object.keys(MODEL_CONFIGS).map(modelKey => (
                     <button
                       key={modelKey}
                       onClick={() => setModelType(modelKey)}
-                      className={`px-6 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                      className={`px-6 py-2 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
                         modelType === modelKey
-                          ? 'bg-white text-black shadow-sm'
-                          : 'text-gray-500 hover:text-gray-800'
+                          ? 'bg-card text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
                       {MODEL_CONFIGS[modelKey as keyof typeof MODEL_CONFIGS].name}
@@ -299,13 +289,14 @@ export function CustomScenarioPage() {
                 <div className="grid grid-cols-2 gap-6">
                   {MODEL_CONFIGS[modelType as keyof typeof MODEL_CONFIGS].params.map(param => (
                     <div key={param.key} className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-2">{param.label}</label>
+                      <label className="text-sm font-medium text-muted-foreground mb-2 transition-colors duration-300">{param.label}</label>
                       <input
                         type={param.type}
                         step={param.step}
                         value={hyperparameters[param.key] ?? ''}
                         onChange={(e) => handleParamChange(param.key, e.target.value)}
-                        className="bg-gray-50 border border-gray-200 text-sm rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        // Inputs sit nicely inside the card using bg-background
+                        className="bg-background border border-border text-foreground text-sm rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors duration-300"
                       />
                     </div>
                   ))}
@@ -316,10 +307,10 @@ export function CustomScenarioPage() {
                 <button
                   onClick={handleRunScenario}
                   disabled={isSubmitting}
-                  className={`flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-lg transition-all ${
+                  className={`flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-lg transition-all cursor-pointer ${
                     isSubmitting
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-[#D4FF00] text-black hover:bg-[#bce600] shadow-sm hover:shadow-md'
+                      ? 'bg-muted text-muted-foreground border border-border cursor-not-allowed'
+                      : 'bg-light-accent text-[#09090B] hover:opacity-90 shadow-sm border border-transparent'
                   }`}
                 >
                   {isSubmitting ? 'Initializing...' : 'Execute Scenario'}

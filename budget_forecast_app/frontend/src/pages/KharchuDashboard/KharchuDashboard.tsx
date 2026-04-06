@@ -404,7 +404,8 @@ export function KharchuDashboard() {
   };
 
   return (
-    <div className="h-screen w-screen bg-[#F5F1EB] dark:bg-gray-900 flex overflow-hidden">
+    // Replaced hardcoded background with bg-background
+    <div className="h-screen w-screen bg-background flex overflow-hidden transition-colors duration-300">
         <LeftSidebar />
 
         <div className="flex-1 flex flex-col py-8 px-2 overflow-hidden">
@@ -422,9 +423,10 @@ export function KharchuDashboard() {
             <MetricCards metrics={metricsData} isLoading={isLoading} datasetId={datasetId}/>
 
             {isLoading ? (
-              <div className="h-[400px] flex flex-col items-center justify-center bg-white rounded-[24px] shadow-sm border border-gray-100 mt-6">
-                <Loader2 className="animate-spin text-gray-400 mb-4" size={32} />
-                <p className="text-gray-500 font-medium">Loading your forecast...</p>
+              // Themed Loading State
+              <div className="h-[400px] flex flex-col items-center justify-center bg-card rounded-[24px] shadow-sm border border-border mt-6 transition-colors duration-300">
+                <Loader2 className="animate-spin text-muted-foreground mb-4" size={32} />
+                <p className="text-muted-foreground font-medium transition-colors duration-300">Loading your forecast...</p>
               </div>
             ) : (
               <div className="mt-6">
@@ -434,20 +436,19 @@ export function KharchuDashboard() {
 
                     {/* Left Side: Title & Segmented Toggle */}
                     <div className="flex items-center gap-6">
-                      <h3 className="text-lg font-bold text-[#1A1A1A]">Forecast Overview</h3>
+                      <h3 className="text-lg font-bold text-foreground transition-colors duration-300">Forecast Overview</h3>
 
-                      <div className="flex bg-[#E5E0D8] rounded-xl p-1 shadow-inner border border-black/5">
+                      <div className="flex bg-muted rounded-xl p-1 shadow-inner border border-border transition-colors duration-300">
                         <button
                           onClick={() => {
                               setGranularity('monthly');
                               handleApplyFilters(activeFilters.includes('Global View'), 'monthly');
                               }
                           }
-
                           className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
                             granularity === 'monthly'
-                              ? 'bg-white text-black shadow-sm'
-                              : 'text-gray-500 hover:text-gray-800'
+                              ? 'bg-card text-foreground shadow-sm'
+                              : 'text-muted-foreground hover:text-foreground'
                           }`}
                         >
                           Monthly
@@ -460,8 +461,8 @@ export function KharchuDashboard() {
                           }
                           className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
                             granularity === 'daily'
-                              ? 'bg-white text-black shadow-sm'
-                              : 'text-gray-500 hover:text-gray-800'
+                              ? 'bg-card text-foreground shadow-sm'
+                              : 'text-muted-foreground hover:text-foreground'
                           }`}
                         >
                           Daily
@@ -469,10 +470,10 @@ export function KharchuDashboard() {
                       </div>
                     </div>
 
-                    {/* Right Side: Export Button */}
+                    {/* Right Side: Export Button (Using your Lime Green Light Accent) */}
                     <button
                       onClick={handleDownloadCSV}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-[#D4FF00] text-black rounded-xl text-sm font-semibold hover:bg-[#bce600] transition-colors shadow-sm border border-transparent hover:border-black/10"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-light-accent text-[#09090B] rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm border border-transparent cursor-pointer"
                     >
                       <Download size={16} />
                       Export to CSV
@@ -486,12 +487,13 @@ export function KharchuDashboard() {
                   historical={historicalData}
                   granularity={granularity}
                 />
+
                 {/* --- ACTIVE FILTERS DISPLAY --- */}
                 <div className="mt-4 flex flex-wrap items-center gap-2 px-2 animate-in fade-in duration-300">
-                  <span className="text-sm font-semibold text-gray-400 mr-2">Currently Viewing:</span>
+                  <span className="text-sm font-semibold text-muted-foreground mr-2 transition-colors duration-300">Currently Viewing:</span>
 
                   {activeFilters.includes('Global View') ? (
-                    <span className="px-3 py-1 bg-gray-100 text-gray-500 text-xs font-bold rounded-full border border-gray-200">
+                    <span className="px-3 py-1 bg-muted text-muted-foreground text-xs font-bold rounded-full border border-border transition-colors duration-300">
                       Global Aggregate
                     </span>
                   ) : (
@@ -501,9 +503,9 @@ export function KharchuDashboard() {
                       const filterLabel = filter.replace('By ', '');
 
                       return (
-                        <div key={filter} className="flex items-center bg-[#E5E0D8]/60 border border-[#E5E0D8] rounded-full px-3 py-1.5 shadow-sm">
-                          <span className="text-xs font-bold text-gray-500 mr-1.5 uppercase tracking-wider">{filterLabel}:</span>
-                          <span className="text-xs font-bold text-[#1A1A1A]">{displayValue}</span>
+                        <div key={filter} className="flex items-center bg-muted/60 border border-border rounded-full px-3 py-1.5 shadow-sm transition-colors duration-300">
+                          <span className="text-xs font-bold text-muted-foreground mr-1.5 uppercase tracking-wider transition-colors duration-300">{filterLabel}:</span>
+                          <span className="text-xs font-bold text-foreground transition-colors duration-300">{displayValue}</span>
                         </div>
                       );
                     })
@@ -514,7 +516,8 @@ export function KharchuDashboard() {
           </div>
         </div>
 
-        <div className="py-8 pr-8 pl-4 border-l border-gray-200/50 dark:border-gray-800 bg-[#F5F1EB] dark:bg-gray-900">
+        {/* Right Sidebar Wrapper */}
+        <div className="py-8 pr-8 pl-4 border-l border-border transition-colors duration-300">
           <RightSidebar />
         </div>
       </div>

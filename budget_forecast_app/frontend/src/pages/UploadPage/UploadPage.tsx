@@ -2,11 +2,11 @@ import React from 'react';
 import { LeftSidebar } from '../KharchuDashboard/LeftSidebar';
 import { TopHeader } from '../KharchuDashboard/TopHeader';
 import { RightSidebar } from '../KharchuDashboard/RightSidebar';
-import { ForecastUpload } from './ForecastUpload'; // The component we just built
+import { ForecastUpload } from './ForecastUpload';
 
 export function UploadPage() {
   return (
-    <div className="h-screen w-screen bg-[#F5F1EB] dark:bg-gray-900 flex overflow-hidden">
+    <div className="h-screen w-screen bg-background flex overflow-hidden transition-colors duration-300">
 
         {/* Navigation Sidebar */}
         <LeftSidebar />
@@ -17,7 +17,8 @@ export function UploadPage() {
           <TopHeader />
 
           {/* Scrollable Main Area for the Upload Component */}
-          <div className="flex-1 overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-gray-300">
+          {/* Swapped inline tailwind scrollbar classes for your custom-scrollbar class from index.css */}
+          <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar">
             {/* We place the ForecastUpload component here.
               Because it has a max-w-2xl and mx-auto class, it will sit nicely centered
               in the middle of this large dashboard view.
@@ -30,7 +31,8 @@ export function UploadPage() {
         </div>
 
         {/* Resources Sidebar */}
-        <div className="py-8 pr-8 pl-4 border-l border-gray-200/50 dark:border-gray-800 bg-[#F5F1EB] dark:bg-gray-900">
+        {/* Swapped border colors to border-border and removed redundant background colors */}
+        <div className="py-8 pr-8 pl-4 border-l border-border transition-colors duration-300">
           <RightSidebar />
         </div>
 

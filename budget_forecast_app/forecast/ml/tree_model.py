@@ -59,7 +59,15 @@ class TreeForecaster(BaseForecaster):
         y_train = train_df['spend']
 
         # 3. Fit Model (Delegated to subclass)
-        self.model = self._fit_model(X_train, y_train, cat_features)
+        split_idx = int(len(X_train) * 0.85)  # Keep last 15% for validation
+
+        X_train_split = X_train.iloc[:split_idx]
+        y_train_split = y_train.iloc[:split_idx]
+
+        X_val_split = X_train.iloc[split_idx:]
+        y_val_split = y_train.iloc[split_idx:]
+
+        self.model = self._fit_model(X_train_split, y_train_split, cat_features)
 
         # 4. Iterative Forecasting
         last_date = df_clean['date'].max()
@@ -86,9 +94,11 @@ class TreeForecaster(BaseForecaster):
 
         forecast_df = pd.DataFrame(future_records)
 
-        # 5. Metrics
-        train_preds = self.model.predict(X_train)
-        error_metrics = self._get_metrics(y_train, train_preds)
+        # 5. Metrics (Score on the 15% holdout, NOT the training data!)
+        val_preds = self.model.predict(X_val_split)
+
+        # Now Optuna receives a true out-of-sample RMSE to minimize
+        error_metrics = self._get_metrics(y_val_split, val_preds)
         final_metrics = self._calculate_base_metrics(forecast_df, error_metrics)
 
         return forecast_df, df_clean, final_metrics

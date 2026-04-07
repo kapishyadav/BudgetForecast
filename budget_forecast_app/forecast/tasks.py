@@ -1,11 +1,14 @@
-
 import logging
 import os
-from datetime import time
+import time  # Fixed: changed from 'from datetime import time' so time.time() works
+import pandas as pd
 
 from celery import shared_task
-from .models import ForecastRun
 from django.conf import settings
+
+from .models import ForecastRun, ForecastDataset
+from .services.optuna_tuning_service import OptunaTuningService
+from .ml.enums import ForecastType, Granularity
 
 logger = logging.getLogger(__name__)
 
@@ -14,8 +17,8 @@ logger = logging.getLogger(__name__)
 def generate_forecast_task(self, dataset_id,
                            forecast_type_str="overall_aggregate",
                            granularity_str="monthly",
-                           model_name = "prophet",
-                           hyperparameters = None,
+                           model_name="prophet",
+                           hyperparameters=None,
                            **kwargs):
     logger.info(f"Task {self.request.id}: Starting forecast generation for dataset id: {dataset_id}")
     if hyperparameters is None:
@@ -28,8 +31,8 @@ def generate_forecast_task(self, dataset_id,
             dataset_id=dataset_id,
             forecast_type_str=forecast_type_str,
             granularity_str=granularity_str,
-            model_name = model_name,
-            hyperparameters = hyperparameters,
+            model_name=model_name,
+            hyperparameters=hyperparameters,
             **kwargs
         )
         return {"status": "success", **result}
@@ -39,8 +42,77 @@ def generate_forecast_task(self, dataset_id,
         # If anything in the pipeline crashes, safely update the DB so the UI knows it failed
         ForecastRun.objects.filter(task_id=self.request.id).update(
             # Assuming you add a status field, e.g., status='failed'
-            # status='failed',
-            # error_message=str(e)
+            status='failed',
+            error_message=str(e)
+        )
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+
+@shared_task(bind=True)
+def run_optuna_tuning_task(self, dataset_id,
+                           forecast_type_str="overall_aggregate",
+                           granularity_str="monthly",
+                           model_name="prophet",
+                           tuning_trials=20,
+                           **kwargs):
+    """Runs Optuna hyperparameter tuning, then executes the forecast pipeline."""
+    logger.info(f"Task {self.request.id}: Starting OPTUNA tuning ({tuning_trials} trials) for dataset: {dataset_id}")
+
+    try:
+        from .services.services import ForecastOrchestrationService
+        from .models import HistoricalSpend
+
+        # 1. Load the dataset into a pandas DataFrame using your custom manager!
+        df = HistoricalSpend.objects.get_dataset_as_dataframe(dataset_id=dataset_id)
+
+        # 2. Convert strings back to your Enum classes for the ML pipeline
+        forecast_type = ForecastType(forecast_type_str)
+        granularity = Granularity(granularity_str)
+
+        # 3. Initialize and run the tuner
+        tuner = OptunaTuningService(
+            df=df,
+            forecast_type=forecast_type,
+            granularity=granularity,
+            model_name=model_name,
+            logger=logger,
+            **kwargs
+        )
+
+        # Run the study to find the best parameters
+        best_params = tuner.run_study(n_trials=tuning_trials)
+        logger.info(f"Task {self.request.id}: Optuna found best params: {best_params}")
+
+        # 4. Update the DB record, removing the "tuning_in_progress" placeholder
+        ForecastRun.objects.filter(task_id=self.request.id).update(
+            hyperparameters=best_params
+        )
+
+        # 5. Now, run the ACTUAL forecast pipeline using these newly found parameters!
+        service = ForecastOrchestrationService()
+        result = service.execute_forecast_pipeline(
+            task_id=self.request.id,
+            dataset_id=dataset_id,
+            forecast_type_str=forecast_type_str,
+            granularity_str=granularity_str,
+            model_name=model_name,
+            hyperparameters=best_params,
+            **kwargs
+        )
+
+        return {
+            "status": "success",
+            "tuned_params": best_params,
+            **result
+        }
+
+    except Exception as e:
+        logger.error(f"Task {self.request.id}: Optuna tuning failed - {str(e)}")
+        ForecastRun.objects.filter(task_id=self.request.id).update(
+            # status='failed'
         )
         return {
             "status": "error",

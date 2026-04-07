@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 from typing import Optional
 from django.core.files.uploadedfile import UploadedFile
+from rest_framework import serializers
 
 
 @dataclass(frozen=True)
@@ -39,6 +40,9 @@ class CustomScenarioDTO:
     service_name: Optional[str] = None
     bu_code: Optional[int] = None
     segment_name: Optional[str] = None
+    # Optuna fields
+    tune_hyperparameters: bool = False
+    tuning_trials: int = 20
 
     def __post_init__(self):
         if not self.dataset_id:

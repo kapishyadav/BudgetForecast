@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Play, UploadCloud, Settings2 } from 'lucide-react';
+import { ArrowLeft, Play, UploadCloud, Settings2, Sparkles, Info } from 'lucide-react';
 import { LeftSidebar } from '../KharchuDashboard/LeftSidebar';
 import { RightSidebar } from '../KharchuDashboard/RightSidebar';
 import { TopHeader } from '../KharchuDashboard/TopHeader';
@@ -41,6 +41,10 @@ export function CustomScenarioPage() {
   const [modelType, setModelType] = useState('xgboost');
   const [hyperparameters, setHyperparameters] = useState<any>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // NEW: Optuna State
+  const [isOptunaEnabled, setIsOptunaEnabled] = useState(false);
+  const [optunaTrials, setOptunaTrials] = useState(20);
 
   const [activeFilters, setActiveFilters] = useState<string[]>(['Global View']);
   const [filterValues, setFilterValues] = useState<Record<string, any>>({});
@@ -196,7 +200,10 @@ export function CustomScenarioPage() {
       account_name: filterValues["By Account"]?.value || null,
       service_name: filterValues["By Service"]?.value || null,
       segment_name: filterValues["By Segment"]?.value || null,
-      bu_code: filterValues["By BU Code"]?.value || null
+      bu_code: filterValues["By BU Code"]?.value || null,
+      // NEW: Send Optuna flags to backend
+      tune_hyperparameters: isOptunaEnabled,
+      tuning_trials: isOptunaEnabled ? optunaTrials : undefined
     };
 
     try {
@@ -206,7 +213,7 @@ export function CustomScenarioPage() {
         body: JSON.stringify(payload)
       });
       const data = await response.json();
-      if (response.ok && (data.status?.toUpperCase() === "SUCCESS")) {
+      if (response.ok && (data.status?.toUpperCase() === "SUCCESS" || response.status === 202)) {
         pollCustomTaskStatus(data.task_id || data.data?.task_id, modelType, mappedForecastType);
       } else {
         alert("Failed: " + (data.message || "Unknown error"));
@@ -218,7 +225,6 @@ export function CustomScenarioPage() {
   };
 
   return (
-    // Outer canvas: bg-bg-color
     <div className="h-screen w-screen bg-background flex overflow-hidden transition-colors duration-300">
         <LeftSidebar />
 
@@ -245,7 +251,6 @@ export function CustomScenarioPage() {
           <div className="grid grid-cols-3 gap-8 max-w-5xl">
             {/* Left Column: Dataset */}
             <div className="col-span-1 space-y-6">
-              {/* Inner cards: bg-card */}
               <div className="bg-card rounded-2xl p-6 shadow-sm border border-border transition-colors duration-300">
                 <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2 transition-colors duration-300">
                   <UploadCloud size={18} className="text-primary" /> Dataset Context
@@ -284,7 +289,8 @@ export function CustomScenarioPage() {
                   ))}
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                {/* Manual Params Grid (Dims if Optuna is active) */}
+                <div className={`grid grid-cols-2 gap-6 transition-opacity duration-300 ${isOptunaEnabled ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
                   {MODEL_CONFIGS[modelType as keyof typeof MODEL_CONFIGS].params.map(param => (
                     <div key={param.key} className="flex flex-col">
                       <label className="text-sm font-medium text-muted-foreground mb-2 transition-colors duration-300">{param.label}</label>
@@ -293,12 +299,63 @@ export function CustomScenarioPage() {
                         step={param.step}
                         value={hyperparameters[param.key] ?? ''}
                         onChange={(e) => handleParamChange(param.key, e.target.value)}
-                        // Inputs sit nicely inside the card using bg-background
-                        className="bg-background border border-border text-foreground text-sm rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors duration-300"
+                        disabled={isOptunaEnabled}
+                        className="bg-background border border-border text-foreground text-sm rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors duration-300 disabled:cursor-not-allowed"
                       />
                     </div>
                   ))}
                 </div>
+
+                {/* Optuna Toggle Section */}
+                <div className="mt-8 pt-6 border-t border-border">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 className="text-md font-semibold text-foreground flex items-center gap-2">
+                        <Sparkles size={16} className="text-blue-500" />
+                        Auto-Tune with Optuna
+                      </h4>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Automatically find the optimal hyperparameters. Overrides manual inputs.
+                      </p>
+                    </div>
+
+                    {/* Custom Toggle Switch */}
+                    <button
+                      onClick={() => setIsOptunaEnabled(!isOptunaEnabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                        isOptunaEnabled ? 'bg-blue-500' : 'bg-muted border border-border'
+                      }`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform shadow-sm ${
+                        isOptunaEnabled ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </button>
+                  </div>
+
+                  {/* Disclaimer & Trial Input (Expands when Optuna is on) */}
+                  {isOptunaEnabled && (
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex flex-col gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="flex items-start gap-3">
+                        <Info size={18} className="text-blue-500 shrink-0 mt-0.5" />
+                        <p className="text-sm text-foreground/80 leading-relaxed">
+                          <strong className="text-blue-600 dark:text-blue-400">Computational Disclaimer:</strong> Hyperparameter tuning requires training the model multiple times. This process is computationally expensive and will take significantly longer to complete than a standard scenario.
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between border-t border-blue-500/20 pt-3">
+                        <label className="text-sm font-medium text-foreground">Number of Trials (Iterative trainings)</label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={100}
+                          value={optunaTrials}
+                          onChange={(e) => setOptunaTrials(parseInt(e.target.value) || 1)}
+                          className="bg-background border border-border text-foreground text-sm rounded-lg p-2 w-24 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
               </div>
 
               <div className="flex justify-end pt-4">
@@ -318,8 +375,7 @@ export function CustomScenarioPage() {
             </div>
           </div>
         </div>
-        {/* Right Sidebar Wrapper */}
-          <RightSidebar />
+        <RightSidebar />
     </div>
   );
 }

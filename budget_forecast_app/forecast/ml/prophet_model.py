@@ -4,10 +4,14 @@ prophet_model.py
 Unified Prophet forecasting module.
 Adheres to BaseForecaster interface while preserving strict data validations.
 """
+import logging
 import pandas as pd
 from prophet import Prophet
 from prophet.diagnostics import cross_validation, performance_metrics
 import warnings
+
+logging.getLogger('cmdstanpy').setLevel(logging.ERROR)
+logging.getLogger('prophet').setLevel(logging.ERROR)
 
 from .enums import Granularity
 from .base_model import BaseForecaster

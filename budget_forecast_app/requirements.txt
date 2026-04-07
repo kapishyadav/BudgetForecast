@@ -36,3 +36,5 @@ catboost>=1.2.0
 sentence-transformers >= 5.0.0
 
 torch == 2.11.0
+
+optuna==3.6.2

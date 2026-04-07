@@ -66,3 +66,6 @@ class CustomScenarioSerializer(serializers.Serializer):
     service_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     bu_code = serializers.IntegerField(required=False, allow_null=True)
     segment_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    # Optuna fields
+    tune_hyperparameters = serializers.BooleanField(default=False)
+    tuning_trials = serializers.IntegerField(default=20, min_value=1, max_value=100, required=False)

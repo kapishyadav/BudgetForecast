@@ -166,7 +166,12 @@ export function StatisticsChart({ forecast = [], historical = [], granularity = 
 
             {splitDateName && (
               <>
-                <ReferenceArea x1={splitDateName} fill="url(#diagonalHatch)" fillOpacity={1} />
+                <ReferenceArea
+                  x1={splitDateName}
+                  fill="var(--muted)"
+                  fillOpacity={0.10}
+                  strokeOpacity={0.3}
+                />
                 <ReferenceLine x={splitDateName} stroke="var(--foreground)" strokeWidth={1} strokeDasharray="3 3" />
               </>
             )}

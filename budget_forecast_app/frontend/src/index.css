@@ -59,6 +59,7 @@
     --primary-foreground: #f7f3ee; /* Text on primary buttons */
     --accent: #E5E0D8;
     --light-accent: #EAFF52;  /* Your lime green */
+    --dark-accent: #826363
     --secondary: #d8c3a5;
     --muted: #eae6e0;         /* Disabled states, subtle backgrounds */
     --border: #f7f3ee;

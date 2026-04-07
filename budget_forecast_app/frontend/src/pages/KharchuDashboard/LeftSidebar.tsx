@@ -23,7 +23,7 @@ export function LeftSidebar() {
   const inactiveClass = "text-gray-400 hover:text-white dark:text-muted-foreground dark:hover:text-sidebar-foreground transition-colors duration-300";
 
   return (
-    <div className="w-20 bg-[#1D1B1B] dark:bg-background h-[92vh] rounded-[30px] flex flex-col items-center py-6 mx-4 my-auto justify-between shadow-lg transition-colors duration-300">
+    <div className="w-20 bg-[#1D1B1B] dark:bg-background h-[92vh] rounded-[30px] flex flex-col items-center py-6 mx-4 my-auto justify-between transition-colors duration-300">
       <div className="flex flex-col items-center space-y-6">
 
         {/* Logo FIX: Changed dark:bg-black/10 and dark:text-black to light/transparent versions */}

@@ -15,58 +15,43 @@ export function AuthPage() {
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    // Grab values directly from the form
     const form = e.target as HTMLFormElement;
     const email = (form.elements.namedItem('email') as HTMLInputElement).value;
     const password = (form.elements.namedItem('password') as HTMLInputElement).value;
 
     try {
       if (isLogin) {
-        // --- LOGIN LOGIC ---
         const response = await fetch('http://localhost:8001/api/token/', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          // Note: Django's default auth expects "username", so we map email to it
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: email, password: password }),
         });
 
         if (response.ok) {
           const data = await response.json();
-          // Save tokens to local storage
           localStorage.setItem('access_token', data.access);
           localStorage.setItem('refresh_token', data.refresh);
-
-          // Send user to the protected dashboard
           navigate('/kharchu');
         } else {
           setErrorMessage("Invalid email or password. Please try again.");
         }
-
       } else {
-        // --- SIGN UP LOGIC ---
         const fullName = (form.elements.namedItem('fullName') as HTMLInputElement).value;
-
-        // Assuming you make an endpoint called /api/register/ in Django
         const response = await fetch('http://localhost:8001/api/register/', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password, name: fullName }),
         });
 
         if (response.ok) {
           setSuccessMessage("Account created successfully! Please log in.");
-          setIsLogin(true); // Switch to login view
-          form.reset(); // Clear the form
+          setIsLogin(true);
+          form.reset();
         } else {
           setErrorMessage("Registration failed. That email might already be in use.");
         }
       }
     } catch (error) {
-      console.error("Auth error:", error);
       setErrorMessage("Network error. Please check if the server is running.");
     } finally {
       setIsLoading(false);
@@ -74,22 +59,28 @@ export function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#E5E0D8] p-4 flex justify-center items-center">
-      <div className="bg-white rounded-[32px] shadow-xl w-full max-w-md p-8 border border-gray-100 relative overflow-hidden">
-        <div className="absolute -top-[20%] -right-[20%] w-[50%] h-[50%] rounded-full bg-gray-100 blur-[80px] pointer-events-none"></div>
+    // Changed: bg-[#E5E0D8] -> bg-background
+    <div className="min-h-screen bg-background p-4 flex justify-center items-center transition-colors duration-500">
+
+      {/* Changed: bg-white -> bg-card | border-gray-100 -> border-border */}
+      <div className="bg-card rounded-[32px] shadow-xl w-full max-w-md p-8 border border-border relative overflow-hidden transition-colors duration-500">
+
+        {/* Decorative Blur - updated to be more subtle in dark mode */}
+        <div className="absolute -top-[20%] -right-[20%] w-[50%] h-[50%] rounded-full bg-muted blur-[80px] pointer-events-none opacity-50"></div>
 
         <div className="relative z-10">
           <div className="flex justify-center mb-6">
-            <div className="bg-gray-50 p-3 rounded-full text-gray-500 border border-gray-100 shadow-sm">
-              <BarChart3 size={28} className="text-[#1A1A1A]" />
+            {/* Changed: bg-gray-50 -> bg-muted | text-gray-500 -> text-muted-foreground */}
+            <div className="bg-muted p-3 rounded-full text-muted-foreground border border-border shadow-sm">
+              <BarChart3 size={28} className="text-foreground" />
             </div>
           </div>
 
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-[#1A1A1A] tracking-tight mb-2">
+            <h2 className="text-2xl font-bold text-foreground tracking-tight mb-2">
               {isLogin ? 'Welcome back' : 'Create an account'}
             </h2>
-            <p className="text-gray-500 text-sm">
+            <p className="text-muted-foreground text-sm">
               {isLogin ? "Don't have an account? " : "Already have an account? "}
               <button
                 type="button"
@@ -98,7 +89,7 @@ export function AuthPage() {
                   setErrorMessage(null);
                   setSuccessMessage(null);
                 }}
-                className="font-semibold text-[#1A1A1A] hover:text-gray-600 transition-colors"
+                className="font-semibold text-foreground hover:opacity-70 transition-all underline-offset-4 hover:underline"
               >
                 {isLogin ? 'Sign up' : 'Log in'}
               </button>
@@ -107,12 +98,12 @@ export function AuthPage() {
 
           {/* Error and Success Messages */}
           {errorMessage && (
-            <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 text-center">
+            <div className="mb-4 p-3 bg-red-500/10 text-red-500 text-sm rounded-xl border border-red-500/20 text-center">
               {errorMessage}
             </div>
           )}
           {successMessage && (
-            <div className="mb-4 p-3 bg-green-50 text-green-700 text-sm rounded-xl border border-green-100 text-center">
+            <div className="mb-4 p-3 bg-green-500/10 text-green-500 text-sm rounded-xl border border-green-500/20 text-center">
               {successMessage}
             </div>
           )}
@@ -120,19 +111,18 @@ export function AuthPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (
               <div>
-                <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5 ml-1">
+                <label className="block text-sm font-medium text-foreground mb-1.5 ml-1">
                   Full Name
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400" />
+                    <User className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  {/* ADDED name="fullName" HERE */}
                   <input
                     name="fullName"
                     type="text"
                     required
-                    className="block w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-[16px] focus:bg-white focus:ring-2 focus:ring-[#1A1A1A] focus:border-transparent sm:text-sm transition-all outline-none"
+                    className="block w-full pl-11 pr-4 py-3.5 bg-muted border border-border rounded-[16px] text-foreground focus:ring-2 focus:ring-foreground focus:border-transparent sm:text-sm transition-all outline-none placeholder:text-muted-foreground/50"
                     placeholder="Jane Doe"
                   />
                 </div>
@@ -140,18 +130,18 @@ export function AuthPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5 ml-1">
+              <label className="block text-sm font-medium text-foreground mb-1.5 ml-1">
                 Email Address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <Mail className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <input
                   name="email"
                   type="email"
                   required
-                  className="block w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-[16px] focus:bg-white focus:ring-2 focus:ring-[#1A1A1A] focus:border-transparent sm:text-sm transition-all outline-none"
+                  className="block w-full pl-11 pr-4 py-3.5 bg-muted border border-border rounded-[16px] text-foreground focus:ring-2 focus:ring-foreground focus:border-transparent sm:text-sm transition-all outline-none placeholder:text-muted-foreground/50"
                   placeholder="you@company.com"
                 />
               </div>
@@ -159,33 +149,35 @@ export function AuthPage() {
 
             <div>
               <div className="flex justify-between items-center mb-1.5 ml-1 mr-1">
-                <label className="block text-sm font-medium text-[#1A1A1A]">
+                <label className="block text-sm font-medium text-foreground">
                   Password
                 </label>
                 {isLogin && (
-                  <a href="#" className="text-xs font-medium text-gray-500 hover:text-[#1A1A1A] transition-colors">
+                  <a href="#" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
                     Forgot password?
                   </a>
                 )}
               </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <input
                   name="password"
                   type="password"
                   required
-                  className="block w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-[16px] focus:bg-white focus:ring-2 focus:ring-[#1A1A1A] focus:border-transparent sm:text-sm transition-all outline-none"
+                  className="block w-full pl-11 pr-4 py-3.5 bg-muted border border-border rounded-[16px] text-foreground focus:ring-2 focus:ring-foreground focus:border-transparent sm:text-sm transition-all outline-none placeholder:text-muted-foreground/50"
                   placeholder="••••••••"
                 />
               </div>
             </div>
 
+            {/* Submit Button - Uses inverse colors for high contrast */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-2 flex justify-center items-center gap-2 py-4 px-4 rounded-[16px] text-sm font-medium text-white bg-[#1A1A1A] hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1A1A1A] transition-all shadow-sm group disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full mt-2 flex justify-center items-center gap-2 py-4 px-4 rounded-[16px] text-sm font-semibold transition-all shadow-sm group disabled:opacity-70 disabled:cursor-not-allowed
+                bg-foreground text-background hover:opacity-90 active:scale-[0.98]"
             >
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

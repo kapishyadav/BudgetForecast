@@ -11,8 +11,8 @@ from .semantic_column_mapper import SemanticColumnMapper
 logger = logging.getLogger(__name__)
 
 
-class DatasetUploadService:
-    """Handles parsing, validating, and persisting uploaded budget datasets."""
+class DataIngestionService:
+    """Handles ingestion, parsing, validating, and persisting uploaded budget datasets."""
 
     def process_csv_upload(self, dto: DatasetUploadDTO) -> str:
         """Processes the CSV and saves records to the database. Returns the Dataset ID."""
@@ -40,6 +40,40 @@ class DatasetUploadService:
         df = client.fetch_daily_costs(start_date, end_date)
         return self._process_dataframe(df, integration.dataset)
 
+    def process_azure_ingestion(self, integration: CloudIntegration, start_date: str, end_date: str) -> str:
+        """Automated Azure ingestion method using Service Principal credentials."""
+        logger.info(f"Processing Azure ingestion for dataset: {integration.dataset.name}")
+        from .azure_client import AzureCostClient  # Local import to prevent circular dependencies
+
+        # Map the integration fields to Azure's naming conventions
+        # Reuse access_key for Client ID and secret_key for Client Secret
+        client = AzureCostClient(
+            tenant_id=integration.tenant_id,
+            client_id=integration.access_key,
+            client_secret=integration.secret_key,
+            subscription_id=integration.account_id
+        )
+
+        df = client.fetch_daily_costs(start_date, end_date)
+        return self._process_dataframe(df, integration.dataset)
+
+    def process_gcp_ingestion(self, integration: CloudIntegration, start_date: str, end_date: str) -> str:
+        """Automated GCP ingestion method using BigQuery export."""
+        logger.info(f"Processing GCP ingestion for dataset: {integration.dataset.name}")
+        from .gcp_client import GCPBillingClient  # Local import to prevent circular dependencies
+
+        # Initialize with the decrypted JSON service account dictionary
+        client = GCPBillingClient(
+            service_account_info=integration.gcp_service_account_json
+        )
+
+        df = client.fetch_daily_costs(
+            table_id=integration.gcp_table_id,
+            start_date=start_date,
+            end_date=end_date
+        )
+        return self._process_dataframe(df, integration.dataset)
+
     def _process_dataframe(self, df: pd.DataFrame, dataset: ForecastDataset) -> str:
         """Shared core logic for dynamic mapping and DB insertion."""
         # Dynamic Column Mapping
@@ -56,23 +90,42 @@ class DatasetUploadService:
         # Ensure timezone-naive dates to prevent merging overlaps
         df['date'] = pd.to_datetime(df['date']).dt.date
 
-        spend_records = []
-        has_account = 'accountName' in df.columns
-        has_service = 'serviceName' in df.columns
+        # Fill missing grouping columns with 'Unallocated' BEFORE grouping
+        if 'serviceName' not in df.columns:
+            df['serviceName'] = 'Unallocated'
+        else:
+            df['serviceName'] = df['serviceName'].fillna('Unallocated')
+
+        if 'accountName' not in df.columns:
+            df['accountName'] = 'Unallocated'
+        else:
+            df['accountName'] = df['accountName'].fillna('Unallocated')
+
+        # --- Pre-Aggregate data to prevent Postgres "cannot affect row a second time" error ---
+        # Group by the exact unique fields defined in models.py
+        group_fields = ['date', 'serviceName', 'accountName']
+        agg_funcs = {'spend': 'sum'}  # Add up the spend for duplicate rows
+
         has_bucode = 'buCode' in df.columns
         has_segment = 'segment' in df.columns
 
-        for index, row in df.iterrows():
-            # Default to "Unallocated" if the cloud provider didn't return an account/service grouping
-            service_val = row['serviceName'] if has_service and pd.notna(row['serviceName']) else 'Unallocated'
-            account_val = row['accountName'] if has_account and pd.notna(row['accountName']) else 'Unallocated'
+        if has_bucode:
+            agg_funcs['buCode'] = 'first'  # Keep the first buCode encountered
+        if has_segment:
+            agg_funcs['segment'] = 'first'
 
+        # Execute the Pandas groupby to squash duplicates
+        df = df.groupby(group_fields, as_index=False).agg(agg_funcs)
+
+        spend_records = []
+
+        for index, row in df.iterrows():
             record = HistoricalSpend(
                 dataset=dataset,
-                date=pd.to_datetime(row['date']).date(),
+                date=row['date'],
                 spend=row['spend'],
-                account_name=account_val,
-                service_name=service_val,
+                account_name=row['accountName'],
+                service_name=row['serviceName'],
                 bu_code=int(row['buCode']) if has_bucode and pd.notna(row['buCode']) else None,
                 segment=row['segment'] if has_segment and pd.notna(row['segment']) else None,
             )
@@ -85,7 +138,7 @@ class DatasetUploadService:
                 batch_size=5000,
                 update_conflicts=True,
                 unique_fields=['dataset', 'date', 'service_name', 'account_name'],
-                update_fields=['spend'] # If a record exists, update the spend amount
+                update_fields=['spend']
             )
 
         logger.info(f"Idempotently merged {len(spend_records)} rows to Postgres for dataset {dataset.id}.")

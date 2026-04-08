@@ -28,4 +28,10 @@ app.conf.beat_schedule = {
         'schedule': crontab(minute=0, hour=0), # Runs at midnight
         'args': (24,) # Deletes files older than 24 hours
     },
+    'daily-cloud-billing-sync': {
+        'task': 'forecast.tasks.sync_all_cloud_billing',
+        # Run at 2:00 AM every day.
+        # Cloud providers usually finalize yesterday's billing around midnight.
+        'schedule': crontab(hour=2, minute=0),
+    },
 }

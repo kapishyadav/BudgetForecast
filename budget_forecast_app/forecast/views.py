@@ -5,7 +5,7 @@ from django.views.decorators.http import require_POST
 from .dto import ForecastTriggerDTO, CustomScenarioDTO
 from .services.services import ForecastOrchestrationService
 from .dto import DatasetUploadDTO
-from .services.upload_service import DatasetUploadService
+from .services.ingestion_service import DatasetUploadService
 from .serializers import ForecastTriggerSerializer, CustomScenarioSerializer
 from .utils.responses import api_response
 from .config import DEFAULT_FORECAST_TYPE, DEFAULT_GRANULARITY

@@ -3,7 +3,7 @@ import logging
 from typing import Dict, List
 from django.db import transaction
 
-from ..models import ForecastDataset, HistoricalSpend
+from ..models import ForecastDataset, HistoricalSpend, CloudIntegration
 from ..dto import DatasetUploadDTO
 from ..config import DATASET_COLUMN_MAPPINGS
 from .semantic_column_mapper import SemanticColumnMapper
@@ -25,6 +25,23 @@ class DatasetUploadService:
         except Exception as e:
             raise ValueError(f"Failed to read CSV file: {str(e)}")
 
+        dataset = ForecastDataset.objects.create(name=dto.dataset_name)
+        return self._process_dataframe(df, dataset)
+
+    def process_aws_ingestion(self, integration: CloudIntegration, start_date: str, end_date: str) -> str:
+        """Automated AWS ingestion method."""
+        logger.info(f"Processing AWS ingestion for dataset: {integration.dataset.name}")
+        from .aws_client import AWSCostExplorerClient  # Local import to prevent circular dependencies
+
+        client = AWSCostExplorerClient(
+            access_key=integration.access_key,
+            secret_key=integration.secret_key
+        )
+        df = client.fetch_daily_costs(start_date, end_date)
+        return self._process_dataframe(df, integration.dataset)
+
+    def _process_dataframe(self, df: pd.DataFrame, dataset: ForecastDataset) -> str:
+        """Shared core logic for dynamic mapping and DB insertion."""
         # Dynamic Column Mapping
         mapped_columns = self._get_mapped_columns(df.columns.tolist(), DATASET_COLUMN_MAPPINGS)
         rename_dict = {actual_col: canonical_col for canonical_col, actual_col in mapped_columns.items()}
@@ -32,15 +49,11 @@ class DatasetUploadService:
 
         # Critical Validation
         if 'date' not in df.columns:
-            raise ValueError("CSV must contain a recognized date column (e.g., date, month, Date).")
+            raise ValueError("Data must contain a recognized date column.")
         if 'spend' not in df.columns:
-            raise ValueError("CSV must contain a recognized spend/cost column.")
+            raise ValueError("Data must contain a recognized spend/cost column.")
 
-        # Database Insertion
-        dataset = ForecastDataset.objects.create(name=dto.dataset_name)
         spend_records = []
-
-        # Check for optional columns safely
         has_account = 'accountName' in df.columns
         has_service = 'serviceName' in df.columns
         has_bucode = 'buCode' in df.columns

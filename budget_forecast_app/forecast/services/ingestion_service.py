@@ -53,6 +53,9 @@ class DatasetUploadService:
         if 'spend' not in df.columns:
             raise ValueError("Data must contain a recognized spend/cost column.")
 
+        # Ensure timezone-naive dates to prevent merging overlaps
+        df['date'] = pd.to_datetime(df['date']).dt.date
+
         spend_records = []
         has_account = 'accountName' in df.columns
         has_service = 'serviceName' in df.columns
@@ -60,22 +63,32 @@ class DatasetUploadService:
         has_segment = 'segment' in df.columns
 
         for index, row in df.iterrows():
+            # Default to "Unallocated" if the cloud provider didn't return an account/service grouping
+            service_val = row['serviceName'] if has_service and pd.notna(row['serviceName']) else 'Unallocated'
+            account_val = row['accountName'] if has_account and pd.notna(row['accountName']) else 'Unallocated'
+
             record = HistoricalSpend(
                 dataset=dataset,
                 date=pd.to_datetime(row['date']).date(),
                 spend=row['spend'],
-                account_name=row['accountName'] if has_account and pd.notna(row['accountName']) else None,
-                service_name=row['serviceName'] if has_service and pd.notna(row['serviceName']) else None,
+                account_name=account_val,
+                service_name=service_val,
                 bu_code=int(row['buCode']) if has_bucode and pd.notna(row['buCode']) else None,
                 segment=row['segment'] if has_segment and pd.notna(row['segment']) else None,
             )
             spend_records.append(record)
 
-        # Bulk create wrapped in a transaction ensures all-or-nothing saving
+        # Bulk create wrapped in a transaction ensures all-or-nothing Idempotent saving.
         with transaction.atomic():
-            HistoricalSpend.objects.bulk_create(spend_records, batch_size=5000)
+            HistoricalSpend.objects.bulk_create(
+                spend_records,
+                batch_size=5000,
+                update_conflicts=True,
+                unique_fields=['dataset', 'date', 'service_name', 'account_name'],
+                update_fields=['spend'] # If a record exists, update the spend amount
+            )
 
-        logger.info(f"Successfully saved {len(spend_records)} rows to Postgres for dataset {dataset.id}.")
+        logger.info(f"Idempotently merged {len(spend_records)} rows to Postgres for dataset {dataset.id}.")
         return str(dataset.id)
 
     def _get_mapped_columns(self, available_columns: list, mappings: Dict[str, List[str]]) -> Dict[str, str]:

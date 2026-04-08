@@ -1,6 +1,7 @@
 # Create your models here.
 from django.db import models
 from django_cryptography.fields import encrypt
+from django.db.models import UniqueConstraint
 import uuid
 import pandas as pd
 
@@ -68,6 +69,12 @@ class HistoricalSpend(models.Model):
 
     class Meta:
         indexes = [models.Index(fields=['dataset', 'date'])]
+        constraints = [
+            UniqueConstraint(
+                fields=['dataset', 'date', 'service_name', 'account_name'],
+                name='unique_daily_service_spend'
+            )
+        ]
 
 
 class ForecastRun(models.Model):
@@ -97,10 +104,17 @@ class CloudIntegration(models.Model):
     provider = models.CharField(max_length=20, choices=PROVIDER_CHOICES)
     account_id = models.CharField(max_length=255, help_text="e.g., AWS Account ID")
 
-    # Encrypted fields
+    # Encrypted AWS fields
     access_key = encrypt(models.CharField(max_length=255, blank=True, null=True))
     secret_key = encrypt(models.CharField(max_length=255, blank=True, null=True))
     role_arn = encrypt(models.CharField(max_length=255, blank=True, null=True))
+
+    # Encrypted Azure specific fields (can reuse access_key for Client ID, secret_key for Client Secret)
+    tenant_id = encrypt(models.CharField(max_length=255, blank=True, null=True))
+
+    # GCP specific field
+    gcp_service_account_json = encrypt(models.JSONField(blank=True, null=True))
+    gcp_table_id = models.CharField(max_length=255, blank=True, null=True, help_text="project.dataset.table")
 
     is_active = models.BooleanField(default=True)
     last_synced_at = models.DateTimeField(null=True, blank=True)

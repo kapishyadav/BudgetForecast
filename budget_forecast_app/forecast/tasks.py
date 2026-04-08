@@ -1,14 +1,19 @@
 import logging
 import os
 import time  # Fixed: changed from 'from datetime import time' so time.time() works
-import pandas as pd
+from datetime import timedelta
 
 from celery import shared_task
+from celery.exceptions import MaxRetriesExceededError
 from django.conf import settings
+from django.utils import timezone
 
 from .models import ForecastRun, ForecastDataset
 from .services.optuna_tuning_service import OptunaTuningService
 from .ml.enums import ForecastType, Granularity
+
+from .models import CloudIntegration
+from .services.ingestion_service import DataIngestionService
 
 logger = logging.getLogger(__name__)
 
@@ -145,3 +150,65 @@ def delete_old_files_task(max_age_hours=24):
                 deleted_count += 1
 
     return f"Cleanup complete. Deleted {deleted_count} files."
+
+
+@shared_task
+def sync_all_cloud_billing():
+    """Master task scheduled by Celery Beat to trigger all active syncs."""
+    active_integrations = CloudIntegration.objects.filter(is_active=True)
+
+    logger.info(f"Starting daily sync for {active_integrations.count()} active integrations.")
+
+    for integration in active_integrations:
+        # Dispatch a separate sub-task for each integration so a failure in one
+        # doesn't crash the sync for the others.
+        sync_integration_data.delay(integration.id)
+
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={'max_retries': 3})
+def sync_integration_data(self, integration_id: int):
+    """
+    Worker sub-task to execute the API call.
+    Uses exponential backoff (retry_backoff=True) to handle API rate limits natively.
+    """
+    try:
+        integration = CloudIntegration.objects.get(id=integration_id)
+    except CloudIntegration.DoesNotExist:
+        logger.error(f"Integration ID {integration_id} not found.")
+        return
+
+    # Always pull the last 3 days to account for delayed billing adjustments from cloud providers
+    end_date = timezone.now().date()
+    start_date = end_date - timedelta(days=3)
+
+    # Format exactly as the Cloud SDKs expect ('YYYY-MM-DD')
+    start_str = start_date.strftime('%Y-%m-%d')
+    end_str = end_date.strftime('%Y-%m-%d')
+
+    service = DataIngestionService()
+
+    try:
+        if integration.provider == 'AWS':
+            service.process_aws_ingestion(integration, start_str, end_str)
+        elif integration.provider == 'AZURE':
+            service.process_azure_ingestion(integration, start_str, end_str)  # To be built
+        elif integration.provider == 'GCP':
+            service.process_gcp_ingestion(integration, start_str, end_str)  # To be built
+
+        # Update health tracking on success
+        integration.last_synced_at = timezone.now()
+        integration.save(update_fields=['last_synced_at'])
+        logger.info(f"Successfully synced {integration.provider} for dataset {integration.dataset.id}")
+
+    except Exception as exc:
+        logger.warning(f"Error syncing {integration.provider} integration {integration_id}: {exc}. Retrying...")
+        try:
+            # Raise exception to trigger Celery's autoretry mechanism
+            raise exc
+        except MaxRetriesExceededError:
+            # If it fails 3 times in a row, flag it for the user in the UI
+            logger.error(f"Max retries exceeded for integration {integration_id}.")
+            integration.is_active = False
+            integration.save(update_fields=['is_active'])
+            # Optional: Trigger an email alert to yourself here
+

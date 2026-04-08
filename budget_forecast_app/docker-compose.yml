@@ -63,5 +63,17 @@ services:
       - redis
     restart: always
 
+  celery-beat:
+    build: .
+    command: celery -A budget_forecast_app beat -l info
+    volumes:
+      - .:/app
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - DATABASE_URL=postgres://your_db_user:your_db_pass@db:5432/your_db_name # Match your existing DB credentials
+    depends_on:
+      - redis
+      - db
+
 volumes:
   postgres_data:

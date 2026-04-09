@@ -28,6 +28,7 @@ from celery.result import AsyncResult
 import json
 import os
 import pandas as pd
+import numpy as np
 
 logger = setup_logging()
 
@@ -303,7 +304,9 @@ def get_dashboard_data(request):
     raw_historical = json.loads(result.get("historical_json", "[]"))
     metrics = result.get("metrics", {})
 
-    # --- THE FIX: Robust Dataset ID Retrieval ---
+    # --- Extract the AI Insight from the Celery payload ---
+    ai_insight = result.get("prescriptive_insight", "")
+
     # First, try to get it from the Celery result dictionary
     dataset_id = result.get("dataset_id")
 
@@ -314,6 +317,8 @@ def get_dashboard_data(request):
             run_record = ForecastRun.objects.filter(task_id=task_id).first()
             if run_record:
                 dataset_id = str(run_record.dataset.id)
+                # Grab insight from DB if it wasn't in the Celery result dict
+                ai_insight = ai_insight or run_record.prescriptive_insight
                 print(f"DEBUG: Found dataset_id {dataset_id} via database fallback.")
             else:
                 print(f"DEBUG: No ForecastRun found for task_id {task_id}")
@@ -334,7 +339,8 @@ def get_dashboard_data(request):
             "forecast": raw_forecast,
             "historical": raw_historical,
             "metrics": metrics,
-            "dataset_id": dataset_id  # This will now successfully pass to React!
+            "dataset_id": dataset_id,  # This will now successfully pass to React!
+            "ai_insight": ai_insight
         })
 
     # 4. Filter logic
@@ -357,11 +363,12 @@ def get_dashboard_data(request):
         "forecast": filtered_forecast,
         "historical": filtered_historical,
         "metrics": metrics,
-        "dataset_id": dataset_id
+        "dataset_id": dataset_id,
+        "ai_insight": ai_insight
     })
 
 
-# --- NEW CLOUD INTEGRATION VIEWSET ---
+# ---  CLOUD INTEGRATION VIEWSET ---
 
 class CloudIntegrationViewSet(viewsets.ModelViewSet):
     """

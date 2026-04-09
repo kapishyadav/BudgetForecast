@@ -2,18 +2,22 @@ import logging
 import os
 import time  # Fixed: changed from 'from datetime import time' so time.time() works
 from datetime import timedelta
+import pandas as pd
+import json
 
 from celery import shared_task
 from celery.exceptions import MaxRetriesExceededError
 from django.conf import settings
 from django.utils import timezone
 
-from .models import ForecastRun, ForecastDataset
+from .models import ForecastRun, HistoricalSpend
 from .services.optuna_tuning_service import OptunaTuningService
 from .ml.enums import ForecastType, Granularity
 
 from .models import CloudIntegration
 from .services.ingestion_service import DataIngestionService
+from .services.llm_providers import OllamaProvider
+from .services.prescriptive_service import PrescriptiveAnalysisService
 
 logger = logging.getLogger(__name__)
 
@@ -40,15 +44,71 @@ def generate_forecast_task(self, dataset_id,
             hyperparameters=hyperparameters,
             **kwargs
         )
-        return {"status": "success", **result}
+
+        insight = "Analyzing forecast patterns..."
+
+        try:
+            from .services.llm_providers import OllamaProvider
+            from .services.prescriptive_service import PrescriptiveAnalysisService
+
+            # Generate the insight
+            llm_client = OllamaProvider()
+            llm_service = PrescriptiveAnalysisService(llm_client)
+
+            pipeline_metrics = result.get('metrics', {})
+
+            # 1. Load the Historical Dataframe
+            historical_df = HistoricalSpend.objects.get_dataset_as_dataframe(dataset_id=dataset_id)
+
+            # 2. Dynamically calculate the number of historical months
+            historical_months = len(historical_df)
+
+            # 3. Pull the forecast period from the metrics (default to 12 if missing)
+            forecast_months = pipeline_metrics.get('forecast_period', 12)
+            total_forecast_spend = pipeline_metrics.get('total_forecasted_spend', 0)
+
+            # 4. Calculate total spend
+            if 'spend' in historical_df.columns:
+                total_current_spend = historical_df['spend'].sum()
+            elif 'y' in historical_df.columns:
+                total_current_spend = historical_df['y'].sum()
+            else:
+                total_current_spend = 0.0
+
+            insight = llm_service.generate_and_save_insight(
+                task_id=self.request.id,
+                total_current_spend=total_current_spend,
+                total_forecast_spend=total_forecast_spend,
+                historical_months = historical_months,
+                forecast_months = forecast_months
+            )
+
+            logger.info(f"DEBUG : insight generated in celery task is : {insight}")
+
+            # 1. EXPLICITLY set the key in the result dictionary so it cannot be overwritten
+            result['prescriptive_insight'] = insight
+
+            # 2. Save to database
+            ForecastRun.objects.filter(task_id=self.request.id).update(
+                prescriptive_insight=insight
+            )
+            logger.info(f"Task {self.request.id}: AI Insight generated successfully.")
+
+        except Exception as ai_error:
+            logger.error(f"Task {self.request.id}: Failed to generate AI insight - {str(ai_error)}")
+            result['prescriptive_insight'] = "Insight generation temporarily unavailable."
+
+        return {"status": "success",
+                **result,
+                "prescriptive_insight": insight
+                }
 
     except Exception as e:
         logger.error(f"Task {self.request.id}: Forecasting failed - {str(e)}")
         # If anything in the pipeline crashes, safely update the DB so the UI knows it failed
         ForecastRun.objects.filter(task_id=self.request.id).update(
             # Assuming you add a status field, e.g., status='failed'
-            status='failed',
-            error_message=str(e)
+            status='failed'
         )
         return {
             "status": "error",
@@ -108,16 +168,44 @@ def run_optuna_tuning_task(self, dataset_id,
             **kwargs
         )
 
-        return {
-            "status": "success",
-            "tuned_params": best_params,
-            **result
-        }
+        insight = "Analyzing forecast patterns..."
+
+        try:
+            from .services.llm_providers import OllamaProvider
+            from .services.prescriptive_service import PrescriptiveAnalysisService
+
+            # Generate the insight
+            llm_client = OllamaProvider()
+            llm_service = PrescriptiveAnalysisService(llm_client)
+            insight = llm_service.generate_and_save_insight(
+                task_id=self.request.id,
+                dataset_id=dataset_id,
+                forecast_data=result.get('forecast_data', [])
+            )
+
+            # 1. EXPLICITLY set the key in the result dictionary so it cannot be overwritten
+            result['prescriptive_insight'] = insight
+
+            # 2. Save to database
+            ForecastRun.objects.filter(task_id=self.request.id).update(
+                prescriptive_insight=insight
+            )
+            logger.info(f"Task {self.request.id}: AI Insight generated successfully.")
+
+        except Exception as ai_error:
+            logger.error(f"Task {self.request.id}: Failed to generate AI insight - {str(ai_error)}")
+            result['prescriptive_insight'] = "Insight generation temporarily unavailable."
+
+        return {"status": "success",
+                "tuned_params": best_params,
+                **result,
+                "prescriptive_insight": insight
+                }
 
     except Exception as e:
         logger.error(f"Task {self.request.id}: Optuna tuning failed - {str(e)}")
         ForecastRun.objects.filter(task_id=self.request.id).update(
-            # status='failed'
+            status='failed'
         )
         return {
             "status": "error",

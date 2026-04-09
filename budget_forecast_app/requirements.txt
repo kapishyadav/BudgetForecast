@@ -45,3 +45,5 @@ django-cryptography>=1.1
 azure-identity>=1.15.0
 azure-mgmt-costmanagement>=4.0.0
 google-cloud-bigquery>=3.14.0
+
+requests>=2.31.0

@@ -323,7 +323,9 @@ export function CustomScenarioPage() {
                     <button
                       onClick={() => setIsOptunaEnabled(!isOptunaEnabled)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                        isOptunaEnabled ? 'bg-blue-500' : 'bg-muted border border-border'
+                        isOptunaEnabled
+                          ? 'bg-blue-600 dark:bg-light-accent'
+                          : 'bg-muted border border-border'
                       }`}
                     >
                       <span className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform shadow-sm ${
@@ -334,14 +336,19 @@ export function CustomScenarioPage() {
 
                   {/* Disclaimer & Trial Input (Expands when Optuna is on) */}
                   {isOptunaEnabled && (
-                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex flex-col gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="bg-blue-500/10 dark:bg-light-accent/10 border border-blue-500/20 dark:border-light-accent/20 rounded-xl p-4 flex flex-col gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
                       <div className="flex items-start gap-3">
-                        <Info size={18} className="text-blue-500 shrink-0 mt-0.5" />
+                        {/* Swaps to light-accent only in dark mode */}
+                        <Info size={18} className="text-blue-600 dark:text-light-accent shrink-0 mt-0.5" />
+
                         <p className="text-sm text-foreground/80 leading-relaxed">
-                          <strong className="text-blue-600 dark:text-blue-400">Computational Disclaimer:</strong> Hyperparameter tuning requires training the model multiple times. This process is computationally expensive and will take significantly longer to complete than a standard scenario.
+                          {/* Slightly darker blue for the bold text in light mode for maximum readability */}
+                          <strong className="text-blue-700 dark:text-light-accent">Computational Disclaimer:</strong> Hyperparameter tuning requires training the model multiple times. This process is computationally expensive and will take significantly longer to complete than a standard scenario.
                         </p>
                       </div>
-                      <div className="flex items-center justify-between border-t border-blue-500/20 pt-3">
+
+                      {/* The divider line matches the active theme */}
+                      <div className="flex items-center justify-between border-t border-blue-500/20 dark:border-light-accent/20 pt-3">
                         <label className="text-sm font-medium text-foreground">Number of Trials (Iterative trainings)</label>
                         <input
                           type="number"
@@ -349,7 +356,8 @@ export function CustomScenarioPage() {
                           max={100}
                           value={optunaTrials}
                           onChange={(e) => setOptunaTrials(parseInt(e.target.value) || 1)}
-                          className="bg-background border border-border text-foreground text-sm rounded-lg p-2 w-24 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                          // Focus rings update dynamically based on theme
+                          className="bg-background border border-border text-foreground text-sm rounded-lg p-2 w-24 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-light-accent/50"
                         />
                       </div>
                     </div>

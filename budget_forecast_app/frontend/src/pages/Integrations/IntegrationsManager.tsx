@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Cloud, Server, Database, Save, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Cloud, Server, Database, Save, RefreshCw, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { getCsrfToken } from '../../utils/csrf';
 
 export function IntegrationsManager() {
@@ -261,6 +261,18 @@ export function IntegrationsManager() {
 
           <div className="border-t border-border pt-6">
             <h3 className="text-lg font-semibold text-foreground mb-4">Security Credentials</h3>
+
+            {/* --- SECURITY ENCRYPTION NOTE --- */}
+            <div className="mb-6 p-4 bg-light-accent/10 border border-light-accent/20 rounded-xl flex items-start space-x-3 transition-colors duration-300">
+              <ShieldCheck className="text-light-accent mt-0.5 shrink-0" size={20} />
+              <div>
+                <p className="text-sm font-semibold text-foreground">Encrypted at Rest</p>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  Kharchu uses AES-128 Fernet encryption to secure your credentials. Your API keys and secrets are encrypted before hitting our database and are strictly masked during all browser communications.
+                </p>
+              </div>
+            </div>
+            {/* -------------------------------- */}
 
             {activeTab === 'AWS' && (
               <div>

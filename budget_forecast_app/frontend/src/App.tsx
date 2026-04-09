@@ -5,6 +5,7 @@ import { KharchuDashboard } from './pages/KharchuDashboard/KharchuDashboard';
 import { CustomScenarioPage } from './pages/CustomScenario/CustomScenarioPage';
 import { UploadPage } from './pages/UploadPage/UploadPage';
 import { AuthPage } from './pages/LoginPage/AuthPage';
+import { IntegrationsPage } from './pages/Integrations/IntegrationsPage';
 
 // The Bouncer: Protects routes from unauthenticated users
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -53,6 +54,14 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/integrations"
+          element={
+            <ProtectedRoute>
+              <IntegrationsPage />
+            </ProtectedRoute>
+          }
+         />
       </Routes>
     </ThemeProvider>
   );

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class ForecastOrchestrationService:
-    """Encapsulates all business logic for initiating forecasts."""
+    """Encapsulates all business logic for initiating forecasts-misc."""
 
     def trigger_standard_forecast(self, dto: ForecastTriggerDTO) -> dict:
         # Ensure the dataset exists before queuing a task

@@ -1,36 +1,28 @@
 # Create your views here.
-from typing import Dict
-
-from django.views.decorators.http import require_POST
 from .dto import ForecastTriggerDTO, CustomScenarioDTO
 from .services.services import ForecastOrchestrationService
 from .dto import DatasetUploadDTO
 from .services.ingestion_service import DataIngestionService
-from .serializers import ForecastTriggerSerializer, CustomScenarioSerializer
+from .serializers import ForecastTriggerSerializer, CustomScenarioSerializer, CloudIntegrationSerializer
 from .utils.responses import api_response
-from .config import DEFAULT_FORECAST_TYPE, DEFAULT_GRANULARITY
 
 from django.shortcuts import render
-from django.shortcuts import get_object_or_404
 from django.http import JsonResponse, Http404, FileResponse, HttpResponse
 from django.core.files.storage import FileSystemStorage
-from django.conf import settings
-from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
-from .models import ForecastDataset, ForecastRun, HistoricalSpend
+from .models import ForecastRun, HistoricalSpend, CloudIntegration
 from .ml.main import run_forecast
 from .ml.utils.setup_logging import setup_logging
-from .ml.enums import ForecastType, Granularity
 
-from rest_framework import generics
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import generics, viewsets
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.models import User
 from .serializers import RegisterSerializer
 
-from .tasks import generate_forecast_task
+from .tasks import sync_integration_data
 from celery.result import AsyncResult
 
 import json
@@ -215,7 +207,7 @@ def download_forecast_csv(request):
 
 
 def dashboard_view(request):
-    # Suppose this is your forecasts DataFrame
+    # Suppose this is your forecasts-misc DataFrame
     forecasts_formatted = request['forecast']
     metrics = request['metrics']
 
@@ -367,3 +359,57 @@ def get_dashboard_data(request):
         "metrics": metrics,
         "dataset_id": dataset_id
     })
+
+
+# --- NEW CLOUD INTEGRATION VIEWSET ---
+
+class CloudIntegrationViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows Cloud Integrations to be viewed, created, or edited.
+    """
+    queryset = CloudIntegration.objects.all().order_by('-id')
+    serializer_class = CloudIntegrationSerializer
+
+    def get_queryset(self):
+        """
+        Optional: If you want to filter integrations by a specific dataset
+        passed in the URL query params (e.g., ?dataset_id=123)
+        """
+        queryset = super().get_queryset()
+        dataset_id = self.request.query_params.get('dataset_id')
+        if dataset_id:
+            queryset = queryset.filter(dataset_id=dataset_id)
+
+        provider = self.request.query_params.get('provider')
+        if provider:
+            # .upper() ensures 'aws' or 'AWS' both match your database choices
+            queryset = queryset.filter(provider=provider.upper())
+
+        return queryset
+
+    @action(detail=True, methods=['post'], url_path='sync-now')
+    def sync_now(self, request, pk=None):
+        """
+        Custom endpoint to manually trigger the Celery ingestion task.
+        Accessed via: POST /api/cloud-integrations/{id}/sync-now/
+        """
+        integration = self.get_object()
+
+        if not integration.is_active:
+            return Response(
+                {"error": "Cannot sync an inactive integration."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Dispatch the Celery task in the background
+        task = sync_integration_data.delay(integration.id)
+
+        logger.info(f"Manual sync triggered for integration {integration.id}. Task ID: {task.id}")
+
+        return Response(
+            {
+                "message": f"Sync queued successfully for {integration.provider}.",
+                "task_id": task.id
+            },
+            status=status.HTTP_202_ACCEPTED
+        )

@@ -17,6 +17,7 @@ export function LeftSidebar() {
   const isHome = location.pathname === '/';
   const isDashboard = location.pathname === '/kharchu';
   const isUpload = location.pathname === '/upload';
+  const isIntegrations = location.pathname === '/integrations';
 
   // FIX: Replaced dark:text-black with dark:text-sidebar-foreground and dark:text-muted-foreground
   const activeClass = "text-white bg-white/20 dark:text-sidebar-foreground dark:bg-white/10 p-2 rounded-xl transition-colors duration-300";
@@ -59,9 +60,13 @@ export function LeftSidebar() {
           <LayoutDashboard size={20} />
         </Link>
 
-        <button className={inactiveClass}>
+        <Link
+          to="/integrations"
+          className={isIntegrations ? activeClass : inactiveClass}
+          title="Cloud Integrations"
+        >
           <LinkIcon size={20} />
-        </button>
+        </Link>
         <button className={inactiveClass}>
           <Globe size={20} />
         </button>

@@ -16,6 +16,9 @@ interface MetricCardsProps {
 }
 
 export function MetricCards({ metrics, isLoading, datasetId }: MetricCardsProps) {
+  // 1. ALL HOOKS MUST GO AT THE VERY TOP
+  const [searchParams] = useSearchParams();
+  const urlModel = searchParams.get('model');
 
   const formatCurrency = (val: number) => {
     if (!val) return '$0';
@@ -23,6 +26,7 @@ export function MetricCards({ metrics, isLoading, datasetId }: MetricCardsProps)
     return `$${val.toLocaleString()}`;
   };
 
+  // 2. EARLY RETURNS GO AFTER HOOKS
   // Loading State - Updated to use bg-card, border-border, and bg-muted
   if (isLoading || !metrics) {
     return (
@@ -42,13 +46,10 @@ export function MetricCards({ metrics, isLoading, datasetId }: MetricCardsProps)
     );
   }
 
-  // Calculations
+  // 3. MAIN LOGIC AND CALCULATIONS
   const totalSpend = metrics.total_forecasted_spend || 0;
   const dummyBudget = totalSpend * 1.2;
   const spendPercentage = dummyBudget > 0 ? (totalSpend / dummyBudget) * 100 : 0;
-
-  const [searchParams] = useSearchParams();
-  const urlModel = searchParams.get('model');
 
   const modelDisplayNames: Record<string, string> = {
     xgboost: 'XGBoost',
@@ -65,15 +66,14 @@ export function MetricCards({ metrics, isLoading, datasetId }: MetricCardsProps)
   const accuracyPercentage = Math.max(0, 100 - mapeError);
   const accuracySegmentsFilled = Math.floor((accuracyPercentage / 100) * 8);
 
+  // 4. MAIN RENDER
   return (
     <div className="flex flex-nowrap overflow-x-auto gap-6 pb-4 w-full custom-scrollbar mb-8">
 
       {/* Card 1: Total Forecasted Spend */}
-      {/* Replaced bg-white and border-gray-50 with bg-card and border-border */}
       <div className="min-w-[320px] flex-1 bg-card rounded-[24px] p-6 shadow-sm border border-border flex flex-col justify-between shrink-0 transition-colors duration-300">
         <div className="flex justify-between items-start mb-6">
             <div className="flex items-center gap-2">
-              {/* Replaced bg-[#F5F1EB] with bg-muted */}
               <div className="flex items-center gap-2 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-sm font-medium border border-border transition-colors duration-300">
                 <Globe size={16} />
                 <span>Predicted Future Spend</span>
@@ -95,7 +95,6 @@ export function MetricCards({ metrics, isLoading, datasetId }: MetricCardsProps)
               {spendPercentage.toFixed(1)}%
             </span>
           </div>
-          {/* Replaced text-[#1A1A1A] with text-foreground */}
           <div className="text-4xl font-bold text-foreground mb-1 tracking-tight transition-colors duration-300">
             {formatCurrency(totalSpend)}
           </div>

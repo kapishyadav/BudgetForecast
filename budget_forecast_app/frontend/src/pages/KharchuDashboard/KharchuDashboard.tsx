@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Loader2, LogOut, Download } from 'lucide-react';
+import { Loader2, LogOut, Download, Sparkles } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { LeftSidebar } from './LeftSidebar';
 import { TopHeader } from './TopHeader';
@@ -9,6 +9,8 @@ import { TabNavigation } from './TabNavigation';
 import { MetricCards } from './MetricCards';
 import { StatisticsChart } from './StatisticsChart';
 import { getCsrfToken } from '../../utils/csrf';
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const FILTER_FIELD_MAP = {
   "By Account": "account_name",
@@ -32,6 +34,9 @@ export function KharchuDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [forecastMessage, setForecastMessage] = useState("Applying filters...");
   const [datasetId, setDatasetId] = useState(null);
+
+  // ---> NEW STATE FOR AI INSIGHT <---
+  const [aiInsight, setAiInsight] = useState<string | null>(null);
 
   // Extract the URL parameters first
   const [searchParams, setSearchParams] = useSearchParams();
@@ -135,6 +140,9 @@ export function KharchuDashboard() {
                 forecast_period: payload.metrics.forecast_period || "Next 12 Months"
             });
         }
+
+        // ---> GRAB AI INSIGHT FROM BACKEND <---
+        setAiInsight(payload.ai_insight || null);
 
         if (payload.dataset_id) setDatasetId(payload.dataset_id);
       } catch (error) {
@@ -479,6 +487,24 @@ export function KharchuDashboard() {
                       Export to CSV
                     </button>
                   </div>
+                )}
+
+                {/* --- AI PRESCRIPTIVE INSIGHT CARD --- */}
+                {aiInsight && (
+                    <div className="mb-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        <Alert className="bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 shadow-sm rounded-xl transition-colors duration-300">
+                            <Sparkles className="h-5 w-5 text-indigo-600 dark:text-indigo-400 animate-pulse" />
+                            <AlertTitle className="text-indigo-900 dark:text-indigo-100 font-semibold flex items-center gap-2">
+                                FinOps AI Prescriptive Insight
+                                <span className="text-xs bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full font-medium border border-indigo-200 dark:border-indigo-800">
+                                    Gemma 4
+                                </span>
+                            </AlertTitle>
+                            <AlertDescription className="text-indigo-800 dark:text-indigo-200 mt-2 leading-relaxed font-medium">
+                                {aiInsight}
+                            </AlertDescription>
+                        </Alert>
+                    </div>
                 )}
 
                 {/* --- THE CHART --- */}

@@ -177,11 +177,36 @@ def run_optuna_tuning_task(self, dataset_id,
             # Generate the insight
             llm_client = OllamaProvider()
             llm_service = PrescriptiveAnalysisService(llm_client)
+
+            pipeline_metrics = result.get('metrics', {})
+
+            # 1. Load the Historical Dataframe
+            historical_df = HistoricalSpend.objects.get_dataset_as_dataframe(dataset_id=dataset_id)
+
+            # 2. Dynamically calculate the number of historical months
+            historical_months = len(historical_df)
+
+            # 3. Pull the forecast period from the metrics (default to 12 if missing)
+            forecast_months = pipeline_metrics.get('forecast_period', 12)
+            total_forecast_spend = pipeline_metrics.get('total_forecasted_spend', 0)
+
+            # 4. Calculate total spend
+            if 'spend' in historical_df.columns:
+                total_current_spend = historical_df['spend'].sum()
+            elif 'y' in historical_df.columns:
+                total_current_spend = historical_df['y'].sum()
+            else:
+                total_current_spend = 0.0
+
             insight = llm_service.generate_and_save_insight(
                 task_id=self.request.id,
-                dataset_id=dataset_id,
-                forecast_data=result.get('forecast_data', [])
+                total_current_spend=total_current_spend,
+                total_forecast_spend=total_forecast_spend,
+                historical_months=historical_months,
+                forecast_months=forecast_months
             )
+
+            logger.info(f"DEBUG : insight generated in celery task is : {insight}")
 
             # 1. EXPLICITLY set the key in the result dictionary so it cannot be overwritten
             result['prescriptive_insight'] = insight

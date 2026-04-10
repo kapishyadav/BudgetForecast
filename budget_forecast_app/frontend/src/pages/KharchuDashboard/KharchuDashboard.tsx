@@ -492,17 +492,25 @@ export function KharchuDashboard() {
                 {/* --- AI PRESCRIPTIVE INSIGHT CARD --- */}
                 {aiInsight && (
                     <div className="mb-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <Alert className="bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 shadow-sm rounded-xl transition-colors duration-300">
-                            <Sparkles className="h-5 w-5 text-indigo-600 dark:text-indigo-400 animate-pulse" />
-                            <AlertTitle className="text-indigo-900 dark:text-indigo-100 font-semibold flex items-center gap-2">
+                        <Alert className="bg- border border- dark:border- shadow- rounded- transition-all duration-300">
+
+                            <Sparkles size={16} className="text-blue-500 animate-pulse" />
+
+                            <AlertTitle className="text- dark:text- font-semibold flex items-center gap-2">
                                 FinOps AI Prescriptive Insight
-                                <span className="text-xs bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full font-medium border border-indigo-200 dark:border-indigo-800">
+                                {/*
+                                  The badge uses your primary button colors, automatically inverting:
+                                  Light mode: Black bg, white text. Dark mode: White bg, black text.
+                                */}
+                                <span className="text-xs bg-light-accent text-[#09090B] px-2 py-0.5 rounded-full font-medium">
                                     Gemma 4
                                 </span>
                             </AlertTitle>
-                            <AlertDescription className="text-indigo-800 dark:text-indigo-200 mt-2 leading-relaxed font-medium">
+
+                            <AlertDescription className="text- dark:text- mt-2 leading-relaxed font-medium">
                                 {aiInsight}
                             </AlertDescription>
+
                         </Alert>
                     </div>
                 )}

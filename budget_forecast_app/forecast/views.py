@@ -1,6 +1,6 @@
 # Create your views here.
 from .dto import ForecastTriggerDTO, CustomScenarioDTO
-from .services.services import ForecastOrchestrationService
+from .services.services import ForecastOrchestrationService, HistoricalDataService
 from .dto import DatasetUploadDTO
 from .services.ingestion_service import DataIngestionService
 from .serializers import ForecastTriggerSerializer, CustomScenarioSerializer, CloudIntegrationSerializer
@@ -107,6 +107,27 @@ def run_custom_scenario(request):
     result = service.trigger_custom_scenario(dto)
 
     return api_response(data=result, message="Scenario triggered successfully.", status_code=202)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def visualize_history(request):
+    """Thin API boundary for historical visualizations."""
+    dataset_id = request.GET.get('dataset_id')
+
+    try:
+        service = HistoricalDataService()
+        data = service.get_historical_visuals(dataset_id)
+
+        # Utilize your existing standardized response wrapper
+        return api_response(data=data, message="Visuals fetched successfully.", status_code=200)
+
+    except ValueError as e:
+        return api_response(data=None, message=str(e), status_code=400, success=False)
+    except Exception as e:
+        logger.error(f"Error in visualize_history: {e}")
+        return api_response(data=None, message="Internal Server Error", status_code=500, success=False)
+
 
 def get_suggestions(request):
     """

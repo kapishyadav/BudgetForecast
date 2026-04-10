@@ -92,6 +92,10 @@ export default defineConfig(({ command }) => ({
       '/api/run-scenario/': {
         target: 'http://app:8000',
         changeOrigin: true,
+      },
+      '/api/visualize_history': {
+        target: 'http://app:8000',
+        changeOrigin: true,
       }
     }
   }

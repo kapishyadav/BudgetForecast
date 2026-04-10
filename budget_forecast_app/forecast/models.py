@@ -1,6 +1,7 @@
 # Create your models here.
 from django.db import models
 from django_cryptography.fields import encrypt
+from django.db.models import Sum
 from django.db.models import UniqueConstraint
 import uuid
 import pandas as pd
@@ -51,6 +52,23 @@ class HistoricalSpendManager(models.Manager):
 
         return pd.DataFrame(list(historical_data))
 
+    def get_aggregated_account_spend(self, dataset_id: str) -> list:
+        """Fetches and sorts total spend grouped by account."""
+        return list(
+            self.filter(dataset_id=dataset_id)
+            .values('account_name')
+            .annotate(total_spend=Sum('spend'))
+            .order_by('-total_spend')
+        )
+
+    def get_aggregated_service_spend(self, dataset_id: str) -> list:
+        """Fetches and sorts total spend grouped by service."""
+        return list(
+            self.filter(dataset_id=dataset_id)
+            .values('service_name')
+            .annotate(total_spend=Sum('spend'))
+            .order_by('-total_spend')
+        )
 
 class HistoricalSpend(models.Model):
     """Stores the actual row-by-row data from the CSV."""

@@ -24,7 +24,7 @@ urlpatterns = [
     path('status/<str:task_id>/', views.check_task_status, name='check_task_status'),
     path('api/dashboard-data/', views.get_dashboard_data, name='get_dashboard_data'),
     path('api/run-scenario/', views.run_custom_scenario, name='run_custom_scenario'),
-
+    path('api/visualize_history/', views.visualize_history, name='visualize_history'),
     # Add the Router URLs to the urlpatterns
     # By nesting it under 'api/', the final path becomes /api/cloud-integrations/
     path('api/', include(router.urls)),

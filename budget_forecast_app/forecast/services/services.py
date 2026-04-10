@@ -157,3 +157,51 @@ class ForecastOrchestrationService:
             "metrics": result["metrics"],
             "dataset_id": dataset_id
         }
+
+class HistoricalDataService:
+    """Handles business logic and formatting for historical data visualization."""
+
+    def get_historical_visuals(self, dataset_id: str) -> dict:
+        if not dataset_id:
+            raise ValueError("Dataset ID is required")
+
+        # 1. Process Account Data (Apply Top 10 + Other rule)
+        account_data = HistoricalSpend.objects.get_aggregated_account_spend(dataset_id)
+        accounts = []
+        other_account_spend = 0.0
+
+        for i, item in enumerate(account_data):
+            spend = float(item['total_spend'] or 0)
+            if spend == 0:
+                continue
+
+            if i < 10:
+                accounts.append({"name": item['account_name'] or "Uncategorized", "value": spend})
+            else:
+                other_account_spend += spend
+
+        if other_account_spend > 0:
+            accounts.append({"name": "Other", "value": other_account_spend})
+
+        # 2. Process Service Data (Apply Top 20 + Other rule)
+        service_data = HistoricalSpend.objects.get_aggregated_service_spend(dataset_id)
+        services = []
+        other_spend = 0.0
+
+        for i, item in enumerate(service_data):
+            spend = float(item['total_spend'] or 0)
+            if spend == 0:
+                continue
+
+            if i < 20:
+                services.append({"name": item['service_name'] or "Uncategorized", "value": spend})
+            else:
+                other_spend += spend
+
+        if other_spend > 0:
+            services.append({"name": "Other", "value": other_spend})
+
+        return {
+            "accounts": accounts,
+            "services": services
+        }

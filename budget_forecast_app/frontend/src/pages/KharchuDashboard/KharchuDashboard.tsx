@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PieChart as PieChartIcon } from 'lucide-react';
 import axios from 'axios';
 import { Loader2, LogOut, Download, Sparkles } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -9,6 +10,8 @@ import { TabNavigation } from './TabNavigation';
 import { MetricCards } from './MetricCards';
 import { StatisticsChart } from './StatisticsChart';
 import { getCsrfToken } from '../../utils/csrf';
+import { useHistoricalVisuals } from './hooks/useHistoricalVisuals';
+import { HistoricalVisuals } from './HistoricalVisuals';
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -43,6 +46,14 @@ export function KharchuDashboard() {
   const taskId = searchParams.get('taskId');
   const initialGranularity = searchParams.get('granularity') || 'monthly';
   const initialForecastType = searchParams.get('forecastType');
+
+  // Initialize the historicalVisuals hook
+  const {
+    data: historicalVisuals,
+    isLoading: isHistoryLoading,
+    isVisible: isVisualizingHistory,
+    toggleVisuals: handleVisualizeHistory
+  } = useHistoricalVisuals(datasetId);
 
   // --- Rebuild Tabs AND Values from the URL ---
   const getInitialFilters = () => {
@@ -429,6 +440,34 @@ export function KharchuDashboard() {
 
           <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar">
             <MetricCards metrics={metricsData} isLoading={isLoading} datasetId={datasetId}/>
+
+            {/* --- NEW: DEDICATED HISTORICAL EXPLORATION SECTION --- */}
+            {/* Placed OUTSIDE the loading check so users can view history immediately */}
+            {datasetId && (
+              <div className="mt-8 mb-6 flex justify-between items-center bg-card px-8 py-6 rounded-[24px] border border-border shadow-sm transition-colors duration-300">
+              <div className="flex flex-col">
+                 <h2 className="text-xl font-bold text-foreground transition-colors duration-300">Historical Cost Drivers</h2>
+                 <p className="text-sm text-muted-foreground mt-1.5 transition-colors duration-300">Analyze your top accounts and services before forecasting.</p>
+              </div>
+
+              <button
+                onClick={handleVisualizeHistory}
+                disabled={isHistoryLoading}
+                className="flex items-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm border border-transparent cursor-pointer disabled:opacity-50"
+              >
+                {isHistoryLoading ? <Loader2 size={16} className="animate-spin" /> : <PieChartIcon size={16} />}
+                {isVisualizingHistory ? "Hide Analysis" : "Analyze History"}
+              </button>
+            </div>
+            )}
+
+            {/* RENDER HISTORICAL VISUALS HERE */}
+            {isVisualizingHistory && (
+              <HistoricalVisuals data={historicalVisuals} />
+            )}
+
+            {/* Subtle Divider to separate Past from Future */}
+            {datasetId && <div className="h-px w-full bg-border my-6 transition-colors duration-300" />}
 
             {isLoading ? (
               // Themed Loading State

@@ -441,29 +441,52 @@ export function KharchuDashboard() {
           <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar">
             <MetricCards metrics={metricsData} isLoading={isLoading} datasetId={datasetId}/>
 
-            {/* --- NEW: DEDICATED HISTORICAL EXPLORATION SECTION --- */}
-            {/* Placed OUTSIDE the loading check so users can view history immediately */}
-            {datasetId && (
-              <div className="mt-8 mb-6 flex justify-between items-center bg-card px-8 py-6 rounded-[24px] border border-border shadow-sm transition-colors duration-300">
-              <div className="flex flex-col">
-                 <h2 className="text-xl font-bold text-foreground transition-colors duration-300">Historical Cost Drivers</h2>
-                 <p className="text-sm text-muted-foreground mt-1.5 transition-colors duration-300">Analyze your top accounts and services before forecasting.</p>
+            {/* --- HISTORICAL EXPLORATION SECTION (CONDITIONAL RENDERING) --- */}
+            {datasetId && activeFilters.includes('Global View') ? (
+              <>
+                {/* Global View: Full Historical Analysis */}
+                <div className="mt-8 mb-6 flex justify-between items-center bg-card px-8 py-6 rounded-[24px] border border-border shadow-sm transition-colors duration-300">
+                  <div className="flex flex-col">
+                    <h2 className="text-xl font-bold text-foreground transition-colors duration-300">Historical Cost Drivers</h2>
+                    <p className="text-sm text-muted-foreground mt-1.5 transition-colors duration-300">Analyze your top accounts and services before checking out forecasts.</p>
+                  </div>
+
+                  <button
+                    onClick={handleVisualizeHistory}
+                    disabled={isHistoryLoading}
+                    className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm border border-transparent cursor-pointer disabled:opacity-50"
+                  >
+                    {isHistoryLoading ? <Loader2 size={16} className="animate-spin" /> : <PieChartIcon size={16} />}
+                    {isVisualizingHistory ? "Hide Analysis" : "Analyze History"}
+                  </button>
+                </div>
+
+                {/* RENDER HISTORICAL VISUALS HERE */}
+                {isVisualizingHistory && (
+                  <HistoricalVisuals data={historicalVisuals} />
+                )}
+              </>
+            ) : datasetId && (
+              /* Filter Tabs (Account, Service, etc.): Coming Soon Placeholder */
+              <div className="mt-8 mb-6 flex items-center justify-between bg-card/40 px-6 py-4 rounded-[20px] border border-dashed border-border shadow-sm transition-colors duration-300">
+              <div className="flex items-center gap-4">
+                <div className="bg-muted p-2 rounded-full shrink-0">
+                  <PieChartIcon size={20} className="text-muted-foreground opacity-70" />
+                </div>
+                <div className="flex flex-col">
+                  <h2 className="text-sm font-bold text-foreground transition-colors duration-300">Granular Historical Analysis</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5 transition-colors duration-300">
+                    Detailed breakdowns for this specific filter are currently in development.
+                  </p>
+                </div>
               </div>
 
-              <button
-                onClick={handleVisualizeHistory}
-                disabled={isHistoryLoading}
-                className="flex items-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm border border-transparent cursor-pointer disabled:opacity-50"
-              >
-                {isHistoryLoading ? <Loader2 size={16} className="animate-spin" /> : <PieChartIcon size={16} />}
-                {isVisualizingHistory ? "Hide Analysis" : "Analyze History"}
-              </button>
+              <div className="shrink-0 ml-4">
+                <span className="text-[10px] font-bold bg-secondary text-secondary-foreground px-3 py-1 rounded-full uppercase tracking-widest border border-border/50 shadow-sm">
+                  Coming Soon
+                </span>
+              </div>
             </div>
-            )}
-
-            {/* RENDER HISTORICAL VISUALS HERE */}
-            {isVisualizingHistory && (
-              <HistoricalVisuals data={historicalVisuals} />
             )}
 
             {/* Subtle Divider to separate Past from Future */}

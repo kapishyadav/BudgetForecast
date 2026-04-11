@@ -39,13 +39,13 @@ export function HistoricalVisuals({ data }: HistoricalVisualsProps) {
         <h3 className="text-xl font-bold text-foreground mb-6">Historical Spend by Account</h3>
         <div className="flex-1 w-full min-h-[400px]">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+            <PieChart margin={{ top: 20, right: 0, bottom: 0, left: 0 }}>
               <Pie
                 data={safeAccounts}
                 cx="50%"
-                cy="45%" // Shifted up slightly to prevent legend overlap
-                innerRadius={100}
-                outerRadius={160}
+                cy="45%" // Keeps it perfectly lifted above your new legend
+                innerRadius={80} // Scaled down to maintain the donut thickness ratio
+                outerRadius={120} // REDUCED from 140 to absolutely prevent top clipping
                 paddingAngle={2}
                 dataKey="value"
               >
@@ -64,11 +64,32 @@ export function HistoricalVisuals({ data }: HistoricalVisualsProps) {
                   itemStyle={{ color: 'var(--foreground)' }} // OVERRIDES THE SLICE COLOR
                 />
               <Legend
-                verticalAlign="bottom"
-                height={80}
-                iconType="circle"
-                wrapperStyle={{ paddingTop: '20px' }}
-              />
+                  verticalAlign="bottom"
+                  content={(props: any) => {
+                    const { payload } = props;
+                    return (
+                      // Forces a neat 2-column grid with gap spacing
+                      <ul className="grid grid-cols-2 gap-x-4 gap-y-3 pt-8 w-full px-2">
+                        {payload?.map((entry: any, index: number) => (
+                          <li
+                            key={`item-${index}`}
+                            className="flex items-center text-sm text-foreground overflow-hidden"
+                          >
+                            {/* The colored dot (shrink-0 prevents it from getting squished by long text) */}
+                            <span
+                              className="w-3 h-3 rounded-full mr-2 shrink-0"
+                              style={{ backgroundColor: entry.color }}
+                            />
+                            {/* The account name (truncate adds the ellipsis, title shows full name on hover) */}
+                            <span className="truncate font-medium" title={entry.value}>
+                              {entry.value}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  }}
+                />
             </PieChart>
           </ResponsiveContainer>
         </div>

@@ -1,7 +1,7 @@
 KHARCHU: Interactive Budget & Spend Forecasting Dashboard
 =========================================================
 <p align="center">
-  <img src="./assets/dashboard-page-asset.png" width="850" alt="Kharchu Dashboard Overview" />
+  <img src="./assets/kharchu-dashbaord-dark.png" width="850" alt="Kharchu Dashboard Overview" />
 </p>
 **Kharchu** is a full-stack, AI-powered financial application designed to ingest historical spend data and generate highly accurate future budget forecasts. By leveraging advanced Machine Learning algorithms (Facebook Prophet and CatBoost) running asynchronously via Celery, Kharchu provides organizations with a pristine, interactive dashboard to visualize and optimize their cloud and operational spend.
 

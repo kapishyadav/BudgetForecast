@@ -10,8 +10,8 @@ class BaseForecaster(ABC):
         self.hyperparameters = hyperparameters or {}
         self.kwargs = kwargs
 
-        gran_str = granularity.value if hasattr(granularity, 'value') else str(granularity).lower()
-        self.is_daily = gran_str == 'daily'
+        gran_str = granularity.value if hasattr(granularity, 'value') else str(granularity)
+        self.is_daily = gran_str.lower() == 'daily'
         self.freq = 'D' if self.is_daily else 'MS'
         self.periods = kwargs.get('periods', 90 if self.is_daily else 24)
 
@@ -23,10 +23,11 @@ class BaseForecaster(ABC):
         if df.index.name in ['date', 'month', 'Month']:
             df = df.reset_index()
 
-        # Rename columns to standard 'date'
-        rename_map = {col: 'date' for col in ['month', 'Month', date_col] if col in df.columns}
-        if rename_map:
-            df = df.rename(columns=rename_map)
+        # Safely normalize the time column to 'date' without creating duplicates
+        for col in ['date', 'month', 'Month', 'ds']:
+            if col in df.columns and col != 'date':
+                df = df.rename(columns={col: 'date'})
+                break  # Only rename the first valid time column we find
 
         if 'date' not in df.columns:
             raise KeyError(f"Expected a date column, but found: {df.columns.tolist()}")
@@ -46,10 +47,10 @@ class BaseForecaster(ABC):
             raise ValueError("The provided dataset is empty and contains no historical spend data.")
 
         # 1. Dynamic Column Validation
-        if self.granularity == Granularity.MONTHLY and ('month' not in df.columns or 'spend' not in df.columns):
-            raise ValueError("DataFrame for monthly granularity must contain 'month' and 'spend' columns.")
-        elif self.granularity == Granularity.DAILY and ('date' not in df.columns or 'spend' not in df.columns):
-            raise ValueError("DataFrame for daily granularity must contain 'date' and 'spend' columns.")
+        has_time_col = any(col in df.columns for col in ['date', 'month', 'Month'])
+        if not has_time_col or 'spend' not in df.columns:
+            raise ValueError(
+                "DataFrame must contain a time column ('date', 'month', or 'Month') and a 'spend' column.")
 
         # 2. Dynamic Filtering using kwargs passed to the BaseForecaster
         data = df.copy()

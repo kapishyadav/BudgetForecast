@@ -127,15 +127,18 @@ class ForecastOrchestrationService:
 
         # 2. Map strings to Enums
         try:
-            forecast_type = ForecastType(forecast_type_str)
-            granularity = Granularity(granularity_str)
-        except ValueError:
-            logger.warning("Invalid enums passed, falling back to defaults.")
+            forecast_type = next(
+                (e for e in ForecastType if str(e.value).lower() == str(forecast_type_str).lower()),
+                ForecastType.OVERALL_AGGREGATE
+            )
+            granularity = next(
+                (e for e in Granularity if str(e.value).lower() == str(granularity_str).lower()),
+                Granularity.MONTHLY
+            )
+        except Exception as e:
+            logger.warning(f"Invalid enums passed, falling back to defaults. Error: {e}")
             forecast_type = ForecastType.OVERALL_AGGREGATE
             granularity = Granularity.MONTHLY
-
-        if granularity == Granularity.MONTHLY:
-            df.rename(columns={'date': 'month'}, inplace=True)
 
         # 3. Execute Strategy Pattern Engine
         result = run_forecast(df, forecast_type, granularity=granularity, model_name = model_name,

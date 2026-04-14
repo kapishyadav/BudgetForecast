@@ -507,37 +507,6 @@ export function KharchuDashboard() {
                     {/* Left Side: Title & Segmented Toggle */}
                     <div className="flex items-center gap-6">
                       <h3 className="text-lg font-bold text-foreground transition-colors duration-300">Forecast Overview</h3>
-
-                      <div className="flex bg-muted rounded-xl p-1 shadow-inner border border-border transition-colors duration-300">
-                        <button
-                          onClick={() => {
-                              setGranularity('monthly');
-                              handleApplyFilters(activeFilters.includes('Global View'), 'monthly');
-                              }
-                          }
-                          className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
-                            granularity === 'monthly'
-                              ? 'bg-card text-foreground shadow-sm'
-                              : 'text-muted-foreground hover:text-foreground'
-                          }`}
-                        >
-                          Monthly
-                        </button>
-                        <button
-                          onClick={() => {
-                              setGranularity('daily');
-                              handleApplyFilters(activeFilters.includes('Global View'), 'daily');
-                              }
-                          }
-                          className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
-                            granularity === 'daily'
-                              ? 'bg-card text-foreground shadow-sm'
-                              : 'text-muted-foreground hover:text-foreground'
-                          }`}
-                        >
-                          Daily
-                        </button>
-                      </div>
                     </div>
 
                     {/* Right Side: Export Button (Using your Lime Green Light Accent) */}

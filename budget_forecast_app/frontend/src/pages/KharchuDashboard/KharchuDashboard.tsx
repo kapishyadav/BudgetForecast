@@ -506,7 +506,9 @@ export function KharchuDashboard() {
 
                     {/* Left Side: Title & Segmented Toggle */}
                     <div className="flex items-center gap-6">
-                      <h3 className="text-lg font-bold text-foreground transition-colors duration-300">Forecast Overview</h3>
+                      <h3 className="text-lg font-bold text-foreground transition-colors duration-300">
+                      {granularity === 'daily' ? 'Daily Forecasts' : 'Monthly Forecasts'}
+                      </h3>
                     </div>
 
                     {/* Right Side: Export Button (Using your Lime Green Light Accent) */}

@@ -59,7 +59,7 @@ export function ForecastDemo() {
           </div>
 
           {/* Using your custom light-accent (Lime Green) for the badge! */}
-          <div className="text-sm font-semibold text-[#09090B] bg-light-accent px-4 py-2 rounded-full transition-colors">
+          <div className="text-sm font-semibold text-white dark:text-[#09090B] bg-[#826363] dark:bg-light-accent px-4 py-2 rounded-full transition-colors duration-300">
             Real-time
           </div>
         </div>

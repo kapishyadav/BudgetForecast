@@ -65,7 +65,7 @@ export function Features() {
               {/* Icon */}
               <div className="flex items-center space-x-4 mb-4">
                 {/* Changed to bg-muted and text-muted-foreground */}
-                <div className="bg-muted p-3 rounded-full text-muted-foreground transition-colors">
+                <div className="bg-muted p-3 rounded-full text-[#826363] dark:text-light-accent transition-colors">
                   <Icon size={20} />
                 </div>
 
